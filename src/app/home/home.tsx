@@ -4,7 +4,6 @@ import { Button } from '@/components/Button';
 import React from 'react';
 import Image from 'next/image';
 
-import LineByLine from '/images/line_by_line.png';
 
 const Home = () => {
     return (
