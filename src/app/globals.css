@@ -1,9 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #F6F4EC;
+  --bg-primary-light: #F6F4EC;
+  --bg-primary-base: #F3F0E5;
+
   --foreground: #171717;
 }
+
+/* Font Import */
+@font-face {
+  font-family: 'SegoeUI';
+  src: url('/fonts/SegoeUI-Bold.woff') format('woff'),
+        url('/fonts/SegoeUI-Bold-Italic.woff') format('woff2'),
+        url('/fonts/SegoeUI-Italic.woff') format('woff2'),
+        url('/fonts/SegoeUI.woff') format('woff2');
+  
+  font-weight: normal;
+  font-style: normal;
+}
+
 
 @theme inline {
   --color-background: var(--background);
@@ -11,16 +27,67 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
-
+/* 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
+} */
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "SegoeUI-Bold", Arial, Helvetica, sans-serif;
+}
+
+
+/* COLORS */
+
+.font-bold {
+  font-family: "SegoeUI-Bold", Arial, Helvetica, sans-serif;
+}
+.font-primary {
+  font-family: "SegoeUI", Arial, Helvetica, sans-serif;
+}
+.font-italic {
+  font-family: "SegoeUI-Italic", Arial, Helvetica, sans-serif;
+}
+
+
+.bg-primary-light {
+  background-color: #F6F4EC;
+}
+
+.bg-green {
+  background-color: #698269;
+}
+
+.bg-primary-base {
+  background-color: var( --bg-primary-base);
+}
+
+/* C */
+.text-brown {
+  color: #A67C52;
+}
+
+.text-primary {
+  color: #698269;
+}
+
+.bg-header {
+  background-image: url('/images/home_header.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.bg-header-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: #fefaf5b0;
+  opacity: 100%;
+  z-index: 1;
 }
