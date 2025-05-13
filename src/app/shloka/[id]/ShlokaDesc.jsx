@@ -46,7 +46,7 @@ const ShlokaDesc = () => {
     shlokaData.audioFiles.lines.map(() => React.createRef())
   );
 
-  const MAX_REPETITIONS = 2;
+  const MAX_REPETITIONS = 5;
   const fullAudioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLinePlaying, setIsLinePlaying] = useState(false);
@@ -70,42 +70,42 @@ const ShlokaDesc = () => {
   const playLineAudio = (index) => {
     console.log("Playing line audio", index);
     setPlayingFullShloka(false);
-
+  
     const currentAudio = lineAudioRefs.current[index].current;
+  
     if (currentAudio) {
-        // Reset repetition count if switching lines
-        if (activeLine !== index) {
-            setRepetitionCount(0);
-            setActiveLine(index);
-        }
-
-        if (isLinePlaying) {
-            currentAudio.pause();
-            setIsLinePlaying(false);
-        } else {
-            currentAudio.play();
-            setIsLinePlaying(true);
-
-            currentAudio.onended = () => {
-                if (repetitionCount < MAX_REPETITIONS - 1) {
-                    // Repeat the same line
-                    setRepetitionCount(repetitionCount + 1);
-                    currentAudio.currentTime = 0;
-                    currentAudio.play();
-                } else {
-                    // Move to the next line
-                    setRepetitionCount(0);
-                    setIsLinePlaying(false);
-
-                    if (index < shlokaData.audioFiles.lines.length - 1) {
-                        setActiveLine(index + 1);
-                        playLineAudio(index + 1);
-                    }
-                }
-            };
-        }
+      // Reset repetition count if switching lines
+      if (activeLine !== index) {
+        setRepetitionCount(1);
+        setActiveLine(index);
+      }
+  
+      if (isLinePlaying) {
+        currentAudio.pause();
+        setIsLinePlaying(false);
+      } else {
+        currentAudio.play();
+        setIsLinePlaying(true);
+  
+        currentAudio.onended = () => {
+          setRepetitionCount((prevRepetitionCount) => {
+            const newCount = prevRepetitionCount + 1;
+            
+            if (newCount < MAX_REPETITIONS) {
+              currentAudio.currentTime = 0;
+              currentAudio.play();
+            } else {
+              setIsLinePlaying(false);
+            }
+        
+            return newCount;
+          });
+        };
+        
+      }
     }
-};
+  };
+  
 
 
   return (
