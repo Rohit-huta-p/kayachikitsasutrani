@@ -2,22 +2,36 @@
 
 :root {
   --background: #F6F4EC;
-  --bg-primary-light: #F6F4EC;
   --bg-primary-base: #F3F0E5;
-
+  --bg-primary-light: #F6F4EC;
+  --bg-primary-light1 :#FDE1D366;
   --foreground: #171717;
 }
 
 /* Font Import */
 @font-face {
   font-family: 'SegoeUI';
-  src: url('/fonts/SegoeUI-Bold.woff') format('woff'),
-        url('/fonts/SegoeUI-Bold-Italic.woff') format('woff2'),
-        url('/fonts/SegoeUI-Italic.woff') format('woff2'),
-        url('/fonts/SegoeUI.woff') format('woff2');
-  
+  src: url('/fonts/SegoeUI.woff') format('woff');
   font-weight: normal;
   font-style: normal;
+}
+@font-face {
+  font-family: 'SegoeUI-Bold';
+  src: url('/fonts/SegoeUI-Bold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'SegoeUI-Italic';
+  src: url('/fonts/SegoeUI-Italic.woff') format('woff');
+  font-weight: normal;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'SegoeUI-Bold-Italic';
+  src: url('/fonts/SegoeUI-Bold-Italic.woff') format('woff');
+  font-weight: bold;
+  font-style: italic;
 }
 
 
@@ -38,23 +52,33 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "SegoeUI-Bold", Arial, Helvetica, sans-serif;
+  font-family: "SegoeUI",  sans-serif;
 }
+
+
+
 
 
 /* COLORS */
 
-.font-bold {
-  font-family: "SegoeUI-Bold", Arial, Helvetica, sans-serif;
+.font-normal {
+  font-family: "SegoeUI", sans-serif;
 }
-.font-primary {
-  font-family: "SegoeUI", Arial, Helvetica, sans-serif;
+.font-bold {
+  font-family: "SegoeUI-Bold", sans-serif;
 }
 .font-italic {
-  font-family: "SegoeUI-Italic", Arial, Helvetica, sans-serif;
+  font-family: "SegoeUI-Italic", sans-serif;
+}
+.font-bold-italic {
+  font-family: "SegoeUI-Bold-Italic", sans-serif;
 }
 
 
+/* background Colors */
+.bg-primary-base {
+  background-color: var( --bg-primary-base);
+}
 .bg-primary-light {
   background-color: #F6F4EC;
 }
@@ -63,16 +87,41 @@ body {
   background-color: #698269;
 }
 
-.bg-primary-base {
-  background-color: var( --bg-primary-base);
+.bg-primary-light-1 {
+  background-color: #FDE1D366;
 }
 
-/* C */
+.bg-grey-50 {
+  background-color: #E5E7EB;
+}
+
+.bg-grey-100 {
+  background-color: #E5DEFF33;
+}
+
+.bg-indigo-50 {
+  background-color: #F1F0FB;
+}
+.bg-indigo-100 {
+  background-color: #E5DEFF;
+}
+
+.bg-green-100 {
+  background-color: #F2FCE2;
+}
+
+.bg-red-100 {
+  background-color: #FDE1D3;
+}
+
+
+
+
 .text-brown {
   color: #A67C52;
 }
 
-.text-primary {
+.text-green {
   color: #698269;
 }
 
@@ -91,3 +140,12 @@ body {
   opacity: 100%;
   z-index: 1;
 }
+
+.black-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: #0000005e;
+  opacity: 100%;
+  z-index: 0;
+}
+

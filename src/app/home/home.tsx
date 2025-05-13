@@ -3,6 +3,7 @@
 import { Button } from '@/components/Button';
 import React from 'react';
 import Image from 'next/image';
+import { Custom_Link } from '@/components/Link';
 
 
 const Home = () => {
@@ -13,19 +14,21 @@ const Home = () => {
                 <div className="bg-header-overlay"></div>
 
                 <div className='relative z-10 space-y-4'>
-                    <h1 className="text-5xl font-bold text-brown mb-4  ">
+                    <h1 className="text-5xl font-semibold text-brown mb-4  ">
                         Master Ayurvedic Shlokas with <br /> Ease and Authenticity
                     </h1>
                     <p className="text-xl text-black">
                         Join our community and start learning the sacred verses that have guided
                         Ayurvedic practice for millennia.
                     </p>
-                    <Button onClick={() => {}} className={'py-[9px] px-[32px]'} >Get Started</Button>
+                     <Custom_Link href="/dashboard" className="px-8 py-3 bg-green text-white">Get Started</Custom_Link>
                 </div>
             
 
             
             </header>
+
+             
             <section className='text-brown p-[64px] flex flex-col items-center justify-center space-y-7'>
                 <h4 className='text-3xl'>Discover the Power of Traditional Learning</h4>
                 {/* cards */}
@@ -42,7 +45,7 @@ const Home = () => {
                             priority
                         />
 
-                        <h3 className='text-xl'>Line-by-Line Learning</h3>
+                        <h3 className='text-xl font-normal'>Line-by-Line Learning</h3>
                         <p className='text-black text-xs w-full'>Master each part of the shloka before moving to the
                         next, reinforcing your understanding and memorization.</p>
 
@@ -51,7 +54,7 @@ const Home = () => {
                     {/* Authentic Sanskrit */}
                     <div className='bg-white rounded-xl p-[24px] space-y-3'>
                         <Image 
-                            src="/images/line-by-line-learning.png" 
+                            src="/images/authentic-sanskrit.png" 
                             alt="Home Header" 
                             width={50} 
                             height={100} 
@@ -84,7 +87,7 @@ const Home = () => {
             <section className='bg-primary-base px-[64px] py-[30px] flex flex-col justify-center items-center space-y-4'>
                 <h4 className='text-3xl text-brown'>Begin Your Ayurvedic Journey Today</h4>
                 <p className='text-[18px] text-center w-2/3'>Immerse yourself in the ancient wisdom of Ayurveda through our line-by-line learning approach. Perfect for students, practitioners, and enthusiasts alike.</p>
-                <Button onClick={() => {}} className={''}>Start Learning Now</Button>
+                <Button onClick={() => {}} className={'px-[32px] py-[12px]'}>Start Learning Now</Button>
             </section>
 
 

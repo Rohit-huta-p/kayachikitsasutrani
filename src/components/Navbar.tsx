@@ -1,6 +1,10 @@
 "use client";
 import React from 'react';
-import {Button} from './Button';
+
+
+import { Custom_Link } from './Link';
+
+
 
 
 const Navbar = () => {
@@ -9,8 +13,8 @@ const Navbar = () => {
             <h2 className="font-bold text-brown text-xl">Shloka Sutra</h2>
             <div className="space-x-5">
       
-                <button className="font-bold text-primary">Login</button>
-                <Button onClick={() => {}} className="">Signup</Button>
+                <Custom_Link href="/login" className="text-green">Login</Custom_Link>
+                <Custom_Link href={"/signup"} onClick={() => {}} className="bg-green text-white p-2">Signup</Custom_Link>
 
 
             </div>
