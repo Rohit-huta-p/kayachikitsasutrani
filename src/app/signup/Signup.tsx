@@ -7,7 +7,7 @@ import React, { useState } from "react";
 
 const Signup = () => {
   const [toggleDropdown, setToggleDropdown] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  // const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     age: "",

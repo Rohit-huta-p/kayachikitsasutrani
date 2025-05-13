@@ -2,11 +2,8 @@ import React from 'react'
 import Image from 'next/image';
 import { Custom_Link } from '@/components/Link';
 
-interface ShlokaCardProps {
 
-  shloka: Object,
-}
-const ShlokaCard = ({shloka}: ShlokaCardProps) => {
+const ShlokaCard = ({shloka}) => {
   return (
     <div className=' rounded-lg shadow-lg hover:shadow-xl transition-shadow'>
      <div className='h-46 overflow-hidden'>
