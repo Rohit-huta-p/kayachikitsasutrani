@@ -1,7 +1,7 @@
 "use client"
 
 import SearchComponent from '@/components/SearchComponent'
-import React, { useState } from 'react'
+import React from 'react'
 import ShlokaList from './components/ShlokaList'
 
 const Dashboard = () => {

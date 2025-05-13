@@ -1,8 +1,8 @@
 "use client";
 import { Heart } from "lucide-react";
 import Image from "next/image";
-import { useParams } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+
+import React, { useRef, useState } from "react";
 import ShlokaDisplay from "./ShlokaDisplay";
 // ICONS
 import { MdOutlineSkipPrevious, MdPlayArrow } from "react-icons/md";

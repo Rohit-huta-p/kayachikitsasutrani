@@ -1,14 +1,8 @@
 "use client";
-import { Heart } from "lucide-react";
-import Image from "next/image";
-import { useParams } from "next/navigation";
-import React, { useState } from "react";
 
-// ICONS
-import { MdOutlineSkipPrevious, MdPlayArrow } from "react-icons/md";
-import { MdSkipNext } from "react-icons/md";
-import { CiPause1 } from "react-icons/ci";
-import { BiHide } from "react-icons/bi";
+import React from "react";
+
+
 
 import FullText from "./components/FullText";
 import FullTranslation from "./components/FullTranslation";
