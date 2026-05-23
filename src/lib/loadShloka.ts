@@ -12,7 +12,8 @@ export async function loadShloka(id: string): Promise<Shloka> {
     typeof data.id !== 'string' ||
     !Array.isArray(data.lines) ||
     !data.audio ||
-    typeof data.audio.full !== 'string'
+    typeof data.audio.full !== 'string' ||
+    !Array.isArray(data.audio.lines)
   ) {
     throw new Error('Invalid shloka payload');
   }

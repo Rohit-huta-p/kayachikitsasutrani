@@ -56,4 +56,17 @@ describe('loadShloka', () => {
 
     await expect(loadShloka('x')).rejects.toThrow(/invalid shloka/i);
   });
+
+  it('throws when audio.lines is not an array', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: 'x',
+        lines: [],
+        audio: { full: '/a.mp3' }, // missing lines array
+      }),
+    }));
+
+    await expect(loadShloka('x')).rejects.toThrow(/invalid shloka/i);
+  });
 });
