@@ -5,14 +5,9 @@ import {
   initialState,
   REPETITIONS,
   type PlayerState,
-  type PlayerEvent,
 } from './playerReducer';
 
 const CTX = { totalLines: 2 };
-
-function run(state: PlayerState, events: PlayerEvent[]): PlayerState {
-  return events.reduce((s, e) => playerReducer(s, e, CTX), state);
-}
 
 describe('playerReducer', () => {
   it('starts in IDLE', () => {
