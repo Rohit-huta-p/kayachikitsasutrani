@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useReducer, useRef, useState, useCallback } from 'react';
-import type { Shloka, WordTiming } from '@/lib/shloka.types';
+import type { Shloka } from '@/lib/shloka.types';
 import { findWordIndex } from './wordIndex';
 import {
   playerReducer,
@@ -39,10 +39,10 @@ export interface ShlokaPlayerApi {
 }
 
 export function useShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
-  const ctx = { totalLines: shloka.lines.length };
+  const totalLines = shloka.lines.length;
   const reducer = useCallback(
-    (s: PlayerState, e: PlayerEvent) => playerReducer(s, e, ctx),
-    [ctx.totalLines],
+    (s: PlayerState, e: PlayerEvent) => playerReducer(s, e, { totalLines }),
+    [totalLines],
   );
   const [state, dispatch] = useReducer(reducer, initialState);
 
@@ -86,6 +86,10 @@ export function useShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
   const isPlaying = state.status === 'PLAYING_LINE' || state.status === 'PLAYING_FULL';
 
   // Side effect: drive audio playback based on state
+  const playingLine = state.status === 'PLAYING_LINE' ? state.line : null;
+  const playingLineRep = state.status === 'PLAYING_LINE' ? state.rep : null;
+  const playingFullRep = state.status === 'PLAYING_FULL' ? state.rep : null;
+
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -98,7 +102,7 @@ export function useShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
     } else {
       a.pause();
     }
-  }, [state.status, state.status === 'PLAYING_LINE' ? state.line : null, state.status === 'PLAYING_LINE' ? state.rep : null, state.status === 'PLAYING_FULL' ? state.rep : null]);
+  }, [state.status, playingLine, playingLineRep, playingFullRep]);
 
   // Side effect: pause timers
   useEffect(() => {
@@ -133,6 +137,8 @@ export function useShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
   }, []);
 
   // Side effect: word highlight via RAF
+  const rafLine = state.status === 'PLAYING_LINE' ? state.line : -1;
+
   useEffect(() => {
     if (state.status !== 'PLAYING_LINE' && state.status !== 'PLAYING_FULL') {
       setCurrentWordIndex(-1);
@@ -150,7 +156,7 @@ export function useShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
       const t = a.currentTime;
 
       if (state.status === 'PLAYING_LINE') {
-        const idx = findWordIndex(t, shloka.lines[state.line].words);
+        const idx = findWordIndex(t, shloka.lines[rafLine].words);
         setCurrentWordIndex(prev => (prev === idx ? prev : idx));
       } else {
         // PLAYING_FULL: find which line + which word within it
@@ -177,14 +183,15 @@ export function useShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [state.status, state.status === 'PLAYING_LINE' ? state.line : -1, shloka]);
+  }, [state.status, rafLine, shloka]);
 
   // Cleanup on unmount
   useEffect(() => {
+    const audio = audioRef.current;  // CAPTURE at effect mount
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      if (audioRef.current) audioRef.current.pause();
+      if (audio) audio.pause();  // USE captured ref, not .current
     };
   }, []);
 
@@ -193,7 +200,7 @@ export function useShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
     currentLine,
     currentWordIndex,
     rep,
-    totalLines: shloka.lines.length,
+    totalLines,
     REPETITIONS,
     isPlaying,
     audioRef,
