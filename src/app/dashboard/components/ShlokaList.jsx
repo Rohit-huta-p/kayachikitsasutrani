@@ -5,6 +5,7 @@ import ShlokaCard from './ShlokaCard'
 const ShlokaList = () => {
     const [shlokas, setShlokas] = useState([
       {
+        id: "taruna-jwara",
         title: "Nava Jwara or Taruna Jwara Chikitsa",
         pronounciation: "नव ज्वर / तरुण ज्वर चिकित्सा",
         meaning: "Guiding the Early Healing of Fever through Detox and Lightness",
