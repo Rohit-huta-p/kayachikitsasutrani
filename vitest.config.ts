@@ -1,9 +1,15 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  css: {
+    postcss: {
+      plugins: [],
+    },
+  },
   test: {
     environment: 'happy-dom',
     globals: false,
     include: ['src/**/*.test.{ts,tsx}'],
+    css: false,
   },
 });
