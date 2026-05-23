@@ -1,112 +1,36 @@
+// src/app/shloka/[id]/ShlokaDesc.jsx
 "use client";
+
 import { Heart } from "lucide-react";
 import Image from "next/image";
-
-import React, { useRef, useState } from "react";
+import React from "react";
 import ShlokaDisplay from "./ShlokaDisplay";
-// ICONS
-import { MdOutlineSkipPrevious, MdPlayArrow } from "react-icons/md";
-import { MdSkipNext } from "react-icons/md";
-// import { CiPause1 } from "react-icons/ci";
-import { BiHide } from "react-icons/bi";
+import { MdOutlineSkipPrevious, MdPlayArrow, MdSkipNext } from "react-icons/md";
 import { CiPause1 } from "react-icons/ci";
+import { BiHide } from "react-icons/bi";
+import { useShlokaPlayer } from "./hooks/useShlokaPlayer";
 
+const ShlokaDesc = ({ shloka }) => {
+  const player = useShlokaPlayer(shloka);
 
-const shlokaData = {
-  title: "Ayurvedic Principle",
-  text: [
-    "लङ्घनं स्वेदनं कालो यवाग्वस्तिक्तको रसः||१४२||",
-    "पाचनान्यविपक्वानां दोषाणां तरुणे ज्वरे|१४३| ",
-  ],
-  translation: [
-    "laṅghanaṁ svēdanaṁ kālō yavāgvastiktakō rasaḥ||142||",
-    "pācanānyavipakvānāṁ dōṣāṇāṁ taruṇē jvarē|143|",
-  ],
-  meaning:
-    "Langhana (fasting), swedana (fomentation), kala (waiting period of eight days), yavagu (medicated gruels) and tikta rasa drugs (drugs having bitter taste) and all digestive enhancers of avipakva dosha (untransformed) are prescribed in the taruna jwara (the initial stage of jwara).[142]",
-  audioFiles: {
-    full: "/audio/Taruna_Jwara_Full.mp3",
-    lines: [
-      "/audio/Navajwara_Part_1.mp3",
-      "/audio/Navajwara_Part_2.mp3",
-    ],
-  },
-};
+  const playingFull =
+    player.state.status === "PLAYING_FULL" ||
+    (player.state.status === "PAUSING_REP" && player.state.mode === "FULL") ||
+    player.state.status === "PAUSING_FULL" ||
+    (player.state.status === "PAUSED" &&
+      (player.state.prev.status === "PLAYING_FULL" ||
+        player.state.prev.status === "PAUSING_FULL" ||
+        (player.state.prev.status === "PAUSING_REP" && player.state.prev.mode === "FULL")));
 
-const ShlokaDesc = () => {
-  const [activeLine, setActiveLine] = useState(0);
-  const [linesCount, setLinesCount] = useState(shlokaData.text.length);
-  // const [isPlaying, setIsPlaying] = useState(false);
-  const [repetitionCount, setRepetitionCount] = useState(1);
-  const [initialized, setInitialized] = useState(false);
-  const [playingFullShloka, setPlayingFullShloka] = useState(false);
-
-  // const fullAudioRef = useRef(null);
-  const lineAudioRefs = useRef(
-    shlokaData.audioFiles.lines.map(() => React.createRef())
-  );
-
-  const MAX_REPETITIONS = 5;
-  const fullAudioRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLinePlaying, setIsLinePlaying] = useState(false);
-
-  const playFullAudio = () => {
-    console.log("Playing full audio");
-
-    if (fullAudioRef.current) {
-      if (isPlaying) {
-        fullAudioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        setPlayingFullShloka(true);
-        setIsPlaying(true);
-        fullAudioRef.current.play();
-      }
+  const handlePlayPause = () => {
+    if (player.state.status === "IDLE" || player.state.status === "DONE") {
+      player.play();
+    } else if (player.state.status === "PAUSED") {
+      player.resume();
+    } else {
+      player.pause();
     }
   };
-
-
-  const playLineAudio = (index) => {
-    console.log("Playing line audio", index);
-    setPlayingFullShloka(false);
-  
-    const currentAudio = lineAudioRefs.current[index].current;
-  
-    if (currentAudio) {
-      // Reset repetition count if switching lines
-      if (activeLine !== index) {
-        setRepetitionCount(1);
-        setActiveLine(index);
-      }
-  
-      if (isLinePlaying) {
-        currentAudio.pause();
-        setIsLinePlaying(false);
-      } else {
-        currentAudio.play();
-        setIsLinePlaying(true);
-  
-        currentAudio.onended = () => {
-          setRepetitionCount((prevRepetitionCount) => {
-            const newCount = prevRepetitionCount + 1;
-            
-            if (newCount < MAX_REPETITIONS) {
-              currentAudio.currentTime = 0;
-              currentAudio.play();
-            } else {
-              setIsLinePlaying(false);
-            }
-        
-            return newCount;
-          });
-        };
-        
-      }
-    }
-  };
-  
-
 
   return (
     <div className="p-10">
@@ -116,11 +40,8 @@ const ShlokaDesc = () => {
         <div className="col-span-4 space-y-4">
           {/* Shloka Heading */}
           <div className="relative flex flex-col items-center w-full">
-            {/* Image & Text */}
             <div className="h-64 w-full flex justify-center z-5">
-              {/* Black overlay */}
               <div className="black-overlay rounded-lg"></div>
-              {/* Image */}
               <Image
                 src={"/images/shloka_img_2.jpg"}
                 alt="Shloka"
@@ -128,14 +49,11 @@ const ShlokaDesc = () => {
                 height={240}
                 className="rounded-lg w-full object-cover h-full"
               />
-              <div className=" flex items-center justify-between absolute bottom-4 left-3 text-left w-full text-white">
+              <div className="flex items-center justify-between absolute bottom-4 left-3 text-left w-full text-white">
                 <div>
-                  <h1 className="text-2xl">
-                    Nava Jwara or Taruna Jwara Chikitsa
-                  </h1>
+                  <h1 className="text-2xl">{shloka.title}</h1>
                   <p className="text-xs">
-                    Guiding the Early Healing of Fever through Detox and
-                    Lightness
+                    Guiding the Early Healing of Fever through Detox and Lightness
                   </p>
                 </div>
                 <Heart size={18} className="absolute right-6 bottom-1" />
@@ -143,72 +61,55 @@ const ShlokaDesc = () => {
             </div>
           </div>
 
-
-          {/*  shloka  */}
+          {/* Shloka body */}
           <div className="bg-white p-3 text-center place-items-center space-y-2 w-full">
-            
             <ShlokaDisplay
-              activeLine={activeLine}
-              shlokaData={shlokaData}
-              playingFullShloka={playingFullShloka}
-              linesCount={linesCount}
-              repetitionCount={repetitionCount}
+              shloka={shloka}
+              activeLine={Math.max(0, player.currentLine)}
+              currentWordIndex={player.currentWordIndex}
+              rep={player.rep}
+              maxReps={player.REPETITIONS}
+              playingFull={playingFull}
             />
-            {/* Play */}
-            <button onClick={playFullAudio} className="cursor-pointer bg-indigo-100/50 text-black/40 hover:text-black hover:bg-green-100 px-5 py-1 rounded-2xl">
-              {isPlaying ? "Pause Full Audio" : "Play Full Audio"}
+
+            <button
+              onClick={handlePlayPause}
+              className="cursor-pointer bg-indigo-100/50 text-black/40 hover:text-black hover:bg-green-100 px-5 py-1 rounded-2xl"
+            >
+              {player.state.status === "IDLE" || player.state.status === "DONE"
+                ? "Play"
+                : player.state.status === "PAUSED"
+                  ? "Resume"
+                  : "Pause"}
             </button>
-            <audio ref={fullAudioRef} src={shlokaData.audioFiles.full} />
+
+            {/* Single audio element driven by hook */}
+            <audio ref={player.audioRef} src={player.currentSrc ?? undefined} />
           </div>
 
-          {/* Pause - Play - Next */}
+          {/* Skip / Play / Skip */}
           <div className="bg-white/50 hover:bg-white p-10 space-y-5">
             <div className="flex justify-center items-center space-x-4">
               <MdOutlineSkipPrevious
-                onClick={() => {
-                    if (activeLine > 0) {
-                        setActiveLine(activeLine - 1);
-                        setRepetitionCount(0);
-                        playLineAudio(activeLine - 1);
-                    }
-                }}
+                onClick={player.skipPrev}
                 size={28}
                 className="cursor-pointer bg-indigo-100/40 text-black/40 hover:text-black hover:bg-indigo-100 p-1 rounded-2xl"
               />
-            {
-                isLinePlaying ? (
-                    <CiPause1 
-                    onClick={() => {
-                        const currentAudio = lineAudioRefs.current[activeLine].current;
-                        if (currentAudio) {
-                        currentAudio.pause();
-                        setIsLinePlaying(false);
-                        }
-                    }}
-                    size={28}
-                    className="cursor-pointer bg-green-100/50 text-black/40 hover:text-black hover:bg-green-100 p-1 rounded-2xl"
-                    />
-                ) : ( 
-                    <MdPlayArrow
-                    onClick={() => playLineAudio(activeLine)}
-                    size={28}
-                    className="cursor-pointer bg-green-100/50 text-black/40 hover:text-black hover:bg-green-100 p-1 rounded-2xl"
-                    />
-                )
-            }
-
-             
-              <audio ref={lineAudioRefs.current[activeLine]} src={shlokaData.audioFiles.lines[activeLine]} />
-
+              {player.isPlaying ? (
+                <CiPause1
+                  onClick={player.pause}
+                  size={28}
+                  className="cursor-pointer bg-green-100/50 text-black/40 hover:text-black hover:bg-green-100 p-1 rounded-2xl"
+                />
+              ) : (
+                <MdPlayArrow
+                  onClick={handlePlayPause}
+                  size={28}
+                  className="cursor-pointer bg-green-100/50 text-black/40 hover:text-black hover:bg-green-100 p-1 rounded-2xl"
+                />
+              )}
               <MdSkipNext
-                onClick={() => {
-                    if (activeLine < shlokaData.audioFiles.lines.length - 1) {
-                        setActiveLine(activeLine + 1);
-                        setRepetitionCount(0);
-                        playLineAudio(activeLine + 1);
-                    }
-                }}  
-                    
+                onClick={player.skipNext}
                 size={28}
                 className="cursor-pointer bg-indigo-100/40 text-black/40 hover:text-black hover:bg-indigo-100 p-1 rounded-2xl"
               />
@@ -225,36 +126,19 @@ const ShlokaDesc = () => {
         <div className="col-span-2 space-y-5">
           <div className="bg-indigo-50 p-4 rounded-lg">
             <h2 className="text-xl text-brown">Meaning</h2>
-            <p className="text-sm">
-              In the early stage of jwara (fever), known as taruna jwara, the
-              treatment includes:
-            </p>
-            <ul className="text-sm">
-              <li>Langhana (fasting)</li>
-              <li>Swedana (fomentation/sudation)</li>
-              <li> Kala (a waiting period, typically eight days)</li>
-              <li>Yavagu (medicated gruels)</li>
-              <li>Use of Tikta rasa (bitter-tasting herbs)</li>
-              <li>
-                Digestive stimulants to process avipakva doshas (undigested or
-                unripe doshas)
-              </li>
-              <li>
-                This approach aims to support the natural resolution of fever by
-                enhancing digestion and aiding in dosha transformation.
-              </li>
-            </ul>
-            <p className="text-sm">
-              This approach aims to support the natural resolution of fever by
-              enhancing digestion and aiding in dosha transformation
-            </p>
+            <p className="text-sm">{shloka.translation}</p>
+            <p className="text-sm">{shloka.meaning}</p>
           </div>
           <div className="bg-white/60 p-4 rounded-lg">
             <h5 className="text-brown">Lines:</h5>
-            <p className="">लङ्घनं स्वेदनं कालो यवाग्वस्तिक्तको रसः||१४२||</p>
-            <p className="text-sm text-gray-400">
-              पाचनान्यविपक्वानां दोषाणां तरुणे ज्वरे|१४३|
-            </p>
+            {shloka.lines.map((line, i) => (
+              <p
+                key={i}
+                className={i === 0 ? "" : "text-sm text-gray-400"}
+              >
+                {line.sanskrit}
+              </p>
+            ))}
           </div>
         </div>
       </div>
