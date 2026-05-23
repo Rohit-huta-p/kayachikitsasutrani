@@ -2,13 +2,29 @@
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Custom_Link } from "@/components/Link";
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight } from "lucide-react";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/AuthContext";
+
+type FormData = {
+  fullName: string;
+  age: string;
+  gender: string;
+  universityName: string;
+  course: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+};
 
 const Signup = () => {
+  const { signup } = useAuth();
+  const router = useRouter();
   const [toggleDropdown, setToggleDropdown] = useState(false);
-  // const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState<FormData>({
     fullName: "",
     age: "",
     gender: "Gender",
@@ -16,10 +32,45 @@ const Signup = () => {
     course: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
 
-  console.log(formData);
-  
+  const update = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleSubmit = async () => {
+    setError(null);
+    if (!formData.fullName.trim()) return setError("Please enter your name.");
+    if (!formData.email.trim()) return setError("Please enter your email.");
+    if (formData.password.length < 8) return setError("Password must be at least 8 characters.");
+    if (formData.password !== formData.confirmPassword) return setError("Passwords don't match.");
+
+    const genderMap: Record<string, "male" | "female" | "other" | undefined> = {
+      Male: "male",
+      Female: "female",
+      Other: "other",
+    };
+
+    setSubmitting(true);
+    try {
+      await signup({
+        email: formData.email.trim(),
+        password: formData.password,
+        name: formData.fullName.trim(),
+        age: formData.age ? Number(formData.age) : undefined,
+        gender: genderMap[formData.gender],
+        universityName: formData.universityName.trim() || undefined,
+        course: formData.course.trim() || undefined,
+      });
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign up failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className=" flex flex-col justify-center items-center space-y-5 p-15">
 
@@ -38,6 +89,8 @@ const Signup = () => {
               name="fullName"
               placeholder="Your name"
               className="font-thin"
+              value={formData.fullName}
+              onChange={update("fullName")}
             />
           </div>
 
@@ -53,12 +106,14 @@ const Signup = () => {
                     name="age"
                     placeholder="Your age"
                     className=""
+                    value={formData.age}
+                    onChange={update("age")}
                 />
             </div>
             {/* Gender */}
             <div className="flex flex-col space-y-2 w-full">
                 <label htmlFor="gender" className="font-semibold">
-                    Gender 
+                    Gender
                 </label>
                 <div className="relative">
                   <div className="flex justify-between items-center bg-white  rounded" onClick={() => setToggleDropdown(!toggleDropdown)}>
@@ -77,21 +132,23 @@ const Signup = () => {
                     )
                   }
                 </div>
-              
+
             </div>
-           
+
           </div>
 
           {/* University Name */}
           <div className="flex flex-col space-y-2">
                 <label htmlFor="universityName" className="font-semibold">
-                    University Name 
+                    University Name
                 </label>
                 <Input
                     type="text"
                     id="universityName"
                     name="universityName"
                     placeholder="University you have enrolled in"
+                    value={formData.universityName}
+                    onChange={update("universityName")}
                 />
             </div>
           {/* Course / Program */}
@@ -104,6 +161,8 @@ const Signup = () => {
                     id="course"
                     name="course"
                     placeholder="Example: BAMS, MD Ayurveda, etc"
+                    value={formData.course}
+                    onChange={update("course")}
                 />
             </div>
           {/* E-mail */}
@@ -116,6 +175,8 @@ const Signup = () => {
                     id="email"
                     name="email"
                     placeholder="your@email.com"
+                    value={formData.email}
+                    onChange={update("email")}
                 />
             </div>
           {/* Create password */}
@@ -128,21 +189,26 @@ const Signup = () => {
                     id="password"
                     name="password"
                     placeholder="*********"
+                    value={formData.password}
+                    onChange={update("password")}
                 />
             </div>
           {/* Confirm password */}
           <div className="flex flex-col space-y-2">
-                <label htmlFor="email" className="font-semibold">
+                <label htmlFor="confirmPassword" className="font-semibold">
                    Confirm Password
                 </label>
                 <Input
-                    type="email"
-                    id="email"
-                    name="email"
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
                     placeholder="*********"
+                    value={formData.confirmPassword}
+                    onChange={update("confirmPassword")}
                 />
             </div>
-            <Button onClick={() => {}} className={'py-[8px] px-[64px] text-white'}>Sign Up</Button>
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+            <Button onClick={handleSubmit} className={`py-[8px] px-[64px] text-white ${submitting ? "opacity-50 pointer-events-none" : ""}`}>{submitting ? "Signing up…" : "Sign Up"}</Button>
         </form>
       </div>
     <p className="font-thin">Already have an account? <Custom_Link href="/login" className="text-green">Login</Custom_Link></p>
