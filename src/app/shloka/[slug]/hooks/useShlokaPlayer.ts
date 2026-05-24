@@ -119,14 +119,20 @@ export function useShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
     }
   }, [state.status]);
 
-  // Side effect: AUDIO_ENDED dispatch (also on error so we don't get stuck)
+  // Side effect: AUDIO_ENDED dispatch
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
-    const onEnded = () => dispatch({ type: 'AUDIO_ENDED' });
-    const onError = () => {
-      console.warn('Audio failed to load/play; advancing.');
+    const onEnded = () => {
+      // eslint-disable-next-line no-console
+      console.log('[player] AUDIO_ENDED at', a.currentTime, 'duration', a.duration);
       dispatch({ type: 'AUDIO_ENDED' });
+    };
+    const onError = (e: Event) => {
+      // Log but DO NOT dispatch AUDIO_ENDED — error during src swap is normal
+      // and dispatching here can cause premature state transitions.
+      // eslint-disable-next-line no-console
+      console.warn('[player] audio error event (ignoring):', e);
     };
     a.addEventListener('ended', onEnded);
     a.addEventListener('error', onError);
@@ -135,6 +141,12 @@ export function useShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
       a.removeEventListener('error', onError);
     };
   }, []);
+
+  // Diagnostic: log state transitions
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[player] state →', state);
+  }, [state]);
 
   // Side effect: word highlight via RAF
   const rafLine = state.status === 'PLAYING_LINE' ? state.line : -1;
