@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Waveform from "./Waveform";
 import WordList from "./WordList";
 import { useTimingState } from "./useTimingState";
@@ -32,6 +32,18 @@ const TimingEditor: React.FC<Props> = ({ lineAudioUrl, fullAudioUrl, sanskritLin
     .filter((w) => w.fullStart !== null && w.fullEnd !== null)
     .map((w) => ({ id: w.id, start: w.fullStart as number, end: w.fullEnd as number }));
 
+  const fullMarkedCount = fullRegions.length;
+  const firstUnmarkedFull = words.find((w) => w.fullStart === null || w.fullEnd === null);
+
+  // Auto-select first unmarked word once admin finishes marking all line regions.
+  // Helps the workflow: mark all line regions → editor pre-selects first word
+  // missing on full audio so the next drag goes to the right place.
+  useEffect(() => {
+    if (!highlightedId && firstUnmarkedFull && lineRegions.length > 0) {
+      setHighlightedId(firstUnmarkedFull.id);
+    }
+  }, [highlightedId, firstUnmarkedFull, lineRegions.length]);
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -56,39 +68,58 @@ const TimingEditor: React.FC<Props> = ({ lineAudioUrl, fullAudioUrl, sanskritLin
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <div className="text-sm font-semibold">Full audio (this line&apos;s words)</div>
+          <div className="text-sm font-semibold">
+            Full shloka audio — mark each word ({fullMarkedCount} / {words.length} marked)
+          </div>
           {fullAudioUrl ? (
-            <Waveform
-              audioUrl={fullAudioUrl}
-              regions={fullRegions}
-              highlightedId={highlightedId}
-              onRegionCreate={(start, end) => {
-                // Full-waveform drags set the currently-highlighted word's
-                // full range. If no word is highlighted, drop the drag and
-                // show a tip.
-                if (highlightedId) {
-                  setFullRegion(highlightedId, start, end);
-                  setFullError(null);
-                  // Return null so Waveform removes the raw drag; the regions
-                  // sync effect will render the correct region on next pass.
+            <>
+              {firstUnmarkedFull && (
+                <div className="text-xs bg-amber-50 border border-amber-200 rounded p-2">
+                  <span className="font-semibold">Next:</span> drag on the waveform below where{" "}
+                  <span className="font-semibold text-brown">
+                    {sanskritWords[words.indexOf(firstUnmarkedFull)] ?? "this word"}
+                  </span>{" "}
+                  appears in the full shloka audio.
+                </div>
+              )}
+              {!firstUnmarkedFull && words.length > 0 && (
+                <div className="text-xs bg-green-50 border border-green-200 rounded p-2">
+                  ✓ All words marked on full audio. Drag a region edge to adjust.
+                </div>
+              )}
+              <Waveform
+                audioUrl={fullAudioUrl}
+                regions={fullRegions}
+                highlightedId={highlightedId}
+                onRegionCreate={(start, end) => {
+                  // Full-waveform drags set the currently-highlighted word's
+                  // full range. If no word is highlighted, drop the drag and
+                  // show a tip.
+                  if (highlightedId) {
+                    setFullRegion(highlightedId, start, end);
+                    setFullError(null);
+                    // Auto-advance to next unmarked word so workflow stays smooth.
+                    const idx = words.findIndex((w) => w.id === highlightedId);
+                    const next = words.slice(idx + 1).find((w) => w.fullStart === null || w.fullEnd === null);
+                    setHighlightedId(next?.id);
+                    // Return null so Waveform removes the raw drag; the regions
+                    // sync effect will render the correct region on next pass.
+                    return null;
+                  }
+                  setFullError("Select a word from the list on the right first, then drag here.");
                   return null;
-                }
-                setFullError("Select a word from the list first, then drag here.");
-                return null;
-              }}
-              onRegionUpdate={(id, start, end) => setFullRegion(id, start, end)}
-              onRegionClick={(id) => setHighlightedId(id)}
-              onError={(msg) => setFullError(msg)}
-            />
+                }}
+                onRegionUpdate={(id, start, end) => setFullRegion(id, start, end)}
+                onRegionClick={(id) => setHighlightedId(id)}
+                onError={(msg) => setFullError(msg)}
+              />
+            </>
           ) : (
             <div className="border border-dashed border-gray-300 rounded p-6 text-center text-xs text-gray-500">
-              Upload full shloka audio to mark word positions in the full track.
+              Upload full shloka audio (above) to mark word positions in the full track.
             </div>
           )}
           {fullError && <p className="text-xs text-red-600">Full audio: {fullError}</p>}
-          <p className="text-xs text-gray-500 italic">
-            Tip: select a word in the list, then drag on this waveform to set its full-MP3 position.
-          </p>
         </div>
 
         <div className="space-y-2">
