@@ -2,29 +2,26 @@
 
 import React from "react";
 import AudioUploadField from "./AudioUploadField";
+import TimingEditor from "./timing-editor/TimingEditor";
+import type { WordEntry } from "./timing-editor/types";
 import type { ShlokaAssetInput } from "@/lib/auth/types";
 
 export interface LineDraft {
   sanskrit: string;
   transliteration: string;
   audio?: ShlokaAssetInput;
-  wordsJson: string;
-  fullTimingsJson: string;
+  words: WordEntry[];
 }
 
 interface Props {
   index: number;
   line: LineDraft;
+  fullAudioUrl?: string;
   onChange: (next: LineDraft) => void;
   onRemove: () => void;
 }
 
-const WORDS_PLACEHOLDER = `[
-  { "text": "लङ्घनं", "start": 0.0, "end": 0.9 },
-  { "text": "स्वेदनं", "start": 0.9, "end": 1.8 }
-]`;
-
-const LineEditor: React.FC<Props> = ({ index, line, onChange, onRemove }) => {
+const LineEditor: React.FC<Props> = ({ index, line, fullAudioUrl, onChange, onRemove }) => {
   const update = <K extends keyof LineDraft>(key: K, val: LineDraft[K]) =>
     onChange({ ...line, [key]: val });
 
@@ -69,27 +66,12 @@ const LineEditor: React.FC<Props> = ({ index, line, onChange, onRemove }) => {
         onChange={(audio) => update("audio", audio)}
       />
 
-      <div className="space-y-1">
-        <label className="text-sm font-semibold">Words timings (JSON, relative to line MP3)</label>
-        <textarea
-          value={line.wordsJson}
-          onChange={(e) => update("wordsJson", e.target.value)}
-          rows={6}
-          className="w-full border px-2 py-1 rounded font-mono text-xs"
-          placeholder={WORDS_PLACEHOLDER}
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="text-sm font-semibold">Full timings (JSON, relative to full MP3)</label>
-        <textarea
-          value={line.fullTimingsJson}
-          onChange={(e) => update("fullTimingsJson", e.target.value)}
-          rows={6}
-          className="w-full border px-2 py-1 rounded font-mono text-xs"
-          placeholder={WORDS_PLACEHOLDER}
-        />
-      </div>
+      <TimingEditor
+        lineAudioUrl={line.audio?.url}
+        fullAudioUrl={fullAudioUrl}
+        value={line.words}
+        onChange={(words) => update("words", words)}
+      />
     </div>
   );
 };
