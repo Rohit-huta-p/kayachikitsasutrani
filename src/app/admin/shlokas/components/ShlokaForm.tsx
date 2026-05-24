@@ -4,12 +4,28 @@ import React, { useState } from "react";
 import AudioUploadField from "./AudioUploadField";
 import ImageUploadField from "./ImageUploadField";
 import LineEditor, { type LineDraft } from "./LineEditor";
+import type { WordEntry } from "./timing-editor/types";
+import { makeWordId } from "./timing-editor/types";
 import { api } from "@/lib/api";
-import type { PublicShloka, ShlokaInput, ShlokaAssetInput, WordTiming } from "@/lib/auth/types";
+import type { PublicShloka, ShlokaInput, ShlokaAssetInput } from "@/lib/auth/types";
 
 interface Props {
   initial?: PublicShloka;
   onSaved: (s: PublicShloka) => void;
+}
+
+function toEntries(line: PublicShloka["lines"][number]): WordEntry[] {
+  return line.words.map((w, k) => {
+    const f = line.fullTimings[k];
+    return {
+      id: makeWordId(),
+      text: w.text,
+      lineStart: w.start,
+      lineEnd: w.end,
+      fullStart: f?.start ?? null,
+      fullEnd: f?.end ?? null,
+    };
+  });
 }
 
 function toLineDraft(line: PublicShloka["lines"][number], audio?: ShlokaAssetInput): LineDraft {
@@ -17,32 +33,15 @@ function toLineDraft(line: PublicShloka["lines"][number], audio?: ShlokaAssetInp
     sanskrit: line.sanskrit,
     transliteration: line.transliteration,
     audio,
-    wordsJson: JSON.stringify(line.words, null, 2),
-    fullTimingsJson: JSON.stringify(line.fullTimings, null, 2),
+    words: toEntries(line),
   };
-}
-
-function parseTimings(json: string): WordTiming[] | { error: string } {
-  try {
-    const parsed = JSON.parse(json);
-    if (!Array.isArray(parsed)) return { error: "Timings must be a JSON array" };
-    for (const w of parsed) {
-      if (typeof w?.text !== "string" || typeof w?.start !== "number" || typeof w?.end !== "number") {
-        return { error: "Each timing must have text (string), start (number), end (number)" };
-      }
-    }
-    return parsed as WordTiming[];
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Invalid JSON" };
-  }
 }
 
 const emptyLine = (): LineDraft => ({
   sanskrit: "",
   transliteration: "",
   audio: undefined,
-  wordsJson: "[]",
-  fullTimingsJson: "[]",
+  words: [],
 });
 
 const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
@@ -56,12 +55,22 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     initial?.image ? { url: initial.image.url, publicId: initial.image.publicId ?? "" } : undefined,
   );
   const [audioFull, setAudioFull] = useState<ShlokaAssetInput | undefined>(
-    initial?.audio.full ? { url: initial.audio.full.url, publicId: initial.audio.full.publicId ?? "" } : undefined,
+    initial?.audio.full
+      ? { url: initial.audio.full.url, publicId: initial.audio.full.publicId ?? "" }
+      : undefined,
   );
   const [lines, setLines] = useState<LineDraft[]>(
     initial
       ? initial.lines.map((l, i) =>
-          toLineDraft(l, initial.audio.lines[i] ? { url: initial.audio.lines[i].url, publicId: initial.audio.lines[i].publicId ?? "" } : undefined),
+          toLineDraft(
+            l,
+            initial.audio.lines[i]
+              ? {
+                  url: initial.audio.lines[i].url,
+                  publicId: initial.audio.lines[i].publicId ?? "",
+                }
+              : undefined,
+          ),
         )
       : [emptyLine()],
   );
@@ -84,20 +93,30 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     if (!audioFull) return setError("Full audio is required");
     if (lines.length === 0) return setError("At least one line is required");
 
-    const parsedLines = [];
+    const builtLines = [];
     for (let i = 0; i < lines.length; i++) {
       const l = lines[i];
       if (!l.sanskrit.trim()) return setError(`Line ${i + 1}: sanskrit is required`);
       if (!l.audio) return setError(`Line ${i + 1}: audio is required`);
-      const words = parseTimings(l.wordsJson);
-      if ("error" in words) return setError(`Line ${i + 1} words: ${words.error}`);
-      const fullTimings = parseTimings(l.fullTimingsJson);
-      if ("error" in fullTimings) return setError(`Line ${i + 1} fullTimings: ${fullTimings.error}`);
-      parsedLines.push({
+      if (l.words.length === 0) return setError(`Line ${i + 1}: needs at least one word`);
+      for (let k = 0; k < l.words.length; k++) {
+        const w = l.words[k];
+        if (!w.text.trim()) return setError(`Line ${i + 1} word #${k + 1}: text is required`);
+        if (w.lineStart >= w.lineEnd) return setError(`Line ${i + 1} word #${k + 1}: invalid line range`);
+        if (w.fullStart === null || w.fullEnd === null) {
+          return setError(`Line ${i + 1} word #${k + 1}: not yet marked on full audio`);
+        }
+        if (w.fullStart >= w.fullEnd) return setError(`Line ${i + 1} word #${k + 1}: invalid full range`);
+      }
+      builtLines.push({
         sanskrit: l.sanskrit,
         transliteration: l.transliteration,
-        words,
-        fullTimings,
+        words: l.words.map((w) => ({ text: w.text, start: w.lineStart, end: w.lineEnd })),
+        fullTimings: l.words.map((w) => ({
+          text: w.text,
+          start: w.fullStart as number,
+          end: w.fullEnd as number,
+        })),
       });
     }
 
@@ -111,15 +130,16 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
         full: audioFull,
         lines: lines.map((l) => l.audio!),
       },
-      image: image,
-      lines: parsedLines,
+      image,
+      lines: builtLines,
     };
 
     setSubmitting(true);
     try {
-      const saved = isEdit && initial
-        ? await api.admin.shlokas.update(initial.id, body)
-        : await api.admin.shlokas.create(body);
+      const saved =
+        isEdit && initial
+          ? await api.admin.shlokas.update(initial.id, body)
+          : await api.admin.shlokas.create(body);
       setStatus(finalStatus);
       onSaved(saved);
     } catch (err) {
@@ -185,6 +205,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
               key={i}
               index={i}
               line={l}
+              fullAudioUrl={audioFull?.url}
               onChange={(next) => updateLine(i, next)}
               onRemove={() => removeLine(i)}
             />
