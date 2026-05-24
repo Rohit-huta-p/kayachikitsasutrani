@@ -1,4 +1,4 @@
-import type { WordTiming } from '@/lib/shloka.types';
+import type { WordTiming } from '@/lib/auth/types';
 
 /**
  * Returns the index of the word active at time `t`, or -1 if none.

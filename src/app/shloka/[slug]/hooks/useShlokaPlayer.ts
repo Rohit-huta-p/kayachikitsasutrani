@@ -1,8 +1,8 @@
-// src/app/shloka/[id]/hooks/useShlokaPlayer.ts
+// src/app/shloka/[slug]/hooks/useShlokaPlayer.ts
 'use client';
 
 import { useEffect, useReducer, useRef, useState, useCallback } from 'react';
-import type { Shloka } from '@/lib/shloka.types';
+import type { PublicShloka as Shloka } from '@/lib/auth/types';
 import { findWordIndex } from './wordIndex';
 import {
   playerReducer,
@@ -67,13 +67,13 @@ export function useShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
 
   const currentSrc =
     state.status === 'PLAYING_LINE' || (state.status === 'PAUSING_REP' && state.mode === 'LINE')
-      ? shloka.audio.lines[state.line]
+      ? shloka.audio.lines[state.line].url
       : state.status === 'PLAYING_FULL' || (state.status === 'PAUSING_REP' && state.mode === 'FULL')
-        ? shloka.audio.full
+        ? shloka.audio.full.url
         : state.status === 'PAUSING_LINE'
-          ? shloka.audio.lines[state.nextLine]
+          ? shloka.audio.lines[state.nextLine].url
           : state.status === 'PAUSING_FULL'
-            ? shloka.audio.full
+            ? shloka.audio.full.url
             : null;
 
   const rep =

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { findWordIndex } from './wordIndex';
-import type { WordTiming } from '@/lib/shloka.types';
+import type { WordTiming } from '@/lib/auth/types';
 
 const timings: WordTiming[] = [
   { text: 'a', start: 0.0, end: 1.0 },
