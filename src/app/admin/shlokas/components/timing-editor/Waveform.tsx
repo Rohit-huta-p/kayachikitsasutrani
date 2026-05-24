@@ -49,6 +49,8 @@ const Waveform: React.FC<Props> = ({
   /** True while we're calling rp.addRegion programmatically — suppresses the region-created listener. */
   const programmaticAdd = useRef(false);
   const [ready, setReady] = useState(false);
+  /** Zoom level in pixels-per-second. 0 = fit-to-container. */
+  const [zoom, setZoom] = useState(0);
 
   // Latest callback refs (avoid re-initing WaveSurfer when handlers change)
   const onRegionCreateRef = useRef(onRegionCreate);
@@ -130,6 +132,13 @@ const Waveform: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioUrl, height]);
 
+  // Apply zoom when slider/buttons change or when audio becomes ready
+  useEffect(() => {
+    const ws = wsRef.current;
+    if (!ws || !ready) return;
+    ws.zoom(zoom);
+  }, [zoom, ready]);
+
   // Sync `regions` prop into the plugin once ready
   useEffect(() => {
     const rp = regionsPluginRef.current;
@@ -173,8 +182,8 @@ const Waveform: React.FC<Props> = ({
 
   return (
     <div className="space-y-2">
-      <div ref={containerRef} className="w-full" />
-      <div className="flex gap-2 text-xs">
+      <div ref={containerRef} className="w-full overflow-x-auto" />
+      <div className="flex flex-wrap gap-2 items-center text-xs">
         <button
           type="button"
           onClick={() => wsRef.current?.playPause()}
@@ -191,6 +200,47 @@ const Waveform: React.FC<Props> = ({
         >
           ⏹
         </button>
+        <span className="text-gray-400">|</span>
+        <span className="text-gray-600">Zoom:</span>
+        <button
+          type="button"
+          onClick={() => setZoom(0)}
+          disabled={!ready}
+          className={zoom === 0 ? "px-2 py-0.5 border rounded bg-brown text-white" : "px-2 py-0.5 border rounded"}
+          title="Fit to container"
+        >
+          Fit
+        </button>
+        <button
+          type="button"
+          onClick={() => setZoom((z) => Math.max(0, z === 0 ? 50 : z) === 0 ? 50 : Math.max(10, (z === 0 ? 50 : z) - 50))}
+          disabled={!ready}
+          className="px-2 py-0.5 border rounded"
+          title="Zoom out"
+        >
+          −
+        </button>
+        <input
+          type="range"
+          min={0}
+          max={500}
+          step={10}
+          value={zoom}
+          onChange={(e) => setZoom(Number(e.target.value))}
+          disabled={!ready}
+          className="w-32"
+          title="Zoom level (pixels per second)"
+        />
+        <button
+          type="button"
+          onClick={() => setZoom((z) => Math.min(500, (z === 0 ? 50 : z) + 50))}
+          disabled={!ready}
+          className="px-2 py-0.5 border rounded"
+          title="Zoom in"
+        >
+          +
+        </button>
+        {zoom > 0 && <span className="text-gray-500">{zoom} px/s</span>}
         {!ready && <span className="text-gray-500">Loading audio…</span>}
       </div>
     </div>
