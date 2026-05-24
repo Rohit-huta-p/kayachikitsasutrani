@@ -1,6 +1,20 @@
-import type { PublicUser, SignupBody, LoginBody, ApiError } from './auth/types';
+import type {
+  PublicUser,
+  SignupBody,
+  LoginBody,
+  ApiError,
+  PublicShloka,
+  ShlokaInput,
+} from './auth/types';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+function qs(params?: Record<string, string | number | undefined>): string {
+  if (!params) return '';
+  const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== '');
+  if (entries.length === 0) return '';
+  return '?' + entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join('&');
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -8,10 +22,34 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
   });
-  const body = (await res.json().catch(() => null)) as { error?: { code: string; message: string } } & Record<string, unknown>;
+  const body = (await res.json().catch(() => null)) as
+    | ({ error?: { code: string; message: string } } & Record<string, unknown>)
+    | null;
   if (!res.ok) {
     const code = body?.error?.code ?? `HTTP_${res.status}`;
     const message = body?.error?.message ?? `Request failed (${res.status})`;
+    const err = new Error(message) as ApiError;
+    err.code = code;
+    err.status = res.status;
+    throw err;
+  }
+  return body as unknown as T;
+}
+
+async function uploadFile<T>(path: string, file: File): Promise<T> {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    body: form,
+  });
+  const body = (await res.json().catch(() => null)) as
+    | ({ error?: { code: string; message: string } } & Record<string, unknown>)
+    | null;
+  if (!res.ok) {
+    const code = body?.error?.code ?? `HTTP_${res.status}`;
+    const message = body?.error?.message ?? `Upload failed (${res.status})`;
     const err = new Error(message) as ApiError;
     err.code = code;
     err.status = res.status;
@@ -27,4 +65,38 @@ export const api = {
     request<{ user: PublicUser }>('/api/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   logout: () => request<{ ok: true }>('/api/auth/logout', { method: 'POST' }),
   me: () => request<{ user: PublicUser }>('/api/auth/me'),
+
+  shlokas: {
+    list: (params?: { limit?: number; cursor?: string }) =>
+      request<{ items: PublicShloka[]; nextCursor?: string }>(`/api/shlokas${qs(params)}`),
+    get: (slug: string) =>
+      request<PublicShloka>(`/api/shlokas/${encodeURIComponent(slug)}`),
+  },
+
+  admin: {
+    shlokas: {
+      list: (params?: { status?: 'draft' | 'published' | 'all'; limit?: number; cursor?: string }) =>
+        request<{ items: PublicShloka[]; nextCursor?: string }>(`/api/admin/shlokas${qs(params)}`),
+      get: (id: string) =>
+        request<PublicShloka>(`/api/admin/shlokas/${id}`),
+      create: (body: ShlokaInput) =>
+        request<PublicShloka>(`/api/admin/shlokas`, { method: 'POST', body: JSON.stringify(body) }),
+      update: (id: string, body: Partial<ShlokaInput>) =>
+        request<PublicShloka>(`/api/admin/shlokas/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+      remove: (id: string) =>
+        request<{ ok: true }>(`/api/admin/shlokas/${id}`, { method: 'DELETE' }),
+    },
+    uploads: {
+      audio: (file: File) =>
+        uploadFile<{ url: string; publicId: string; duration?: number }>(`/api/admin/uploads/audio`, file),
+      image: (file: File) =>
+        uploadFile<{ url: string; publicId: string; width: number; height: number }>(`/api/admin/uploads/image`, file),
+    },
+    students: {
+      list: (params?: { limit?: number; cursor?: string }) =>
+        request<{ items: PublicUser[]; nextCursor?: string }>(`/api/admin/students${qs(params)}`),
+      get: (id: string) =>
+        request<{ user: PublicUser }>(`/api/admin/students/${id}`),
+    },
+  },
 };

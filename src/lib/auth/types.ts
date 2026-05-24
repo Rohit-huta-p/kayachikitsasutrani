@@ -29,3 +29,60 @@ export interface ApiError extends Error {
   code: string;
   status: number;
 }
+
+// ── Shloka types (mirror backend PublicShloka) ────────────────────────────
+
+export interface WordTiming {
+  text: string;
+  start: number;
+  end: number;
+}
+
+export interface ShlokaAsset {
+  url: string;
+  publicId?: string; // admin responses only
+}
+
+export interface ShlokaLine {
+  sanskrit: string;
+  transliteration: string;
+  words: WordTiming[];
+  fullTimings: WordTiming[];
+}
+
+export interface PublicShloka {
+  id: string;
+  slug: string;
+  title: string;
+  meaning: string;
+  translation: string;
+  status: 'draft' | 'published';
+  audio: {
+    full: ShlokaAsset;
+    lines: ShlokaAsset[];
+  };
+  image?: ShlokaAsset;
+  lines: ShlokaLine[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Request body for create/update (publicId is required since we just uploaded it)
+export interface ShlokaAssetInput {
+  url: string;
+  publicId: string;
+}
+
+export interface ShlokaInput {
+  slug: string;
+  title: string;
+  meaning: string;
+  translation: string;
+  status?: 'draft' | 'published';
+  audio: {
+    full: ShlokaAssetInput;
+    lines: ShlokaAssetInput[];
+  };
+  image?: ShlokaAssetInput;
+  lines: ShlokaLine[];
+}
