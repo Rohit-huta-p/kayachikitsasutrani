@@ -14,6 +14,10 @@ const Navbar = () => {
             <div className="space-x-5 flex items-center">
                 {state.status === "authed" ? (
                     <>
+                        {state.user.role === "admin" && (
+                            <Custom_Link href="/admin/shlokas" className="text-brown text-sm font-semibold">Admin</Custom_Link>
+                        )}
+                        <Custom_Link href="/dashboard" className="text-green text-sm">Dashboard</Custom_Link>
                         <span className="text-sm">Hi, {state.user.name}</span>
                         <button
                             onClick={() => void logout()}
