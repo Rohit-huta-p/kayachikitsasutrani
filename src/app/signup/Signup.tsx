@@ -3,7 +3,7 @@ import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Custom_Link } from "@/components/Link";
 import { ChevronRight } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
 
@@ -19,8 +19,13 @@ type FormData = {
 };
 
 const Signup = () => {
-  const { signup } = useAuth();
+  const { state, signup } = useAuth();
   const router = useRouter();
+  useEffect(() => {
+    if (state.status === "authed") {
+      router.replace(state.user.role === "admin" ? "/admin/shlokas" : "/dashboard");
+    }
+  }, [state, router]);
   const [toggleDropdown, setToggleDropdown] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);

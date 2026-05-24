@@ -1,17 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 const Login = () => {
-  const { login } = useAuth();
+  const { state, login } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Bounce if already logged in — also handles post-login redirect since
+  // login() updates state to "authed".
+  useEffect(() => {
+    if (state.status === "authed") {
+      router.replace(state.user.role === "admin" ? "/admin/shlokas" : "/dashboard");
+    }
+  }, [state, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +27,7 @@ const Login = () => {
     setSubmitting(true);
     try {
       await login({ email, password });
-      router.push("/dashboard");
+      // AuthContext updates state → useEffect above routes.
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
       setError(message);
