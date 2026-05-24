@@ -46,6 +46,8 @@ const Waveform: React.FC<Props> = ({
   const regionsPluginRef = useRef<ReturnType<typeof RegionsPlugin.create> | null>(null);
   const wsIdToOurId = useRef<Map<string, string>>(new Map());
   const ourIdToWsRegion = useRef<Map<string, WsRegion>>(new Map());
+  /** True while we're calling rp.addRegion programmatically — suppresses the region-created listener. */
+  const programmaticAdd = useRef(false);
   const [ready, setReady] = useState(false);
 
   // Latest callback refs (avoid re-initing WaveSurfer when handlers change)
@@ -89,7 +91,9 @@ const Waveform: React.FC<Props> = ({
     ws.on("error", onErrorEvt);
 
     rp.on("region-created", (region: WsRegion) => {
-      // Skip if this region came from us (we created it programmatically — has an our-id mapping).
+      // Skip if this region came from us (we added it programmatically via the sync effect).
+      if (programmaticAdd.current) return;
+      // Skip if it's already mapped (defensive).
       if (wsIdToOurId.current.has(region.id)) return;
       const id = onRegionCreateRef.current(region.start, region.end);
       if (id === null) {
@@ -147,6 +151,7 @@ const Waveform: React.FC<Props> = ({
       const existing = ourIdToWsRegion.current.get(r.id);
       const fill = r.id === highlightedId ? HIGHLIGHT_COLOR : (color ?? DEFAULT_COLOR);
       if (!existing) {
+        programmaticAdd.current = true;
         const wsRegion = rp.addRegion({
           start: r.start,
           end: r.end,
@@ -154,6 +159,7 @@ const Waveform: React.FC<Props> = ({
           drag: true,
           resize: true,
         });
+        programmaticAdd.current = false;
         wsIdToOurId.current.set(wsRegion.id, r.id);
         ourIdToWsRegion.current.set(r.id, wsRegion);
       } else {
