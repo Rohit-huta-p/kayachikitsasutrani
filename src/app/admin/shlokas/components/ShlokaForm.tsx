@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import AudioUploadField from "./AudioUploadField";
 import ImageUploadField from "./ImageUploadField";
 import LineEditor, { type LineDraft } from "./LineEditor";
+import FullAudioEditor, { type FullRegionInput } from "./timing-editor/FullAudioEditor";
 import type { WordEntry } from "./timing-editor/types";
 import { makeWordId } from "./timing-editor/types";
 import { api } from "@/lib/api";
@@ -44,6 +45,10 @@ const emptyLine = (): LineDraft => ({
   words: [],
 });
 
+function splitSanskrit(line: string): string[] {
+  return line.split(/\s+/).filter(Boolean);
+}
+
 const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
   const isEdit = !!initial;
   const [slug, setSlug] = useState(initial?.slug ?? "");
@@ -74,6 +79,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
         )
       : [emptyLine()],
   );
+  const [selectedWordId, setSelectedWordId] = useState<string | undefined>();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,6 +89,66 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
   const removeLine = (i: number) =>
     setLines((prev) => (prev.length === 1 ? prev : prev.filter((_, idx) => idx !== i)));
 
+  // ── Full audio aggregation ────────────────────────────────────────────
+  // Build the regions for the full-audio waveform from all lines' words
+  // that have fullStart/fullEnd set. Also build a lookup of selected word
+  // metadata for the editor's "Next: ..." banner.
+  const fullRegions = useMemo<FullRegionInput[]>(() => {
+    const out: FullRegionInput[] = [];
+    for (let li = 0; li < lines.length; li++) {
+      const split = splitSanskrit(lines[li].sanskrit);
+      lines[li].words.forEach((w, wi) => {
+        if (w.fullStart !== null && w.fullEnd !== null) {
+          out.push({
+            id: w.id,
+            start: w.fullStart,
+            end: w.fullEnd,
+            lineIndex: li,
+            label: split[wi] ?? w.text ?? "?",
+          });
+        }
+      });
+    }
+    return out;
+  }, [lines]);
+
+  const totalWords = useMemo(
+    () => lines.reduce((sum, l) => sum + l.words.length, 0),
+    [lines],
+  );
+
+  // Selected word metadata for the banner
+  const selectedMeta = useMemo(() => {
+    if (!selectedWordId) return undefined;
+    for (let li = 0; li < lines.length; li++) {
+      const wi = lines[li].words.findIndex((w) => w.id === selectedWordId);
+      if (wi !== -1) {
+        const split = splitSanskrit(lines[li].sanskrit);
+        return { lineIndex: li, wordIndex: wi, label: split[wi] ?? "?" };
+      }
+    }
+    return undefined;
+  }, [selectedWordId, lines]);
+
+  const setFullForWord = (wordId: string, start: number, end: number) => {
+    setLines((prev) =>
+      prev.map((l) => ({
+        ...l,
+        words: l.words.map((w) =>
+          w.id === wordId ? { ...w, fullStart: start, fullEnd: end } : w,
+        ),
+      })),
+    );
+    // After assignment, auto-advance to the next unmarked word in document order.
+    const flat: WordEntry[] = lines.flatMap((l) => l.words);
+    const idx = flat.findIndex((w) => w.id === wordId);
+    const next = flat
+      .slice(idx + 1)
+      .find((w) => w.fullStart === null || w.fullEnd === null);
+    setSelectedWordId(next?.id);
+  };
+
+  // ── Submit ────────────────────────────────────────────────────────────
   const submit = async (nextStatus?: "draft" | "published") => {
     setError(null);
     const finalStatus = nextStatus ?? status;
@@ -98,7 +164,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       const l = lines[i];
       if (!l.sanskrit.trim()) return setError(`Line ${i + 1}: sanskrit is required`);
       if (!l.audio) return setError(`Line ${i + 1}: audio is required`);
-      const sanskritWords = l.sanskrit.split(/\s+/).filter(Boolean);
+      const sanskritWords = splitSanskrit(l.sanskrit);
       if (l.words.length === 0) return setError(`Line ${i + 1}: needs at least one region`);
       if (l.words.length !== sanskritWords.length) {
         return setError(
@@ -202,6 +268,21 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
 
       <AudioUploadField label="Full audio (MP3)" value={audioFull} onChange={setAudioFull} />
 
+      {/* Single full-audio editor at the top — drives positions for all lines' words */}
+      <div className="bg-white/40 rounded p-4 border border-gray-200">
+        <FullAudioEditor
+          audioUrl={audioFull?.url}
+          regions={fullRegions}
+          totalWords={totalWords}
+          selectedWordId={selectedWordId}
+          selectedWordLabel={selectedMeta?.label}
+          selectedWordLineIndex={selectedMeta?.lineIndex}
+          onRegionAssign={(id, start, end) => setFullForWord(id, start, end)}
+          onRegionUpdate={(id, start, end) => setFullForWord(id, start, end)}
+          onRegionClick={(id) => setSelectedWordId(id)}
+        />
+      </div>
+
       <div>
         <h3 className="font-semibold text-brown mb-2">Lines</h3>
         <div className="space-y-3">
@@ -210,9 +291,10 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
               key={i}
               index={i}
               line={l}
-              fullAudioUrl={audioFull?.url}
               onChange={(next) => updateLine(i, next)}
               onRemove={() => removeLine(i)}
+              selectedWordId={selectedWordId}
+              onSelectWord={(id) => setSelectedWordId(id)}
             />
           ))}
         </div>

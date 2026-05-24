@@ -16,12 +16,20 @@ export interface LineDraft {
 interface Props {
   index: number;
   line: LineDraft;
-  fullAudioUrl?: string;
   onChange: (next: LineDraft) => void;
   onRemove: () => void;
+  selectedWordId?: string;
+  onSelectWord?: (wordId: string | undefined) => void;
 }
 
-const LineEditor: React.FC<Props> = ({ index, line, fullAudioUrl, onChange, onRemove }) => {
+const LineEditor: React.FC<Props> = ({
+  index,
+  line,
+  onChange,
+  onRemove,
+  selectedWordId,
+  onSelectWord,
+}) => {
   const update = <K extends keyof LineDraft>(key: K, val: LineDraft[K]) =>
     onChange({ ...line, [key]: val });
 
@@ -68,10 +76,11 @@ const LineEditor: React.FC<Props> = ({ index, line, fullAudioUrl, onChange, onRe
 
       <TimingEditor
         lineAudioUrl={line.audio?.url}
-        fullAudioUrl={fullAudioUrl}
         sanskritLine={line.sanskrit}
         value={line.words}
         onChange={(words) => update("words", words)}
+        selectedWordId={selectedWordId}
+        onSelectWord={onSelectWord}
       />
     </div>
   );
