@@ -14,10 +14,22 @@ export interface FullRegionInput {
   label: string;
 }
 
+/** Every word across the shloka, with optional full-audio marker. */
+export interface FullWordRow {
+  id: string;
+  lineIndex: number;
+  wordIndex: number;
+  label: string;
+  fullStart: number | null;
+  fullEnd: number | null;
+}
+
 interface Props {
   audioUrl?: string;
-  /** Words across all lines that have full positions set. */
+  /** Words across all lines that have full positions set (rendered as regions on waveform). */
   regions: FullRegionInput[];
+  /** Every word across all lines (rendered as the sidebar list). */
+  allWords: FullWordRow[];
   /** Total word count across all lines (for progress display). */
   totalWords: number;
   /** Currently selected word (the next drag will set this word's full range). */
@@ -27,6 +39,7 @@ interface Props {
   onRegionAssign: (wordId: string, start: number, end: number) => void;
   onRegionUpdate: (wordId: string, start: number, end: number) => void;
   onRegionClick: (wordId: string) => void;
+  onClearFull: (wordId: string) => void;
 }
 
 // Color palette by line index (cycle through if more lines than colors)
@@ -42,9 +55,14 @@ function colorForLine(idx: number): string {
   return LINE_COLORS[idx % LINE_COLORS.length];
 }
 
+function formatMs(seconds: number): string {
+  return `${Math.round(seconds * 1000)} ms`;
+}
+
 const FullAudioEditor: React.FC<Props> = ({
   audioUrl,
   regions,
+  allWords,
   totalWords,
   selectedWordId,
   selectedWordLabel,
@@ -52,6 +70,7 @@ const FullAudioEditor: React.FC<Props> = ({
   onRegionAssign,
   onRegionUpdate,
   onRegionClick,
+  onClearFull,
 }) => {
   const [error, setError] = useState<string | null>(null);
   const markedCount = regions.length;
@@ -86,7 +105,7 @@ const FullAudioEditor: React.FC<Props> = ({
         </div>
       ) : totalWords > 0 ? (
         <div className="text-xs bg-gray-50 border border-gray-200 rounded p-2">
-          Click a word in any line below to select it, then drag here to mark its position in the full audio.
+          Click a word in the list (right) or in any line below to select it, then drag here to mark.
         </div>
       ) : (
         <div className="text-xs bg-gray-50 border border-gray-200 rounded p-2">
@@ -94,43 +113,104 @@ const FullAudioEditor: React.FC<Props> = ({
         </div>
       )}
 
-      <Waveform
-        audioUrl={audioUrl}
-        regions={regions.map((r) => ({ id: r.id, start: r.start, end: r.end }))}
-        highlightedId={selectedWordId}
-        height={100}
-        onRegionCreate={(start, end) => {
-          if (!selectedWordId) {
-            setError("Click a word from a line below first, then drag here.");
-            return null;
-          }
-          onRegionAssign(selectedWordId, start, end);
-          setError(null);
-          return null;
-        }}
-        onRegionUpdate={(id, start, end) => onRegionUpdate(id, start, end)}
-        onRegionClick={(id) => onRegionClick(id)}
-        onError={(msg) => setError(msg)}
-      />
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Waveform
+            audioUrl={audioUrl}
+            regions={regions.map((r) => ({ id: r.id, start: r.start, end: r.end }))}
+            highlightedId={selectedWordId}
+            height={100}
+            onRegionCreate={(start, end) => {
+              if (!selectedWordId) {
+                setError("Click a word from the list first, then drag here.");
+                return null;
+              }
+              onRegionAssign(selectedWordId, start, end);
+              setError(null);
+              return null;
+            }}
+            onRegionUpdate={(id, start, end) => onRegionUpdate(id, start, end)}
+            onRegionClick={(id) => onRegionClick(id)}
+            onError={(msg) => setError(msg)}
+          />
 
-      {/* Color legend */}
-      {totalWords > 0 && (
-        <div className="flex flex-wrap gap-3 text-xs text-gray-600">
-          {Array.from(new Set(regions.map((r) => r.lineIndex)))
-            .sort((a, b) => a - b)
-            .map((li) => (
-              <span key={li} className="flex items-center gap-1">
-                <span
-                  className="inline-block w-3 h-3 rounded-sm"
-                  style={{ backgroundColor: colorForLine(li) }}
-                />
-                Line {li + 1}
-              </span>
-            ))}
+          {totalWords > 0 && (
+            <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+              {Array.from(new Set(allWords.map((w) => w.lineIndex)))
+                .sort((a, b) => a - b)
+                .map((li) => (
+                  <span key={li} className="flex items-center gap-1">
+                    <span
+                      className="inline-block w-3 h-3 rounded-sm"
+                      style={{ backgroundColor: colorForLine(li) }}
+                    />
+                    Line {li + 1}
+                  </span>
+                ))}
+            </div>
+          )}
+
+          {error && <p className="text-xs text-red-600">{error}</p>}
         </div>
-      )}
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+        <div className="space-y-2">
+          <div className="text-sm font-semibold">All words ({markedCount} / {totalWords})</div>
+          {allWords.length === 0 ? (
+            <p className="text-xs text-gray-500 italic">
+              No words yet. Mark them on the line waveforms below first.
+            </p>
+          ) : (
+            <ol className="space-y-1 text-sm max-h-96 overflow-y-auto">
+              {allWords.map((w) => {
+                const marked = w.fullStart !== null && w.fullEnd !== null;
+                const isSelected = w.id === selectedWordId;
+                return (
+                  <li
+                    key={w.id}
+                    onClick={() => onRegionClick(w.id)}
+                    className={
+                      isSelected
+                        ? "flex items-center gap-2 p-1 rounded bg-yellow-100 cursor-pointer"
+                        : "flex items-center gap-2 p-1 rounded hover:bg-white/60 cursor-pointer"
+                    }
+                  >
+                    <span
+                      className="inline-block w-2 h-4 rounded-sm shrink-0"
+                      style={{ backgroundColor: colorForLine(w.lineIndex) }}
+                      title={`Line ${w.lineIndex + 1}`}
+                    />
+                    <span className="text-xs text-gray-500 w-10 shrink-0">
+                      L{w.lineIndex + 1}#{w.wordIndex + 1}
+                    </span>
+                    <span className="flex-1 px-1 text-sm font-medium">{w.label}</span>
+                    {marked ? (
+                      <span className="text-xs text-gray-500 shrink-0" title="full-audio duration">
+                        {formatMs((w.fullEnd as number) - (w.fullStart as number))}
+                      </span>
+                    ) : (
+                      <span className="text-amber-600 text-xs italic shrink-0">not marked</span>
+                    )}
+                    {marked && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onClearFull(w.id);
+                        }}
+                        className="text-red-600 text-xs"
+                        aria-label="Clear full-audio mark"
+                        title="Clear full-audio mark"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

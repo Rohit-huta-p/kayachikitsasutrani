@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import AudioUploadField from "./AudioUploadField";
 import ImageUploadField from "./ImageUploadField";
 import LineEditor, { type LineDraft } from "./LineEditor";
-import FullAudioEditor, { type FullRegionInput } from "./timing-editor/FullAudioEditor";
+import FullAudioEditor, { type FullRegionInput, type FullWordRow } from "./timing-editor/FullAudioEditor";
 import type { WordEntry } from "./timing-editor/types";
 import { makeWordId } from "./timing-editor/types";
 import { api } from "@/lib/api";
@@ -116,6 +116,36 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     () => lines.reduce((sum, l) => sum + l.words.length, 0),
     [lines],
   );
+
+  // Flat list of every word across all lines (for the full-audio sidebar)
+  const allWords = useMemo<FullWordRow[]>(() => {
+    const out: FullWordRow[] = [];
+    for (let li = 0; li < lines.length; li++) {
+      const split = splitSanskrit(lines[li].sanskrit);
+      lines[li].words.forEach((w, wi) => {
+        out.push({
+          id: w.id,
+          lineIndex: li,
+          wordIndex: wi,
+          label: split[wi] ?? w.text ?? "?",
+          fullStart: w.fullStart,
+          fullEnd: w.fullEnd,
+        });
+      });
+    }
+    return out;
+  }, [lines]);
+
+  const clearFullForWord = (wordId: string) => {
+    setLines((prev) =>
+      prev.map((l) => ({
+        ...l,
+        words: l.words.map((w) =>
+          w.id === wordId ? { ...w, fullStart: null, fullEnd: null } : w,
+        ),
+      })),
+    );
+  };
 
   // Selected word metadata for the banner
   const selectedMeta = useMemo(() => {
@@ -273,6 +303,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
         <FullAudioEditor
           audioUrl={audioFull?.url}
           regions={fullRegions}
+          allWords={allWords}
           totalWords={totalWords}
           selectedWordId={selectedWordId}
           selectedWordLabel={selectedMeta?.label}
@@ -280,6 +311,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
           onRegionAssign={(id, start, end) => setFullForWord(id, start, end)}
           onRegionUpdate={(id, start, end) => setFullForWord(id, start, end)}
           onRegionClick={(id) => setSelectedWordId(id)}
+          onClearFull={clearFullForWord}
         />
       </div>
 
