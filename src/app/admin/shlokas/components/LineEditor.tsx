@@ -69,6 +69,7 @@ const LineEditor: React.FC<Props> = ({ index, line, fullAudioUrl, onChange, onRe
       <TimingEditor
         lineAudioUrl={line.audio?.url}
         fullAudioUrl={fullAudioUrl}
+        sanskritLine={line.sanskrit}
         value={line.words}
         onChange={(words) => update("words", words)}
       />

@@ -98,22 +98,27 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       const l = lines[i];
       if (!l.sanskrit.trim()) return setError(`Line ${i + 1}: sanskrit is required`);
       if (!l.audio) return setError(`Line ${i + 1}: audio is required`);
-      if (l.words.length === 0) return setError(`Line ${i + 1}: needs at least one word`);
+      const sanskritWords = l.sanskrit.split(/\s+/).filter(Boolean);
+      if (l.words.length === 0) return setError(`Line ${i + 1}: needs at least one region`);
+      if (l.words.length !== sanskritWords.length) {
+        return setError(
+          `Line ${i + 1}: ${l.words.length} regions marked but sanskrit has ${sanskritWords.length} words. They must match.`,
+        );
+      }
       for (let k = 0; k < l.words.length; k++) {
         const w = l.words[k];
-        if (!w.text.trim()) return setError(`Line ${i + 1} word #${k + 1}: text is required`);
-        if (w.lineStart >= w.lineEnd) return setError(`Line ${i + 1} word #${k + 1}: invalid line range`);
+        if (w.lineStart >= w.lineEnd) return setError(`Line ${i + 1} region #${k + 1}: invalid line range`);
         if (w.fullStart === null || w.fullEnd === null) {
-          return setError(`Line ${i + 1} word #${k + 1}: not yet marked on full audio`);
+          return setError(`Line ${i + 1} region #${k + 1} (${sanskritWords[k]}): not yet marked on full audio`);
         }
-        if (w.fullStart >= w.fullEnd) return setError(`Line ${i + 1} word #${k + 1}: invalid full range`);
+        if (w.fullStart >= w.fullEnd) return setError(`Line ${i + 1} region #${k + 1}: invalid full range`);
       }
       builtLines.push({
         sanskrit: l.sanskrit,
         transliteration: l.transliteration,
-        words: l.words.map((w) => ({ text: w.text, start: w.lineStart, end: w.lineEnd })),
-        fullTimings: l.words.map((w) => ({
-          text: w.text,
+        words: l.words.map((w, k) => ({ text: sanskritWords[k], start: w.lineStart, end: w.lineEnd })),
+        fullTimings: l.words.map((w, k) => ({
+          text: sanskritWords[k],
           start: w.fullStart as number,
           end: w.fullEnd as number,
         })),

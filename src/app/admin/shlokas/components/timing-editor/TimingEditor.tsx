@@ -9,13 +9,20 @@ import type { WordEntry } from "./types";
 interface Props {
   lineAudioUrl?: string;
   fullAudioUrl?: string;
+  /** Sanskrit line text — split into words; word labels derive from this. */
+  sanskritLine: string;
   value: WordEntry[];
   onChange: (next: WordEntry[]) => void;
 }
 
-const TimingEditor: React.FC<Props> = ({ lineAudioUrl, fullAudioUrl, value, onChange }) => {
-  const { words, addFromLineRegion, updateLineRegion, setFullRegion, setText, remove } =
+function splitSanskrit(line: string): string[] {
+  return line.split(/\s+/).filter(Boolean);
+}
+
+const TimingEditor: React.FC<Props> = ({ lineAudioUrl, fullAudioUrl, sanskritLine, value, onChange }) => {
+  const { words, addFromLineRegion, updateLineRegion, setFullRegion, remove } =
     useTimingState(value, onChange);
+  const sanskritWords = splitSanskrit(sanskritLine);
   const [highlightedId, setHighlightedId] = useState<string | undefined>();
   const [lineError, setLineError] = useState<string | null>(null);
   const [fullError, setFullError] = useState<string | null>(null);
@@ -85,10 +92,12 @@ const TimingEditor: React.FC<Props> = ({ lineAudioUrl, fullAudioUrl, value, onCh
         </div>
 
         <div className="space-y-2">
-          <div className="text-sm font-semibold">Words ({words.length})</div>
+          <div className="text-sm font-semibold">
+            Words ({words.length} / {sanskritWords.length})
+          </div>
           <WordList
             words={words}
-            onTextChange={setText}
+            sanskritWords={sanskritWords}
             onRemove={remove}
             highlightedId={highlightedId}
             onRowClick={(id) => setHighlightedId(id)}
