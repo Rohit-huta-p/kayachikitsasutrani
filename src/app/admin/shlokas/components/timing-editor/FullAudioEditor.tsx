@@ -78,20 +78,30 @@ const FullAudioEditor: React.FC<Props> = ({
 
   if (!audioUrl) {
     return (
-      <div className="border border-dashed border-gray-300 rounded p-6 text-center text-xs text-gray-500">
-        Upload the full shloka audio above to mark word positions across all lines here.
+      <div className="soft-card border border-dashed border-gray-300 p-6 text-center text-xs text-gray-500">
+        <p className="font-semibold text-brown mb-1">Full shloka audio</p>
+        Upload the full shloka audio in the Info card above to mark word positions here.
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <div className="text-sm font-semibold">
-        Full shloka audio — mark each word ({markedCount} / {totalWords} marked)
+    <div className="soft-card p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-semibold text-brown flex items-center gap-2">
+          <span aria-hidden="true">🎵</span>
+          Full shloka audio
+        </h2>
+        <div className="text-xs">
+          <span className="font-semibold text-green">{markedCount}</span>
+          <span className="text-gray-400"> / </span>
+          <span className="text-gray-600">{totalWords}</span>
+          <span className="text-gray-400"> marked</span>
+        </div>
       </div>
 
       {selectedWordId ? (
-        <div className="text-xs bg-amber-50 border border-amber-200 rounded p-2">
+        <div className="text-xs bg-amber-50 border border-amber-200 rounded-lg p-3 anim-fade-in">
           <span className="font-semibold">Next:</span> drag on the waveform where{" "}
           <span className="font-semibold text-brown">{selectedWordLabel}</span>
           {selectedWordLineIndex !== undefined && (
