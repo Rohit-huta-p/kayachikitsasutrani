@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import ShlokaForm from "../../components/ShlokaForm";
 import { api } from "@/lib/api";
 import type { PublicShloka, ApiError } from "@/lib/auth/types";
@@ -24,17 +23,9 @@ const EditShlokaPage: React.FC = () => {
   }, [id]);
 
   if (error) return <div className="p-10 text-red-600">{error}</div>;
-  if (!shloka) return <div className="p-10">Loading…</div>;
+  if (!shloka) return <div className="p-10 text-brown">Loading…</div>;
 
-  return (
-    <div className="p-10">
-      <div className="mb-4">
-        <Link href="/admin/shlokas" className="text-sm text-green underline">← Back to shlokas</Link>
-      </div>
-      <h1 className="text-2xl text-brown mb-4">Edit: {shloka.title}</h1>
-      <ShlokaForm initial={shloka} onSaved={() => router.push("/admin/shlokas")} />
-    </div>
-  );
+  return <ShlokaForm initial={shloka} onSaved={() => router.push("/admin/shlokas")} />;
 };
 
 export default EditShlokaPage;
