@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Admin · Edit Shloka — Mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg-primary-base: #F3F0E5;
+    --bg-primary-light: #F6F4EC;
+    --bg-primary-light-1: #FDE1D366;
+    --brown: #7c5f3c;
+    --brown-dark: #5d4528;
+    --green: #4a7c4a;
+    --green-light: #d8e8d8;
+    --amber: #d97706;
+    --red: #dc2626;
+  }
+  body {
+    background: var(--bg-primary-base);
+    font-family: 'Segoe UI', -apple-system, system-ui, sans-serif;
+    color: #2a2520;
+  }
+  .text-brown { color: var(--brown); }
+  .bg-brown { background: var(--brown); }
+  .text-green { color: var(--green); }
+  .bg-green { background: var(--green); }
+  .bg-primary-light { background: var(--bg-primary-light); }
+  .bg-primary-light-1 { background: var(--bg-primary-light-1); }
+
+  /* ── Animations ────────────────────────────────────────────────── */
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.5; transform: scale(1.3); }
+  }
+  @keyframes slide-down {
+    from { max-height: 0; opacity: 0; }
+    to   { max-height: 1400px; opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { max-height: 1400px; opacity: 1; }
+    to   { max-height: 0; opacity: 0; }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes wave-bounce {
+    0%, 100% { transform: scaleY(1); }
+    50%      { transform: scaleY(1.4); }
+  }
+  @keyframes ring-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.5); }
+    70%  { box-shadow: 0 0 0 8px rgba(217, 119, 6, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
+  }
+  @keyframes progress-grow {
+    from { width: 0; }
+    to   { width: var(--target-width); }
+  }
+
+  .fade-in { animation: fade-in 240ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+  .ring-pulse { animation: ring-pulse 2s infinite; }
+  .progress-grow { animation: progress-grow 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+  /* Line card collapse/expand */
+  .line-body {
+    overflow: hidden;
+    transition: max-height 360ms cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 240ms ease;
+    max-height: 0;
+    opacity: 0;
+  }
+  .line-card.expanded .line-body {
+    max-height: 1400px;
+    opacity: 1;
+  }
+  .line-card .chev {
+    transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .line-card.expanded .chev {
+    transform: rotate(90deg);
+  }
+
+  /* Hover lift */
+  .line-card {
+    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  }
+  .line-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124, 95, 60, 0.08);
+  }
+
+  /* Waveform bars (decorative) */
+  .wave-bar {
+    background: var(--brown);
+    border-radius: 1px;
+    transition: background 200ms ease;
+  }
+  .wave-bar.played { background: var(--brown-dark); }
+  .wave-region {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 4px;
+    transition: background 200ms ease, transform 200ms ease;
+    cursor: pointer;
+  }
+  .wave-region:hover { transform: scaleY(1.05); }
+
+  .word-row {
+    transition: background 160ms ease, transform 160ms ease;
+  }
+  .word-row:hover { background: rgba(124, 95, 60, 0.06); }
+  .word-row.selected {
+    background: #fef3c7;
+    transform: translateX(2px);
+  }
+
+  /* Save button glow */
+  .btn-publish {
+    transition: all 200ms ease;
+    box-shadow: 0 2px 6px rgba(74, 124, 74, 0.25);
+  }
+  .btn-publish:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(74, 124, 74, 0.35);
+  }
+  .btn-publish:active {
+    transform: translateY(0);
+  }
+
+  /* Progress meter */
+  .meter-fill {
+    transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Sticky shadow on scroll */
+  .sticky-bar {
+    box-shadow: 0 1px 0 rgba(124, 95, 60, 0.08);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Status icons */
+  .status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: bold;
+    transition: all 200ms ease;
+  }
+  .status-done   { background: #d1fae5; color: #047857; }
+  .status-warn   { background: #fef3c7; color: #92400e; animation: ring-pulse 2.5s infinite; }
+  .status-empty  { background: #e5e7eb; color: #6b7280; }
+
+  /* Color stripes per line */
+  .line-stripe {
+    width: 4px;
+    border-radius: 2px;
+    transition: opacity 200ms;
+  }
+
+  /* Mock zoom slider */
+  input[type="range"].zoom {
+    accent-color: var(--brown);
+  }
+
+  /* Selectable rows */
+  .selectable {
+    cursor: pointer;
+  }
+
+  /* Soft card */
+  .soft-card {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(124, 95, 60, 0.08);
+    border-radius: 12px;
+  }
+
+  /* Subtle entry stagger */
+  .stagger > * {
+    animation: fade-in 320ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger > *:nth-child(2) { animation-delay: 60ms; }
+  .stagger > *:nth-child(3) { animation-delay: 120ms; }
+  .stagger > *:nth-child(4) { animation-delay: 180ms; }
+  .stagger > *:nth-child(5) { animation-delay: 240ms; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!-- NAVBAR (existing) -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════ -->
+<div class="flex justify-between items-center p-4 bg-white shadow-sm">
+  <h2 class="font-bold text-brown text-xl">Shloka Sutra</h2>
+  <div class="space-x-5 flex items-center">
+    <a class="text-brown text-sm font-semibold">Admin</a>
+    <a class="text-green text-sm">Dashboard</a>
+    <span class="text-sm">Hi, Admin</span>
+    <button class="text-green text-sm underline cursor-pointer">Log out</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!-- STICKY TOP BAR -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════ -->
+<div class="sticky top-0 z-30 bg-primary-light sticky-bar">
+  <div class="max-w-7xl mx-auto px-6 py-3 flex items-center gap-4">
+    <a class="text-sm text-green hover:underline cursor-pointer flex items-center gap-1">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Shlokas
+    </a>
+    <span class="text-gray-400">/</span>
+    <h1 class="text-lg font-semibold text-brown truncate">Edit: Taruna Jwara Chikitsa</h1>
+
+    <!-- Unsaved indicator -->
+    <div class="flex items-center gap-1 ml-2">
+      <span class="w-2 h-2 rounded-full bg-amber-500 pulse-dot"></span>
+      <span class="text-xs text-amber-700">unsaved</span>
+    </div>
+
+    <div class="flex-1"></div>
+
+    <!-- Progress chip -->
+    <div class="hidden md:flex items-center gap-2 text-xs text-gray-600">
+      <span>Progress:</span>
+      <div class="w-28 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+        <div class="h-full bg-green meter-fill" style="width: 60%"></div>
+      </div>
+      <span class="font-semibold text-green">3 / 5 words</span>
+    </div>
+
+    <button class="px-4 py-1.5 text-sm rounded-lg bg-white/60 border border-gray-300 hover:bg-white transition">
+      Save Draft
+    </button>
+    <button class="px-4 py-1.5 text-sm rounded-lg bg-green text-white btn-publish disabled:opacity-50" disabled title="Mark all words on full audio first">
+      Publish
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════ -->
+<!-- TWO COLUMN LAYOUT -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════════════════════ -->
+<div class="max-w-7xl mx-auto px-6 py-6">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- LEFT COLUMN ─────────────────────────────────────────────────────────────────────────────── -->
+    <div class="lg:col-span-7 space-y-4 stagger">
+
+      <!-- ── INFO CARD ── -->
+      <div class="soft-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="status-icon status-done">✓</span>
+            <h2 class="text-base font-semibold text-brown">Shloka Info</h2>
+          </div>
+          <button class="text-xs text-green hover:underline">✎ Edit</button>
+        </div>
+        <div class="grid grid-cols-3 gap-x-4 gap-y-2 text-sm">
+          <div class="text-gray-500">Slug</div>
+          <div class="col-span-2 font-mono text-xs">taruna-jwara</div>
+          <div class="text-gray-500">Title</div>
+          <div class="col-span-2">Nava Jwara or Taruna Jwara Chikitsa</div>
+          <div class="text-gray-500">Meaning</div>
+          <div class="col-span-2 text-gray-700">Langhana, swedana, kala, yavagu and tikta rasa drugs...</div>
+          <div class="text-gray-500">Translation</div>
+          <div class="col-span-2 text-gray-700">In the early stage of jwara, treatment includes...</div>
+          <div class="text-gray-500">Image</div>
+          <div class="col-span-2 flex items-center gap-2">
+            <div class="w-12 h-9 bg-gradient-to-br from-amber-200 to-amber-400 rounded"></div>
+            <span class="text-xs text-gray-500">shloka.jpg</span>
+          </div>
+          <div class="text-gray-500">Full audio</div>
+          <div class="col-span-2 flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-brown"><path d="M12 3v9.5a3.5 3.5 0 11-1-2.45V5h8V3z"/></svg>
+            <span class="text-xs">Taruna_Jwara_Full.mp3</span>
+            <span class="text-xs text-gray-500">8.2s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LINES SECTION ── -->
+      <div class="soft-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-semibold text-brown">Lines</h2>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-green-light text-green font-medium">3 / 5 words timed</span>
+          </div>
+          <button class="text-xs px-2 py-1 rounded bg-brown text-white hover:opacity-90 transition">
+            + Add line
+          </button>
+        </div>
+
+        <div class="space-y-3">
+
+          <!-- LINE 1 — COLLAPSED, DONE -->
+          <div class="line-card border border-green-light bg-white/60 rounded-lg overflow-hidden">
+            <div class="flex items-center p-3 selectable" onclick="this.parentElement.classList.toggle('expanded')">
+              <div class="line-stripe self-stretch mr-3" style="background: rgba(124, 95, 60, 0.55)"></div>
+              <svg class="chev w-4 h-4 text-gray-400 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5l7 7-7 7"/>
+              </svg>
+              <span class="status-icon status-done mr-3">✓</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-sm">Line 1</span>
+                  <span class="text-xs text-gray-500">2/2 words · full: 2/2</span>
+                </div>
+                <div class="text-sm text-gray-700 truncate">लङ्घनं स्वेदनं कालो यवाग्वस्तिक्तको रसः</div>
+              </div>
+              <button class="text-xs text-red-500 hover:text-red-700 ml-3" onclick="event.stopPropagation()">Remove</button>
+            </div>
+            <div class="line-body"></div>
+          </div>
+
+          <!-- LINE 2 — EXPANDED, PARTIAL -->
+          <div class="line-card expanded border border-amber-300 bg-white/60 rounded-lg overflow-hidden">
+            <div class="flex items-center p-3 selectable" onclick="this.parentElement.classList.toggle('expanded')">
+              <div class="line-stripe self-stretch mr-3" style="background: rgba(59, 130, 246, 0.55)"></div>
+              <svg class="chev w-4 h-4 text-gray-400 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5l7 7-7 7"/>
+              </svg>
+              <span class="status-icon status-warn mr-3">⚠</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-sm">Line 2</span>
+                  <span class="text-xs text-amber-700">2/2 words · full: 1/2 pending</span>
+                </div>
+                <div class="text-sm text-gray-700 truncate">पाचनान्यविपक्वानां दोषाणां तरुणे ज्वरे</div>
+              </div>
+              <button class="text-xs text-red-500 hover:text-red-700 ml-3" onclick="event.stopPropagation()">Remove</button>
+            </div>
+
+            <!-- Expanded body -->
+            <div class="line-body">
+              <div class="px-4 pb-4 pt-1 border-t border-gray-200 space-y-3">
+
+                <!-- Sanskrit + transliteration grid -->
+                <div class="grid md:grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-xs font-semibold text-gray-600">Sanskrit (Devanagari)</label>
+                    <input class="w-full mt-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-brown" value="पाचनान्यविपक्वानां दोषाणां तरुणे ज्वरे" />
+                    <div class="text-xs text-gray-400 mt-1">4 words</div>
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-gray-600">Transliteration</label>
+                    <input class="w-full mt-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-brown" value="pācanānyavipakvānāṁ dōṣāṇāṁ taruṇē jvarē" />
+                  </div>
+                </div>
+
+                <!-- Line audio upload -->
+                <div class="flex items-center gap-3 text-sm">
+                  <label class="text-xs font-semibold text-gray-600 min-w-[100px]">Line audio</label>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-brown"><path d="M12 3v9.5a3.5 3.5 0 11-1-2.45V5h8V3z"/></svg>
+                  <span class="text-xs">line-2.mp3</span>
+                  <span class="text-xs text-gray-500">4.2s</span>
+                  <button class="text-xs text-red-500 ml-auto">Replace</button>
+                </div>
+
+                <!-- Line waveform -->
+                <div>
+                  <label class="text-xs font-semibold text-gray-600">Line waveform — drag to mark words</label>
+                  <div class="relative mt-1 bg-white rounded border border-gray-200 p-2 overflow-hidden">
+                    <div class="relative h-16 flex items-center">
+                      <!-- Bars -->
+                      <div class="absolute inset-0 flex items-center gap-px px-1">
+                        <!-- generate bars -->
+                        <script>
+                          /* placeholder; we'll inject via JS below */
+                        </script>
+                      </div>
+                      <!-- Regions -->
+                      <div class="wave-region" style="left:5%; width:38%; background: rgba(59, 130, 246, 0.3); border: 1px solid rgba(59, 130, 246, 0.6);"></div>
+                      <div class="wave-region selected-region" style="left:48%; width:46%; background: rgba(59, 130, 246, 0.5); border: 1px solid rgba(59, 130, 246, 0.8);"></div>
+                      <!-- Decorative bars filling the box -->
+                      <div class="flex items-center gap-px w-full px-1 relative z-0">
+                        <!-- bars rendered by data -->
+                      </div>
+                    </div>
+                    <div class="mt-2 flex gap-2 items-center text-xs">
+                      <button class="px-2 py-0.5 border border-gray-300 rounded hover:bg-gray-50">▶︎/⏸︎</button>
+                      <button class="px-2 py-0.5 border border-gray-300 rounded hover:bg-gray-50">⏹</button>
+                      <span class="text-gray-400">|</span>
+                      <span class="text-gray-600">Zoom:</span>
+                      <button class="px-2 py-0.5 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">Fit</button>
+                      <button class="px-2 py-0.5 border border-gray-300 rounded">−</button>
+                      <input type="range" min="0" max="500" value="120" class="zoom w-24" />
+                      <button class="px-2 py-0.5 border border-gray-300 rounded">+</button>
+                      <span class="text-gray-500">120 px/s</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Per-line word list -->
+                <div>
+                  <label class="text-xs font-semibold text-gray-600">Words (2 / 4)</label>
+                  <ol class="mt-1 space-y-1">
+                    <li class="word-row flex items-center gap-2 p-1.5 rounded text-sm">
+                      <span class="text-xs text-gray-500 w-6">#1</span>
+                      <span class="flex-1 font-medium">पाचनान्यविपक्वानां</span>
+                      <span class="text-xs text-gray-500">1200 ms</span>
+                      <span class="text-xs text-amber-600">⚠</span>
+                      <button class="text-red-500 text-xs">✕</button>
+                    </li>
+                    <li class="word-row selected flex items-center gap-2 p-1.5 rounded text-sm ring-1 ring-amber-400">
+                      <span class="text-xs text-gray-500 w-6">#2</span>
+                      <span class="flex-1 font-medium">दोषाणां</span>
+                      <span class="text-xs text-gray-500">700 ms</span>
+                      <span class="text-xs text-amber-600">⚠</span>
+                      <button class="text-red-500 text-xs">✕</button>
+                    </li>
+                  </ol>
+                  <p class="mt-2 text-xs text-amber-700">⚠ Still to mark on line waveform: <strong>तरुणे</strong>, <strong>ज्वरे</strong></p>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- LINE 3 — COLLAPSED, EMPTY -->
+          <div class="line-card border border-gray-200 bg-white/40 rounded-lg overflow-hidden">
+            <div class="flex items-center p-3 selectable" onclick="this.parentElement.classList.toggle('expanded')">
+              <div class="line-stripe self-stretch mr-3" style="background: rgba(34, 197, 94, 0.4)"></div>
+              <svg class="chev w-4 h-4 text-gray-400 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5l7 7-7 7"/>
+              </svg>
+              <span class="status-icon status-empty mr-3">◯</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-sm text-gray-500">Line 3</span>
+                  <span class="text-xs text-gray-400">no audio yet</span>
+                </div>
+                <div class="text-sm text-gray-400 italic truncate">— upload line audio to start —</div>
+              </div>
+              <button class="text-xs text-red-500 hover:text-red-700 ml-3" onclick="event.stopPropagation()">Remove</button>
+            </div>
+            <div class="line-body"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN ─────────────────────────────────────────────────────────────────────────────── -->
+    <div class="lg:col-span-5 space-y-4">
+      <div class="sticky top-20 space-y-4">
+
+        <div class="soft-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-semibold text-brown flex items-center gap-2">
+              Full shloka audio
+              <span class="text-xs font-normal text-gray-500">— mark each word in the full track</span>
+            </h2>
+            <div class="text-xs">
+              <span class="font-semibold text-green">3</span>
+              <span class="text-gray-400"> / </span>
+              <span class="text-gray-600">5</span>
+              <span class="text-gray-400"> marked</span>
+            </div>
+          </div>
+
+          <!-- Next banner -->
+          <div class="mb-3 p-3 rounded-lg bg-amber-50 border border-amber-200 fade-in">
+            <div class="flex items-start gap-2">
+              <span class="status-icon status-warn flex-shrink-0">!</span>
+              <div class="text-xs leading-relaxed">
+                <span class="font-semibold">Next:</span> drag where
+                <span class="font-semibold text-brown">दोषाणां</span>
+                <span class="text-gray-500">(line 2)</span> appears in the full audio.
+              </div>
+            </div>
+          </div>
+
+          <!-- Full waveform -->
+          <div class="bg-white rounded-lg border border-gray-200 p-2 overflow-hidden">
+            <div id="full-wave" class="relative h-24 flex items-end gap-px px-1">
+              <!-- Wave bars + regions injected by JS -->
+            </div>
+            <div class="mt-2 flex flex-wrap gap-2 items-center text-xs">
+              <button class="px-2 py-0.5 border border-gray-300 rounded hover:bg-gray-50">▶︎/⏸︎</button>
+              <button class="px-2 py-0.5 border border-gray-300 rounded hover:bg-gray-50">⏹</button>
+              <span class="text-gray-400">|</span>
+              <span class="text-gray-600">Zoom:</span>
+              <button class="px-2 py-0.5 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">Fit</button>
+              <button class="px-2 py-0.5 border border-gray-300 rounded">−</button>
+              <input type="range" min="0" max="500" value="180" class="zoom w-20" />
+              <button class="px-2 py-0.5 border border-gray-300 rounded">+</button>
+              <span class="text-gray-500">180 px/s</span>
+            </div>
+          </div>
+
+          <!-- Color legend -->
+          <div class="mt-2 flex gap-3 text-xs text-gray-600">
+            <span class="flex items-center gap-1">
+              <span class="inline-block w-3 h-3 rounded" style="background: rgba(124, 95, 60, 0.55)"></span>
+              Line 1
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="inline-block w-3 h-3 rounded" style="background: rgba(59, 130, 246, 0.55)"></span>
+              Line 2
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="inline-block w-3 h-3 rounded" style="background: rgba(34, 197, 94, 0.4)"></span>
+              Line 3
+            </span>
+          </div>
+        </div>
+
+        <!-- All words -->
+        <div class="soft-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-semibold text-brown">All words</h2>
+            <span class="text-xs text-gray-500">click a word, then drag on the waveform</span>
+          </div>
+          <ol class="space-y-1 text-sm max-h-96 overflow-y-auto pr-2">
+
+            <li class="word-row flex items-center gap-2 p-1.5 rounded">
+              <span class="w-2 h-4 rounded-sm" style="background: rgba(124, 95, 60, 0.55)"></span>
+              <span class="text-xs text-gray-500 w-12">L1#1</span>
+              <span class="flex-1 font-medium">लङ्घनं</span>
+              <span class="text-xs text-gray-500">900 ms</span>
+              <button class="text-red-500 text-xs">✕</button>
+            </li>
+            <li class="word-row flex items-center gap-2 p-1.5 rounded">
+              <span class="w-2 h-4 rounded-sm" style="background: rgba(124, 95, 60, 0.55)"></span>
+              <span class="text-xs text-gray-500 w-12">L1#2</span>
+              <span class="flex-1 font-medium">स्वेदनं</span>
+              <span class="text-xs text-gray-500">900 ms</span>
+              <button class="text-red-500 text-xs">✕</button>
+            </li>
+            <li class="word-row flex items-center gap-2 p-1.5 rounded">
+              <span class="w-2 h-4 rounded-sm" style="background: rgba(124, 95, 60, 0.55)"></span>
+              <span class="text-xs text-gray-500 w-12">L1#3</span>
+              <span class="flex-1 font-medium">कालो</span>
+              <span class="text-xs text-gray-500">600 ms</span>
+              <button class="text-red-500 text-xs">✕</button>
+            </li>
+            <li class="word-row selected flex items-center gap-2 p-1.5 rounded">
+              <span class="w-2 h-4 rounded-sm" style="background: rgba(59, 130, 246, 0.55)"></span>
+              <span class="text-xs text-gray-500 w-12">L2#1</span>
+              <span class="flex-1 font-medium">पाचनान्यविपक्वानां</span>
+              <span class="text-xs text-amber-700 italic">not marked</span>
+              <span class="text-amber-600">⚠</span>
+            </li>
+            <li class="word-row flex items-center gap-2 p-1.5 rounded">
+              <span class="w-2 h-4 rounded-sm" style="background: rgba(59, 130, 246, 0.55)"></span>
+              <span class="text-xs text-gray-500 w-12">L2#2</span>
+              <span class="flex-1 font-medium">दोषाणां</span>
+              <span class="text-xs text-amber-700 italic">not marked</span>
+              <span class="text-amber-600">⚠</span>
+            </li>
+          </ol>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── Inject waveform bars (decorative, randomized) ──────────────────
+  function buildBars(container, count, accentRanges = []) {
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < count; i++) {
+      const bar = document.createElement('div');
+      const h = 20 + Math.abs(Math.sin(i * 0.27) * 60) + Math.random() * 10;
+      bar.className = 'wave-bar';
+      bar.style.width = '2px';
+      bar.style.height = h + '%';
+      bar.style.opacity = 0.6;
+      // Add region tint
+      for (const r of accentRanges) {
+        const ratio = i / count;
+        if (ratio >= r.start && ratio < r.end) {
+          bar.style.background = r.color;
+          bar.style.opacity = 1;
+        }
+      }
+      frag.appendChild(bar);
+    }
+    container.appendChild(frag);
+  }
+
+  // Full waveform with line-coded regions
+  const fullWave = document.getElementById('full-wave');
+  if (fullWave) {
+    fullWave.innerHTML = '';
+    fullWave.style.position = 'relative';
+
+    // Bars (decorative)
+    const barContainer = document.createElement('div');
+    barContainer.style.cssText = 'position:absolute;inset:0;display:flex;align-items:flex-end;gap:1px;padding:0 4px;';
+    buildBars(barContainer, 220, [
+      { start: 0.05, end: 0.18, color: '#7c5f3c' },   // L1#1
+      { start: 0.20, end: 0.32, color: '#7c5f3c' },   // L1#2
+      { start: 0.34, end: 0.42, color: '#7c5f3c' },   // L1#3
+    ]);
+    fullWave.appendChild(barContainer);
+
+    // Region overlays
+    const regions = [
+      { left: '5%',  width: '13%', color: 'rgba(124, 95, 60, 0.30)', border: 'rgba(124, 95, 60, 0.7)', label: 'L1#1' },
+      { left: '20%', width: '12%', color: 'rgba(124, 95, 60, 0.30)', border: 'rgba(124, 95, 60, 0.7)', label: 'L1#2' },
+      { left: '34%', width: '8%',  color: 'rgba(124, 95, 60, 0.30)', border: 'rgba(124, 95, 60, 0.7)', label: 'L1#3' },
+    ];
+    for (const r of regions) {
+      const div = document.createElement('div');
+      div.className = 'wave-region';
+      div.style.cssText = `left:${r.left}; width:${r.width}; background:${r.color}; border:1px solid ${r.border}; top:6px; bottom:6px;`;
+      const lbl = document.createElement('span');
+      lbl.textContent = r.label;
+      lbl.style.cssText = 'position:absolute; top:2px; left:4px; font-size:9px; color:rgba(0,0,0,0.6); font-weight:600;';
+      div.appendChild(lbl);
+      fullWave.appendChild(div);
+    }
+  }
+
+  // Build a few line-waveform bar sets too (find divs with empty bars containers later)
+  document.querySelectorAll('.line-body .relative.h-16').forEach((el, idx) => {
+    // Skip if already populated
+    if (el.dataset.populated) return;
+    el.dataset.populated = 'true';
+    const c = document.createElement('div');
+    c.style.cssText = 'position:absolute;inset:0;display:flex;align-items:flex-end;gap:1px;padding:0 4px;z-index:0;';
+    buildBars(c, 120, [
+      { start: 0.06, end: 0.42, color: '#3b82f6' },
+      { start: 0.50, end: 0.92, color: '#3b82f6' },
+    ]);
+    el.insertBefore(c, el.firstChild);
+  });
+</script>
+
+</body>
+</html>
