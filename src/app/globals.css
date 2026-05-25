@@ -149,3 +149,133 @@ body {
   z-index: 0;
 }
 
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Admin edit redesign — animations + utilities
+   ════════════════════════════════════════════════════════════════════════════ */
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(1.3); }
+}
+@keyframes ring-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.5); }
+  70%  { box-shadow: 0 0 0 8px rgba(217, 119, 6, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
+}
+
+.anim-fade-in { animation: fade-in 280ms cubic-bezier(0.16, 1, 0.3, 1); }
+.anim-pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+.anim-ring-pulse { animation: ring-pulse 2.5s infinite; }
+
+/* Card collapse / expand */
+.collapsible-body {
+  overflow: hidden;
+  transition: max-height 360ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 240ms ease;
+  max-height: 0;
+  opacity: 0;
+}
+.collapsible-body.is-open {
+  max-height: 2000px;
+  opacity: 1;
+}
+.chev-rotate {
+  transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.chev-rotate.is-open {
+  transform: rotate(90deg);
+}
+
+/* Cards */
+.soft-card {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(124, 95, 60, 0.10);
+  border-radius: 12px;
+}
+.line-card {
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+.line-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 95, 60, 0.08);
+}
+
+/* Status icons */
+.status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: bold;
+  transition: all 200ms ease;
+  flex-shrink: 0;
+}
+.status-done  { background: #d1fae5; color: #047857; }
+.status-warn  { background: #fef3c7; color: #92400e; }
+.status-empty { background: #e5e7eb; color: #6b7280; }
+
+/* Progress meter */
+.meter-fill {
+  transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Sticky top bar */
+.sticky-bar {
+  box-shadow: 0 1px 0 rgba(124, 95, 60, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+/* Stagger children entry */
+.stagger > *      { animation: fade-in 320ms cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+
+/* Word row select */
+.word-row {
+  transition: background 160ms ease, transform 160ms ease;
+}
+.word-row:hover { background: rgba(124, 95, 60, 0.06); }
+.word-row.selected {
+  background: #fef3c7;
+  transform: translateX(2px);
+}
+
+/* Publish button glow */
+.btn-publish {
+  transition: all 200ms ease;
+  box-shadow: 0 2px 6px rgba(74, 124, 74, 0.25);
+}
+.btn-publish:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(74, 124, 74, 0.35);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-in,
+  .anim-pulse-dot,
+  .anim-ring-pulse,
+  .stagger > *,
+  .meter-fill,
+  .collapsible-body,
+  .chev-rotate,
+  .line-card,
+  .word-row,
+  .btn-publish {
+    animation: none !important;
+    transition-duration: 80ms !important;
+  }
+}
