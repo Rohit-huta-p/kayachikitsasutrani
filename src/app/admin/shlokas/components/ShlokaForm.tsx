@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import AudioUploadField from "./AudioUploadField";
-import ImageUploadField from "./ImageUploadField";
-import LineEditor, { type LineDraft } from "./LineEditor";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import LineEditor, { type LineDraft, lineStripeColor } from "./LineEditor";
+import ShlokaInfoCard from "./ShlokaInfoCard";
+import EditPageShell from "./EditPageShell";
 import FullAudioEditor, { type FullRegionInput, type FullWordRow } from "./timing-editor/FullAudioEditor";
 import type { WordEntry } from "./timing-editor/types";
 import { makeWordId } from "./timing-editor/types";
@@ -51,11 +51,12 @@ function splitSanskrit(line: string): string[] {
 
 const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
   const isEdit = !!initial;
+
+  // ── Field state ───────────────────────────────────────────────────────
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [title, setTitle] = useState(initial?.title ?? "");
   const [meaning, setMeaning] = useState(initial?.meaning ?? "");
   const [translation, setTranslation] = useState(initial?.translation ?? "");
-  const [status, setStatus] = useState<"draft" | "published">(initial?.status ?? "draft");
   const [image, setImage] = useState<ShlokaAssetInput | undefined>(
     initial?.image ? { url: initial.image.url, publicId: initial.image.publicId ?? "" } : undefined,
   );
@@ -70,10 +71,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
           toLineDraft(
             l,
             initial.audio.lines[i]
-              ? {
-                  url: initial.audio.lines[i].url,
-                  publicId: initial.audio.lines[i].publicId ?? "",
-                }
+              ? { url: initial.audio.lines[i].url, publicId: initial.audio.lines[i].publicId ?? "" }
               : undefined,
           ),
         )
@@ -83,16 +81,31 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ── Dirty tracking (compare to last-saved snapshot) ──────────────────
+  const initialSnapshot = useRef(JSON.stringify({
+    slug: initial?.slug ?? "",
+    title: initial?.title ?? "",
+    meaning: initial?.meaning ?? "",
+    translation: initial?.translation ?? "",
+    image: initial?.image,
+    audioFull: initial?.audio.full,
+    lines: initial?.lines,
+  }));
+  const currentSnapshot = JSON.stringify({ slug, title, meaning, translation, image, audioFull, lines });
+  const dirty = currentSnapshot !== initialSnapshot.current;
+
+  const refreshSnapshot = () => {
+    initialSnapshot.current = JSON.stringify({ slug, title, meaning, translation, image, audioFull, lines });
+  };
+
+  // ── Lines mutators ───────────────────────────────────────────────────
   const updateLine = (i: number, next: LineDraft) =>
     setLines((prev) => prev.map((l, idx) => (idx === i ? next : l)));
   const addLine = () => setLines((prev) => [...prev, emptyLine()]);
   const removeLine = (i: number) =>
     setLines((prev) => (prev.length === 1 ? prev : prev.filter((_, idx) => idx !== i)));
 
-  // ── Full audio aggregation ────────────────────────────────────────────
-  // Build the regions for the full-audio waveform from all lines' words
-  // that have fullStart/fullEnd set. Also build a lookup of selected word
-  // metadata for the editor's "Next: ..." banner.
+  // ── Full-audio aggregation ───────────────────────────────────────────
   const fullRegions = useMemo<FullRegionInput[]>(() => {
     const out: FullRegionInput[] = [];
     for (let li = 0; li < lines.length; li++) {
@@ -117,7 +130,8 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     [lines],
   );
 
-  // Flat list of every word across all lines (for the full-audio sidebar)
+  const fullMarkedCount = fullRegions.length;
+
   const allWords = useMemo<FullWordRow[]>(() => {
     const out: FullWordRow[] = [];
     for (let li = 0; li < lines.length; li++) {
@@ -136,18 +150,6 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     return out;
   }, [lines]);
 
-  const clearFullForWord = (wordId: string) => {
-    setLines((prev) =>
-      prev.map((l) => ({
-        ...l,
-        words: l.words.map((w) =>
-          w.id === wordId ? { ...w, fullStart: null, fullEnd: null } : w,
-        ),
-      })),
-    );
-  };
-
-  // Selected word metadata for the banner
   const selectedMeta = useMemo(() => {
     if (!selectedWordId) return undefined;
     for (let li = 0; li < lines.length; li++) {
@@ -169,54 +171,79 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
         ),
       })),
     );
-    // After assignment, auto-advance to the next unmarked word in document order.
     const flat: WordEntry[] = lines.flatMap((l) => l.words);
     const idx = flat.findIndex((w) => w.id === wordId);
-    const next = flat
-      .slice(idx + 1)
-      .find((w) => w.fullStart === null || w.fullEnd === null);
+    const next = flat.slice(idx + 1).find((w) => w.fullStart === null || w.fullEnd === null);
     setSelectedWordId(next?.id);
   };
 
-  // ── Submit ────────────────────────────────────────────────────────────
-  const submit = async (nextStatus?: "draft" | "published") => {
+  const clearFullForWord = (wordId: string) => {
+    setLines((prev) =>
+      prev.map((l) => ({
+        ...l,
+        words: l.words.map((w) =>
+          w.id === wordId ? { ...w, fullStart: null, fullEnd: null } : w,
+        ),
+      })),
+    );
+  };
+
+  // ── Validation gating ────────────────────────────────────────────────
+  const disabledReason = useMemo<string | undefined>(() => {
+    if (!isEdit && !slug.trim()) return "Slug is required";
+    if (!title.trim()) return "Title is required";
+    if (!meaning.trim()) return "Meaning is required";
+    if (!translation.trim()) return "Translation is required";
+    if (!audioFull) return "Full audio is required";
+    if (lines.length === 0) return "At least one line is required";
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (!l.sanskrit.trim()) return `Line ${i + 1}: sanskrit is required`;
+      if (!l.audio) return `Line ${i + 1}: audio is required`;
+      const sw = splitSanskrit(l.sanskrit);
+      if (l.words.length === 0) return `Line ${i + 1}: mark words on the waveform`;
+      if (l.words.length !== sw.length) {
+        return `Line ${i + 1}: ${l.words.length} regions but ${sw.length} words in sanskrit`;
+      }
+      for (let k = 0; k < l.words.length; k++) {
+        const w = l.words[k];
+        if (w.fullStart === null || w.fullEnd === null) {
+          return `Line ${i + 1}: word "${sw[k]}" not marked on full audio`;
+        }
+      }
+    }
+    return undefined;
+  }, [isEdit, slug, title, meaning, translation, audioFull, lines]);
+
+  // ── Submit ───────────────────────────────────────────────────────────
+  const submit = async (nextStatus: "draft" | "published") => {
     setError(null);
-    const finalStatus = nextStatus ?? status;
-    if (!slug.trim() && !isEdit) return setError("Slug is required");
-    if (!title.trim()) return setError("Title is required");
-    if (!meaning.trim()) return setError("Meaning is required");
-    if (!translation.trim()) return setError("Translation is required");
-    if (!audioFull) return setError("Full audio is required");
-    if (lines.length === 0) return setError("At least one line is required");
+    if (nextStatus === "draft") {
+      if (!isEdit && !slug.trim()) return setError("Slug is required");
+      if (!title.trim()) return setError("Title is required");
+    } else {
+      if (disabledReason) return setError(disabledReason);
+    }
 
     const builtLines = [];
     for (let i = 0; i < lines.length; i++) {
       const l = lines[i];
-      if (!l.sanskrit.trim()) return setError(`Line ${i + 1}: sanskrit is required`);
-      if (!l.audio) return setError(`Line ${i + 1}: audio is required`);
       const sanskritWords = splitSanskrit(l.sanskrit);
-      if (l.words.length === 0) return setError(`Line ${i + 1}: needs at least one region`);
-      if (l.words.length !== sanskritWords.length) {
-        return setError(
-          `Line ${i + 1}: ${l.words.length} regions marked but sanskrit has ${sanskritWords.length} words. They must match.`,
-        );
-      }
-      for (let k = 0; k < l.words.length; k++) {
-        const w = l.words[k];
-        if (w.lineStart >= w.lineEnd) return setError(`Line ${i + 1} region #${k + 1}: invalid line range`);
-        if (w.fullStart === null || w.fullEnd === null) {
-          return setError(`Line ${i + 1} region #${k + 1} (${sanskritWords[k]}): not yet marked on full audio`);
-        }
-        if (w.fullStart >= w.fullEnd) return setError(`Line ${i + 1} region #${k + 1}: invalid full range`);
+      if (l.words.length > 0 && l.words.length !== sanskritWords.length && nextStatus === "published") {
+        return setError(`Line ${i + 1}: regions/words count mismatch`);
       }
       builtLines.push({
         sanskrit: l.sanskrit,
         transliteration: l.transliteration,
-        words: l.words.map((w, k) => ({ text: sanskritWords[k], start: w.lineStart, end: w.lineEnd })),
+        words: l.words.map((w, k) => ({
+          text: sanskritWords[k] ?? w.text ?? "",
+          start: w.lineStart,
+          end: w.lineEnd,
+        })),
         fullTimings: l.words.map((w, k) => ({
-          text: sanskritWords[k],
-          start: w.fullStart as number,
-          end: w.fullEnd as number,
+          text: sanskritWords[k] ?? w.text ?? "",
+          start: (w.fullStart ?? w.lineStart),
+          end: (w.fullEnd ?? w.lineEnd),
         })),
       });
     }
@@ -226,14 +253,18 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       title,
       meaning,
       translation,
-      status: finalStatus,
+      status: nextStatus,
       audio: {
-        full: audioFull,
-        lines: lines.map((l) => l.audio!),
+        full: audioFull ?? { url: "", publicId: "" },
+        lines: lines.map((l) => l.audio ?? { url: "", publicId: "" }),
       },
       image,
       lines: builtLines,
     };
+
+    if (nextStatus === "draft" && (!body.audio.full.url || body.audio.lines.some((a) => !a.url))) {
+      return setError("Upload the full audio and every line's audio before saving (draft or publish).");
+    }
 
     setSubmitting(true);
     try {
@@ -241,7 +272,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
         isEdit && initial
           ? await api.admin.shlokas.update(initial.id, body)
           : await api.admin.shlokas.create(body);
-      setStatus(finalStatus);
+      refreshSnapshot();
       onSaved(saved);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -250,56 +281,78 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     }
   };
 
+  // Refresh snapshot when initial prop changes (e.g. edit page finishes loading)
+  useEffect(() => {
+    if (initial) {
+      refreshSnapshot();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial?.id]);
+
   return (
-    <form onSubmit={(e) => { e.preventDefault(); void submit(); }} className="space-y-4 max-w-3xl">
-      <div className="space-y-1">
-        <label className="font-semibold">Slug</label>
-        <input
-          type="text"
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
-          disabled={isEdit}
-          className="w-full border px-2 py-1 rounded disabled:bg-gray-100"
-          placeholder="taruna-jwara"
-        />
-      </div>
+    <EditPageShell
+      title={title || (isEdit ? "Edit shloka" : "New shloka")}
+      marked={fullMarkedCount}
+      total={totalWords}
+      dirty={dirty}
+      submitting={submitting}
+      disabledReason={disabledReason}
+      onSaveDraft={() => void submit("draft")}
+      onPublish={() => void submit("published")}
+      error={error}
+      left={
+        <>
+          <ShlokaInfoCard
+            slug={slug}
+            title={title}
+            meaning={meaning}
+            translation={translation}
+            image={image}
+            audioFull={audioFull}
+            slugDisabled={isEdit}
+            onSlug={setSlug}
+            onTitle={setTitle}
+            onMeaning={setMeaning}
+            onTranslation={setTranslation}
+            onImage={setImage}
+            onAudioFull={setAudioFull}
+          />
 
-      <div className="space-y-1">
-        <label className="font-semibold">Title</label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full border px-2 py-1 rounded"
-        />
-      </div>
+          <div className="soft-card p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-brown">Lines</h2>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green font-medium">
+                  {fullMarkedCount} / {totalWords} words timed
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={addLine}
+                className="text-xs px-2 py-1 rounded bg-brown text-white hover:opacity-90 transition"
+              >
+                + Add line
+              </button>
+            </div>
 
-      <div className="space-y-1">
-        <label className="font-semibold">Meaning</label>
-        <textarea
-          value={meaning}
-          onChange={(e) => setMeaning(e.target.value)}
-          rows={3}
-          className="w-full border px-2 py-1 rounded"
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="font-semibold">Translation</label>
-        <textarea
-          value={translation}
-          onChange={(e) => setTranslation(e.target.value)}
-          rows={3}
-          className="w-full border px-2 py-1 rounded"
-        />
-      </div>
-
-      <ImageUploadField label="Image (optional)" value={image} onChange={setImage} />
-
-      <AudioUploadField label="Full audio (MP3)" value={audioFull} onChange={setAudioFull} />
-
-      {/* Single full-audio editor at the top — drives positions for all lines' words */}
-      <div className="bg-white/40 rounded p-4 border border-gray-200">
+            <div className="space-y-3">
+              {lines.map((l, i) => (
+                <LineEditor
+                  key={i}
+                  index={i}
+                  line={l}
+                  stripeColor={lineStripeColor(i)}
+                  onChange={(next) => updateLine(i, next)}
+                  onRemove={() => removeLine(i)}
+                  selectedWordId={selectedWordId}
+                  onSelectWord={(id) => setSelectedWordId(id)}
+                />
+              ))}
+            </div>
+          </div>
+        </>
+      }
+      right={
         <FullAudioEditor
           audioUrl={audioFull?.url}
           regions={fullRegions}
@@ -313,53 +366,8 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
           onRegionClick={(id) => setSelectedWordId(id)}
           onClearFull={clearFullForWord}
         />
-      </div>
-
-      <div>
-        <h3 className="font-semibold text-brown mb-2">Lines</h3>
-        <div className="space-y-3">
-          {lines.map((l, i) => (
-            <LineEditor
-              key={i}
-              index={i}
-              line={l}
-              onChange={(next) => updateLine(i, next)}
-              onRemove={() => removeLine(i)}
-              selectedWordId={selectedWordId}
-              onSelectWord={(id) => setSelectedWordId(id)}
-            />
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={addLine}
-          className="mt-2 text-sm text-green underline"
-        >
-          + Add line
-        </button>
-      </div>
-
-      {error && <p className="text-red-600 text-sm">{error}</p>}
-
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={() => void submit("draft")}
-          disabled={submitting}
-          className="bg-indigo-100 hover:bg-indigo-200 px-4 py-2 rounded disabled:opacity-50"
-        >
-          {submitting ? "Saving…" : "Save Draft"}
-        </button>
-        <button
-          type="button"
-          onClick={() => void submit("published")}
-          disabled={submitting}
-          className="bg-green text-white px-4 py-2 rounded disabled:opacity-50"
-        >
-          {submitting ? "Saving…" : "Publish"}
-        </button>
-      </div>
-    </form>
+      }
+    />
   );
 };
 
