@@ -57,15 +57,11 @@ const ShlokaDisplay = ({
       {playingFull ? (
         <div>
           {shloka.lines.map((line, i) => renderLine(line, i))}
-          <h3>{shloka.lines.map((l) => l.transliteration).join(" ")}</h3>
         </div>
       ) : (
         shloka.lines.map((line, i) =>
           activeLine === i ? (
-            <React.Fragment key={i}>
-              {renderLine(line, i)}
-              <h3>{line.transliteration}</h3>
-            </React.Fragment>
+            <React.Fragment key={i}>{renderLine(line, i)}</React.Fragment>
           ) : null,
         )
       )}

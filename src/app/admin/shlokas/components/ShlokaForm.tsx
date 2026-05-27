@@ -33,7 +33,6 @@ function toEntries(line: PublicShloka["lines"][number]): WordEntry[] {
 function toLineDraft(line: PublicShloka["lines"][number], audio?: ShlokaAssetInput): LineDraft {
   return {
     sanskrit: line.sanskrit,
-    transliteration: line.transliteration,
     audio,
     words: toEntries(line),
   };
@@ -41,7 +40,6 @@ function toLineDraft(line: PublicShloka["lines"][number], audio?: ShlokaAssetInp
 
 const emptyLine = (): LineDraft => ({
   sanskrit: "",
-  transliteration: "",
   audio: undefined,
   words: [],
 });
@@ -254,7 +252,6 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       }
       builtLines.push({
         sanskrit: l.sanskrit,
-        transliteration: l.transliteration,
         words: l.words.map((w, k) => ({
           text: sanskritWords[k] ?? w.text ?? "",
           start: w.lineStart,

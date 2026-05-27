@@ -9,7 +9,6 @@ import type { ShlokaAssetInput } from "@/lib/auth/types";
 
 export interface LineDraft {
   sanskrit: string;
-  transliteration: string;
   audio?: ShlokaAssetInput;
   words: WordEntry[];
 }
@@ -115,29 +114,17 @@ const LineEditor: React.FC<Props> = ({
 
       <div className={`collapsible-body ${open ? "is-open" : ""}`}>
         <div className="px-4 pb-4 pt-1 border-t border-gray-200 space-y-3">
-          <div className="grid md:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-600">Sanskrit (Devanagari)</label>
-              <input
-                type="text"
-                value={line.sanskrit}
-                onChange={(e) => update("sanskrit", e.target.value)}
-                className="w-full border px-2 py-1 rounded"
-                placeholder="लङ्घनं स्वेदनं ..."
-              />
-              <div className="text-xs text-gray-400">
-                {line.sanskrit.split(/\s+/).filter(Boolean).length} words
-              </div>
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-600">Transliteration</label>
-              <input
-                type="text"
-                value={line.transliteration}
-                onChange={(e) => update("transliteration", e.target.value)}
-                className="w-full border px-2 py-1 rounded"
-                placeholder="laṅghanaṁ svēdanaṁ ..."
-              />
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-gray-600">Sanskrit (Devanagari)</label>
+            <input
+              type="text"
+              value={line.sanskrit}
+              onChange={(e) => update("sanskrit", e.target.value)}
+              className="w-full border px-2 py-1 rounded"
+              placeholder="लङ्घनं स्वेदनं ..."
+            />
+            <div className="text-xs text-gray-400">
+              {line.sanskrit.split(/\s+/).filter(Boolean).length} words
             </div>
           </div>
 

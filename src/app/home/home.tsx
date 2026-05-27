@@ -64,7 +64,7 @@ const Home = () => {
                         <h3 className='text-xl'>Authentic Sanskrit</h3>
                         <p className='text-black text-xs '>
                         Experience shlokas in their original Devanagari script
-                        alongside accurate transliterations and translations.
+                        alongside accurate translations.
                         </p>
                     </div>
                         {/* Visual Context */}
