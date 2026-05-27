@@ -132,11 +132,23 @@ const Waveform: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioUrl, height]);
 
-  // Apply zoom when slider/buttons change or when audio becomes ready
+  // Apply zoom when slider/buttons change or when audio becomes ready.
+  // WaveSurfer throws "No audio loaded" if zoom is called before the decoded
+  // audio buffer is attached — even when our `ready` flag is true (the
+  // 'ready' event can fire before duration is set in some edge cases).
   useEffect(() => {
     const ws = wsRef.current;
     if (!ws || !ready) return;
-    ws.zoom(zoom);
+    try {
+      // Guard: duration must be a positive number before zoom is meaningful.
+      const dur = ws.getDuration?.();
+      if (!dur || dur <= 0) return;
+      ws.zoom(zoom);
+    } catch (err) {
+      // Swallow — audio not ready yet. Next effect run (after a real change)
+      // will apply the zoom correctly.
+      console.warn('[Waveform] zoom skipped:', err);
+    }
   }, [zoom, ready]);
 
   // Sync `regions` prop into the plugin once ready
