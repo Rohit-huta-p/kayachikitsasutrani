@@ -5,6 +5,8 @@ import type {
   ApiError,
   PublicShloka,
   ShlokaInput,
+  CompleteResponse,
+  LeaderboardResponse,
 } from './auth/types';
 
 // Empty base — relative `/api/*` paths are proxied to the backend by
@@ -74,6 +76,13 @@ export const api = {
       request<{ items: PublicShloka[]; nextCursor?: string }>(`/api/shlokas${qs(params)}`),
     get: (slug: string) =>
       request<PublicShloka>(`/api/shlokas/${encodeURIComponent(slug)}`),
+    complete: (slug: string, body: { attempts: number; elapsedSeconds: number }) =>
+      request<CompleteResponse>(`/api/shlokas/${encodeURIComponent(slug)}/complete`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    leaderboard: (slug: string) =>
+      request<LeaderboardResponse>(`/api/shlokas/${encodeURIComponent(slug)}/leaderboard`),
   },
 
   admin: {

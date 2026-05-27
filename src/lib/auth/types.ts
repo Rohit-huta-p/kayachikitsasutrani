@@ -85,3 +85,39 @@ export interface ShlokaInput {
   image?: ShlokaAssetInput;
   lines: ShlokaLine[];
 }
+
+// ── Completion + Leaderboard ──────────────────────────────────────────────
+
+export interface CompletionRecord {
+  id: string;
+  userId: string;
+  shlokaId: string;
+  completedAt: string;
+  attempts: number;
+  elapsedSeconds: number;
+}
+
+export interface CompleteResponse {
+  completion: CompletionRecord;
+  alreadyCompleted: boolean;
+}
+
+export interface LeaderboardRow {
+  userId: string;
+  name: string;
+  email: string;
+  avatarColor: string;
+  initials: string;
+  completedAt: string;
+  attempts: number;
+  elapsedSeconds: number;
+  chronoRank: number;
+  timeRank: number;
+  attemptsRank: number;
+  averageRank: number;
+}
+
+export interface LeaderboardResponse {
+  total: number;
+  items: LeaderboardRow[];
+}
