@@ -106,6 +106,8 @@ export function useKeyboardShortcuts(handlers: {
   undo?: () => void;
   redo?: () => void;
   saveDraft?: () => void;
+  /** Delete / Backspace when not editing text — used to remove the selected word. */
+  deleteSelected?: () => void;
 }): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -114,23 +116,31 @@ export function useKeyboardShortcuts(handlers: {
       const isEditing =
         tag === "input" || tag === "textarea" || (target?.isContentEditable ?? false);
       const cmd = e.metaKey || e.ctrlKey;
-      if (!cmd) return;
-      const key = e.key.toLowerCase();
       // Cmd+S → save draft. Always handle (even when typing).
-      if (key === "s") {
+      if (cmd && e.key.toLowerCase() === "s") {
         e.preventDefault();
         handlers.saveDraft?.();
         return;
       }
-      // Cmd+Z / Cmd+Shift+Z — only when not editing text
+      // The rest only when not editing text
       if (isEditing) return;
-      if (key === "z") {
+      if (cmd && e.key.toLowerCase() === "z") {
         e.preventDefault();
         if (e.shiftKey) handlers.redo?.();
         else handlers.undo?.();
-      } else if (key === "y") {
+        return;
+      }
+      if (cmd && e.key.toLowerCase() === "y") {
         e.preventDefault();
         handlers.redo?.();
+        return;
+      }
+      // Backspace / Delete — remove selected word (no modifier)
+      if (!cmd && (e.key === "Backspace" || e.key === "Delete")) {
+        if (handlers.deleteSelected) {
+          e.preventDefault();
+          handlers.deleteSelected();
+        }
       }
     };
     document.addEventListener("keydown", onKey);

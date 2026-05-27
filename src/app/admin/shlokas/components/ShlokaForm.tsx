@@ -311,6 +311,18 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     undo: linesHistory.canUndo ? linesHistory.undo : undefined,
     redo: linesHistory.canRedo ? linesHistory.redo : undefined,
     saveDraft: () => void submit("draft"),
+    deleteSelected: selectedWordId
+      ? () => {
+          const id = selectedWordId;
+          setLines((prev) =>
+            prev.map((l) => ({
+              ...l,
+              words: l.words.filter((w) => w.id !== id),
+            })),
+          );
+          setSelectedWordId(undefined);
+        }
+      : undefined,
   });
 
   return (

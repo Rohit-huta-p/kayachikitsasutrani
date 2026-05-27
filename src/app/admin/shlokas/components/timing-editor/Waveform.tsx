@@ -23,6 +23,8 @@ interface Props {
   onRegionClick?: (id: string) => void;
   /** Called if audio fails to load. */
   onError?: (msg: string) => void;
+  /** Called when playhead time changes (every frame during playback + on seek). */
+  onTimeUpdate?: (t: number) => void;
   /** px; default 80. */
   height?: number;
 }
@@ -39,6 +41,7 @@ const Waveform: React.FC<Props> = ({
   onRegionUpdate,
   onRegionClick,
   onError,
+  onTimeUpdate,
   height = 80,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -97,13 +100,16 @@ const Waveform: React.FC<Props> = ({
     };
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
-    const onTimeUpdate = (t: number) => setCurrentTime(t);
+    const onTimeUpdateInternal = (t: number) => {
+      setCurrentTime(t);
+      onTimeUpdate?.(t);
+    };
     ws.on("ready", onReady);
     ws.on("error", onErrorEvt);
     ws.on("play", onPlay);
     ws.on("pause", onPause);
     ws.on("finish", onPause);
-    ws.on("timeupdate", onTimeUpdate);
+    ws.on("timeupdate", onTimeUpdateInternal);
 
     rp.on("region-created", (region: WsRegion) => {
       // Skip if this region came from us (we added it programmatically via the sync effect).

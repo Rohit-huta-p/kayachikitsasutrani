@@ -14,6 +14,14 @@ export interface TimingStateApi {
   setFullRegion: (id: string, start: number, end: number) => void;
   setText: (id: string, text: string) => void;
   remove: (id: string) => void;
+  /**
+   * Split a word's line region at the given time. The original keeps
+   * [start, atTime], a new entry takes [atTime, end]. Both entries have
+   * fullStart/fullEnd reset to null (admin marks them again on full audio).
+   * Returns the new entry's id, or null if the split is invalid (no such
+   * word, time outside the region, or zero-width split).
+   */
+  splitAtTime: (id: string, atTime: number) => string | null;
 }
 
 export function useTimingState(
@@ -71,5 +79,34 @@ export function useTimingState(
     [commit, words],
   );
 
-  return { words, addFromLineRegion, updateLineRegion, setFullRegion, setText, remove };
+  const splitAtTime = useCallback(
+    (id: string, atTime: number): string | null => {
+      const target = words.find((w) => w.id === id);
+      if (!target) return null;
+      const epsilon = 0.01; // 10ms minimum on each side
+      if (atTime <= target.lineStart + epsilon || atTime >= target.lineEnd - epsilon) {
+        return null;
+      }
+      const newId = makeWordId();
+      const updated = words.map((w) =>
+        w.id === id
+          ? { ...w, lineEnd: atTime, fullStart: null, fullEnd: null }
+          : w,
+      );
+      // Insert the new entry right after the original; commit will re-sort by lineStart.
+      const next: WordEntry = {
+        id: newId,
+        text: "",
+        lineStart: atTime,
+        lineEnd: target.lineEnd,
+        fullStart: null,
+        fullEnd: null,
+      };
+      commit([...updated, next]);
+      return newId;
+    },
+    [commit, words],
+  );
+
+  return { words, addFromLineRegion, updateLineRegion, setFullRegion, setText, remove, splitAtTime };
 }
