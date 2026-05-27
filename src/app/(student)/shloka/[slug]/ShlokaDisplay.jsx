@@ -32,8 +32,8 @@ const ShlokaDisplay = ({
         key={lineIndex}
         className={
           isActive
-            ? "text-2xl px-4 bg-primary-light-1 w-full"
-            : "text-2xl px-4 w-full opacity-40"
+            ? "text-lg md:text-2xl px-4 bg-primary-light-1 w-full leading-relaxed"
+            : "text-sm md:text-2xl px-4 w-full opacity-40 leading-relaxed"
         }
       >
         {words.map((w, wi) => (
@@ -53,7 +53,7 @@ const ShlokaDisplay = ({
   };
 
   return (
-    <div className="bg-white p-3 text-center place-items-center space-y-2 w-full">
+    <div className="bg-white p-2 md:p-3 text-center place-items-center space-y-2 w-full">
       {playingFull ? (
         <div>
           {shloka.lines.map((line, i) => renderLine(line, i))}
