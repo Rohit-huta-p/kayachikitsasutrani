@@ -7,6 +7,7 @@ import type {
   ShlokaInput,
   CompleteResponse,
   LeaderboardResponse,
+  MyCompletionsResponse,
 } from './auth/types';
 
 // Empty base — relative `/api/*` paths are proxied to the backend by
@@ -69,7 +70,12 @@ export const api = {
   login: (body: LoginBody) =>
     request<{ user: PublicUser }>('/api/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   logout: () => request<{ ok: true }>('/api/auth/logout', { method: 'POST' }),
-  me: () => request<{ user: PublicUser }>('/api/auth/me'),
+  me: Object.assign(
+    () => request<{ user: PublicUser }>('/api/auth/me'),
+    {
+      completions: () => request<MyCompletionsResponse>(`/api/me/completions`),
+    },
+  ),
 
   shlokas: {
     list: (params?: { limit?: number; cursor?: string }) =>

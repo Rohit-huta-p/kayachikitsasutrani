@@ -121,3 +121,21 @@ export interface LeaderboardResponse {
   total: number;
   items: LeaderboardRow[];
 }
+
+// ── My Completions ────────────────────────────────────────────────────────
+
+export interface MyCompletionRow {
+  shlokaId: string;
+  slug: string;
+  title: string;
+  completedAt: string;
+  attempts: number;
+  elapsedSeconds: number;
+  rank: number;
+  totalCompletions: number;
+}
+
+export interface MyCompletionsResponse {
+  total: number;
+  items: MyCompletionRow[];
+}
