@@ -20,7 +20,7 @@ const tabs: Tab[] = [
 const TabBar: React.FC = () => {
   const pathname = usePathname();
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5DDD0] flex justify-around pb-safe z-40">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5DDD0] flex justify-around pb-safe z-40">
       {tabs.map((t) => {
         const active = pathname === t.href || (t.matchPrefix ? pathname.startsWith(t.matchPrefix) : false);
         return (

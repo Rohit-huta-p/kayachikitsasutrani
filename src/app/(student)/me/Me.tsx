@@ -60,7 +60,7 @@ export default function Me() {
         title="Me"
         trailing={<span className="text-xl" aria-hidden="true">⚙️</span>}
       />
-      <div className="px-4 py-4 flex flex-col gap-3 max-w-md mx-auto">
+      <div className="px-4 py-4 flex flex-col gap-3 max-w-md mx-auto md:max-w-2xl">
         {/* Avatar block */}
         <div className="bg-white border border-[#E5DDD0] rounded-2xl p-5 text-center">
           <div className="flex justify-center">

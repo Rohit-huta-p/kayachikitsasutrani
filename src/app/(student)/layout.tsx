@@ -6,7 +6,7 @@ import TabBar from "@/components/student/TabBar";
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-cream flex flex-col">
-      <div className="flex-1 pb-safe-tab">
+      <div className="flex-1 pb-safe-tab md:pb-0">
         {children}
       </div>
       <TabBar />

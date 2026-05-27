@@ -89,7 +89,7 @@ export default function MyShlokas() {
         title="My Shlokas"
         trailing={me ? <AvatarCircle name={me.name} email={me.email} size={34} /> : null}
       />
-      <div className="px-4 py-4 flex flex-col gap-3 max-w-md mx-auto">
+      <div className="px-4 py-4 flex flex-col gap-3 max-w-md mx-auto md:max-w-2xl">
         <div className="flex gap-2 flex-wrap">
           {chip("all", "All", allCount)}
           {chip("top5", "Top 5", top5Count)}
