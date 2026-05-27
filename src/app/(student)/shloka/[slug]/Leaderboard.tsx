@@ -54,7 +54,7 @@ const Leaderboard: React.FC<Props> = ({ slug, currentUserId, refreshKey }) => {
   }, [slug, refreshKey]);
 
   return (
-    <div className="bg-white/60 rounded-lg p-4 mt-6">
+    <div className="bg-white/60 rounded-lg p-3 md:p-4 mt-4 md:mt-6">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold text-brown flex items-center gap-2">
           <span aria-hidden="true">🏆</span>
@@ -81,13 +81,13 @@ const Leaderboard: React.FC<Props> = ({ slug, currentUserId, refreshKey }) => {
                 key={row.userId}
                 className={
                   isMe
-                    ? "flex items-center gap-3 p-2 rounded-lg bg-amber-50 border border-amber-200"
-                    : "flex items-center gap-3 p-2 rounded-lg hover:bg-white/80 transition"
+                    ? "flex items-center gap-3 p-1.5 md:p-2 rounded-lg bg-amber-50 border border-amber-200"
+                    : "flex items-center gap-3 p-1.5 md:p-2 rounded-lg hover:bg-white/80 transition"
                 }
               >
                 <span className="text-xs text-gray-500 w-8 shrink-0 font-mono">#{rank}</span>
                 <span
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
+                  className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
                   style={{ background: row.avatarColor }}
                   aria-hidden="true"
                 >
