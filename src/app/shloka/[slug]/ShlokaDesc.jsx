@@ -9,9 +9,15 @@ import { MdOutlineSkipPrevious, MdPlayArrow, MdSkipNext } from "react-icons/md";
 import { CiPause1 } from "react-icons/ci";
 import { BiHide } from "react-icons/bi";
 import { useShlokaPlayer } from "./hooks/useShlokaPlayer";
+import Leaderboard from "./Leaderboard";
+import { useCompletionTracker } from "./hooks/useCompletionTracker";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 const ShlokaDesc = ({ shloka }) => {
   const player = useShlokaPlayer(shloka);
+  const { state: authState } = useAuth();
+  const currentUserId = authState.status === "authed" ? authState.user.id : undefined;
+  const tracker = useCompletionTracker(shloka.slug, player.state);
 
   const playingFull =
     player.state.status === "PLAYING_FULL" ||
@@ -141,6 +147,23 @@ const ShlokaDesc = ({ shloka }) => {
             ))}
           </div>
         </div>
+      </div>
+
+      {tracker.submitted && (
+        <div className="mt-4 p-3 rounded-lg bg-green-50 border border-green-200 text-sm">
+          {tracker.alreadyCompleted ? (
+            <>You completed this earlier 🎉</>
+          ) : (
+            <>🎉 You completed it! Check the leaderboard below.</>
+          )}
+        </div>
+      )}
+      <div className="mt-4">
+        <Leaderboard
+          slug={shloka.slug}
+          currentUserId={currentUserId}
+          refreshKey={tracker.completionVersion}
+        />
       </div>
     </div>
   );
