@@ -308,10 +308,6 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       disabledReason={disabledReason}
       onSaveDraft={() => void submit("draft")}
       onPublish={() => void submit("published")}
-      canUndo={linesHistory.canUndo}
-      canRedo={linesHistory.canRedo}
-      onUndo={linesHistory.undo}
-      onRedo={linesHistory.redo}
       error={error}
       left={
         <>
