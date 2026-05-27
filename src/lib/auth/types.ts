@@ -5,7 +5,7 @@ export interface PublicUser {
   name: string;
   age?: number;
   gender?: 'male' | 'female' | 'other';
-  universityName?: string;
+  collegeName?: string;
   course?: string;
   createdAt: string;
 }
@@ -16,7 +16,7 @@ export interface SignupBody {
   name: string;
   age?: number;
   gender?: 'male' | 'female' | 'other';
-  universityName?: string;
+  collegeName?: string;
   course?: string;
 }
 

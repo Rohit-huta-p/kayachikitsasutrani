@@ -42,7 +42,7 @@ const StudentDetailPage: React.FC = () => {
         <Row k="Role" v={user.role} />
         <Row k="Age" v={user.age} />
         <Row k="Gender" v={user.gender} />
-        <Row k="University" v={user.universityName} />
+        <Row k="College Name" v={user.collegeName} />
         <Row k="Course" v={user.course} />
         <Row k="Joined" v={new Date(user.createdAt).toLocaleString()} />
       </div>

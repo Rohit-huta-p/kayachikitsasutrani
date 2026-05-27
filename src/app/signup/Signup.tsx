@@ -7,11 +7,13 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
 
+const COURSE_OPTIONS = ["3rd Prof BAMS"] as const;
+
 type FormData = {
   fullName: string;
   age: string;
   gender: string;
-  universityName: string;
+  collegeName: string;
   course: string;
   email: string;
   password: string;
@@ -33,14 +35,14 @@ const Signup = () => {
     fullName: "",
     age: "",
     gender: "Gender",
-    universityName: "",
-    course: "",
+    collegeName: "",
+    course: COURSE_OPTIONS[0],
     email: "",
     password: "",
     confirmPassword: "",
   });
 
-  const update = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const update = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
@@ -65,7 +67,7 @@ const Signup = () => {
         name: formData.fullName.trim(),
         age: formData.age ? Number(formData.age) : undefined,
         gender: genderMap[formData.gender],
-        universityName: formData.universityName.trim() || undefined,
+        collegeName: formData.collegeName.trim() || undefined,
         course: formData.course.trim() || undefined,
       });
       router.push("/dashboard");
@@ -142,18 +144,18 @@ const Signup = () => {
 
           </div>
 
-          {/* University Name */}
+          {/* College Name */}
           <div className="flex flex-col space-y-2">
-                <label htmlFor="universityName" className="font-semibold">
-                    University Name
+                <label htmlFor="collegeName" className="font-semibold">
+                    College Name
                 </label>
                 <Input
                     type="text"
-                    id="universityName"
-                    name="universityName"
-                    placeholder="University you have enrolled in"
-                    value={formData.universityName}
-                    onChange={update("universityName")}
+                    id="collegeName"
+                    name="collegeName"
+                    placeholder="College you have enrolled in"
+                    value={formData.collegeName}
+                    onChange={update("collegeName")}
                 />
             </div>
           {/* Course / Program */}
@@ -161,14 +163,17 @@ const Signup = () => {
                 <label htmlFor="course" className="font-semibold">
                    Course / Program
                 </label>
-                <Input
-                    type="text"
+                <select
                     id="course"
                     name="course"
-                    placeholder="Example: BAMS, MD Ayurveda, etc"
                     value={formData.course}
                     onChange={update("course")}
-                />
+                    className="ouline-none p-2 bg-white"
+                >
+                    {COURSE_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                </select>
             </div>
           {/* E-mail */}
           <div className="flex flex-col space-y-2">
