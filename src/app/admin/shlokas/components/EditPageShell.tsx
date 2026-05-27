@@ -17,6 +17,11 @@ interface Props {
   disabledReason?: string;
   onSaveDraft: () => void;
   onPublish: () => void;
+  /** Undo/redo controls for word-timing edits. */
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
   /** Top-level error (e.g. backend submit failure). */
   error?: string | null;
   left: React.ReactNode;
@@ -32,6 +37,10 @@ const EditPageShell: React.FC<Props> = ({
   disabledReason,
   onSaveDraft,
   onPublish,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
   error,
   left,
   right,
@@ -61,6 +70,31 @@ const EditPageShell: React.FC<Props> = ({
           )}
 
           <div className="flex-1" />
+
+          {(onUndo || onRedo) && (
+            <div className="flex items-center gap-1 bg-white/60 border border-gray-200 rounded-lg px-1 py-0.5">
+              <button
+                type="button"
+                onClick={onUndo}
+                disabled={!canUndo || submitting}
+                title="Undo (⌘Z)"
+                aria-label="Undo"
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 disabled:opacity-30 text-brown"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M9 14l-4-4 4-4M5 10h11a4 4 0 014 4v0a4 4 0 01-4 4H9"/></svg>
+              </button>
+              <button
+                type="button"
+                onClick={onRedo}
+                disabled={!canRedo || submitting}
+                title="Redo (⌘⇧Z)"
+                aria-label="Redo"
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 disabled:opacity-30 text-brown"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M15 14l4-4-4-4M19 10H8a4 4 0 00-4 4v0a4 4 0 004 4h6"/></svg>
+              </button>
+            </div>
+          )}
 
           {total > 0 && (
             <div className="hidden md:flex items-center gap-2 text-xs text-gray-600">

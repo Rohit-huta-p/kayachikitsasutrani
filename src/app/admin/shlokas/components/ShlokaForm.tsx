@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import LineEditor, { type LineDraft, lineStripeColor } from "./LineEditor";
 import ShlokaInfoCard from "./ShlokaInfoCard";
 import EditPageShell from "./EditPageShell";
+import { useHistory, useKeyboardShortcuts } from "./useHistory";
 import FullAudioEditor, { type FullRegionInput, type FullWordRow } from "./timing-editor/FullAudioEditor";
 import type { WordEntry } from "./timing-editor/types";
 import { makeWordId } from "./timing-editor/types";
@@ -65,18 +66,19 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       ? { url: initial.audio.full.url, publicId: initial.audio.full.publicId ?? "" }
       : undefined,
   );
-  const [lines, setLines] = useState<LineDraft[]>(
-    initial
-      ? initial.lines.map((l, i) =>
-          toLineDraft(
-            l,
-            initial.audio.lines[i]
-              ? { url: initial.audio.lines[i].url, publicId: initial.audio.lines[i].publicId ?? "" }
-              : undefined,
-          ),
-        )
-      : [emptyLine()],
-  );
+  const initialLines: LineDraft[] = initial
+    ? initial.lines.map((l, i) =>
+        toLineDraft(
+          l,
+          initial.audio.lines[i]
+            ? { url: initial.audio.lines[i].url, publicId: initial.audio.lines[i].publicId ?? "" }
+            : undefined,
+        ),
+      )
+    : [emptyLine()];
+  const linesHistory = useHistory<LineDraft[]>(initialLines);
+  const lines = linesHistory.state;
+  const setLines = linesHistory.set;
   const [selectedWordId, setSelectedWordId] = useState<string | undefined>();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -289,6 +291,13 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial?.id]);
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    undo: linesHistory.canUndo ? linesHistory.undo : undefined,
+    redo: linesHistory.canRedo ? linesHistory.redo : undefined,
+    saveDraft: () => void submit("draft"),
+  });
+
   return (
     <EditPageShell
       title={title || (isEdit ? "Edit shloka" : "New shloka")}
@@ -299,6 +308,10 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       disabledReason={disabledReason}
       onSaveDraft={() => void submit("draft")}
       onPublish={() => void submit("published")}
+      canUndo={linesHistory.canUndo}
+      canRedo={linesHistory.canRedo}
+      onUndo={linesHistory.undo}
+      onRedo={linesHistory.redo}
       error={error}
       left={
         <>

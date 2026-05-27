@@ -51,6 +51,9 @@ const Waveform: React.FC<Props> = ({
   const [ready, setReady] = useState(false);
   /** Zoom level in pixels-per-second. 0 = fit-to-container. */
   const [zoom, setZoom] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   // Latest callback refs (avoid re-initing WaveSurfer when handlers change)
   const onRegionCreateRef = useRef(onRegionCreate);
@@ -84,13 +87,23 @@ const Waveform: React.FC<Props> = ({
     wsRef.current = ws;
     regionsPluginRef.current = rp;
 
-    const onReady = () => setReady(true);
+    const onReady = () => {
+      setReady(true);
+      setDuration(ws.getDuration?.() || 0);
+    };
     const onErrorEvt = (err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
       onErrorRef.current?.(msg);
     };
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    const onTimeUpdate = (t: number) => setCurrentTime(t);
     ws.on("ready", onReady);
     ws.on("error", onErrorEvt);
+    ws.on("play", onPlay);
+    ws.on("pause", onPause);
+    ws.on("finish", onPause);
+    ws.on("timeupdate", onTimeUpdate);
 
     rp.on("region-created", (region: WsRegion) => {
       // Skip if this region came from us (we added it programmatically via the sync effect).
@@ -118,7 +131,21 @@ const Waveform: React.FC<Props> = ({
       if (ourId) onRegionUpdateRef.current(ourId, region.start, region.end);
     });
     rp.on("region-clicked", (region: WsRegion, e: MouseEvent) => {
-      e.stopPropagation();
+      // Allow click-to-seek even when clicking inside a region. Compute the
+      // seek time from the click position relative to the waveform container.
+      // Note: don't stopPropagation — let parent state handle selection too.
+      const wrapper = containerRef.current;
+      if (wrapper) {
+        const rect = wrapper.getBoundingClientRect();
+        const scrollLeft = wrapper.scrollLeft;
+        const x = e.clientX - rect.left + scrollLeft;
+        const dur = ws.getDuration?.() || 0;
+        if (dur > 0) {
+          const totalWidth = wrapper.scrollWidth || rect.width;
+          const ratio = Math.max(0, Math.min(1, x / totalWidth));
+          ws.setTime(ratio * dur);
+        }
+      }
       const ourId = wsIdToOurId.current.get(region.id);
       if (ourId) onRegionClickRef.current?.(ourId);
     });
@@ -192,68 +219,111 @@ const Waveform: React.FC<Props> = ({
     }
   }, [regions, highlightedId, color, ready]);
 
+  const formatTime = (s: number): string => {
+    if (!isFinite(s) || s < 0) return "0:00";
+    const m = Math.floor(s / 60);
+    const ss = Math.floor(s % 60);
+    return `${m}:${ss.toString().padStart(2, "0")}`;
+  };
+
+  const stepZoom = (delta: number) =>
+    setZoom((z) => {
+      const cur = z === 0 ? 100 : z;
+      return Math.max(0, Math.min(500, cur + delta));
+    });
+
   return (
     <div className="space-y-2">
-      <div ref={containerRef} className="w-full overflow-x-auto" />
-      <div className="flex flex-wrap gap-2 items-center text-xs">
-        <button
-          type="button"
-          onClick={() => wsRef.current?.playPause()}
-          disabled={!ready}
-          className="px-2 py-0.5 border rounded"
-        >
-          ▶︎ / ⏸︎
-        </button>
-        <button
-          type="button"
-          onClick={() => wsRef.current?.stop()}
-          disabled={!ready}
-          className="px-2 py-0.5 border rounded"
-        >
-          ⏹
-        </button>
-        <span className="text-gray-400">|</span>
-        <span className="text-gray-600">Zoom:</span>
-        <button
-          type="button"
-          onClick={() => setZoom(0)}
-          disabled={!ready}
-          className={zoom === 0 ? "px-2 py-0.5 border rounded bg-brown text-white" : "px-2 py-0.5 border rounded"}
-          title="Fit to container"
-        >
-          Fit
-        </button>
-        <button
-          type="button"
-          onClick={() => setZoom((z) => Math.max(0, z === 0 ? 50 : z) === 0 ? 50 : Math.max(10, (z === 0 ? 50 : z) - 50))}
-          disabled={!ready}
-          className="px-2 py-0.5 border rounded"
-          title="Zoom out"
-        >
-          −
-        </button>
-        <input
-          type="range"
-          min={0}
-          max={500}
-          step={10}
-          value={zoom}
-          onChange={(e) => setZoom(Number(e.target.value))}
-          disabled={!ready}
-          className="w-32"
-          title="Zoom level (pixels per second)"
-        />
-        <button
-          type="button"
-          onClick={() => setZoom((z) => Math.min(500, (z === 0 ? 50 : z) + 50))}
-          disabled={!ready}
-          className="px-2 py-0.5 border rounded"
-          title="Zoom in"
-        >
-          +
-        </button>
-        {zoom > 0 && <span className="text-gray-500">{zoom} px/s</span>}
-        {!ready && <span className="text-gray-500">Loading audio…</span>}
+      <div
+        ref={containerRef}
+        className="w-full overflow-x-auto rounded-lg bg-gradient-to-b from-white/80 to-gray-50/80 border border-gray-200 px-2 py-1"
+      />
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        {/* Transport group */}
+        <div className="flex items-center gap-1 bg-white/70 border border-gray-200 rounded-lg px-1 py-0.5">
+          <button
+            type="button"
+            onClick={() => wsRef.current?.playPause()}
+            disabled={!ready}
+            title={isPlaying ? "Pause (space)" : "Play (space)"}
+            aria-label={isPlaying ? "Pause" : "Play"}
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 disabled:opacity-50 text-brown"
+          >
+            {isPlaying ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => wsRef.current?.stop()}
+            disabled={!ready}
+            title="Stop"
+            aria-label="Stop"
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 disabled:opacity-50 text-brown"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>
+          </button>
+          <span className="px-2 font-mono text-[11px] text-gray-700 select-none tabular-nums">
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </span>
+        </div>
+
+        {/* Zoom group */}
+        <div className="flex items-center gap-1 bg-white/70 border border-gray-200 rounded-lg px-1 py-0.5">
+          <button
+            type="button"
+            onClick={() => setZoom(0)}
+            disabled={!ready}
+            title="Fit to container"
+            className={`px-2 h-7 rounded text-[11px] ${zoom === 0 ? "bg-brown text-white" : "hover:bg-gray-100 text-gray-700"}`}
+          >
+            Fit
+          </button>
+          <button
+            type="button"
+            onClick={() => stepZoom(-50)}
+            disabled={!ready || zoom === 0}
+            title="Zoom out"
+            aria-label="Zoom out"
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 disabled:opacity-50 text-brown"
+          >
+            −
+          </button>
+          <input
+            type="range"
+            min={0}
+            max={500}
+            step={10}
+            value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))}
+            disabled={!ready}
+            className="w-24"
+            style={{ accentColor: "#A67C52" }}
+            title="Zoom level (pixels per second)"
+          />
+          <button
+            type="button"
+            onClick={() => stepZoom(50)}
+            disabled={!ready}
+            title="Zoom in"
+            aria-label="Zoom in"
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 disabled:opacity-50 text-brown"
+          >
+            +
+          </button>
+          <span className="text-[10px] text-gray-500 px-1 tabular-nums select-none w-12 text-right">
+            {zoom === 0 ? "fit" : `${zoom}px/s`}
+          </span>
+        </div>
+
+        {!ready && (
+          <span className="text-gray-500 italic flex items-center gap-1">
+            <span className="inline-block w-3 h-3 border-2 border-brown border-t-transparent rounded-full animate-spin" />
+            Loading audio…
+          </span>
+        )}
       </div>
     </div>
   );
