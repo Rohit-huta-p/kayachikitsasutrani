@@ -103,9 +103,27 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
   // ── Lines mutators ───────────────────────────────────────────────────
   const updateLine = (i: number, next: LineDraft) =>
     setLines((prev) => prev.map((l, idx) => (idx === i ? next : l)));
-  const addLine = () => setLines((prev) => [...prev, emptyLine()]);
+  const [scrollToIndex, setScrollToIndex] = useState<number | null>(null);
+  const addLine = () => {
+    setLines((prev) => [...prev, emptyLine()]);
+    setScrollToIndex(lines.length); // index of the just-added line
+  };
   const removeLine = (i: number) =>
     setLines((prev) => (prev.length === 1 ? prev : prev.filter((_, idx) => idx !== i)));
+
+  // Scroll newly-added line into view
+  useEffect(() => {
+    if (scrollToIndex === null) return;
+    // Wait one paint so the new card is in the DOM
+    const id = requestAnimationFrame(() => {
+      const el = document.querySelector<HTMLElement>(`[data-line-index="${scrollToIndex}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      setScrollToIndex(null);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [scrollToIndex]);
 
   // ── Full-audio aggregation ───────────────────────────────────────────
   const fullRegions = useMemo<FullRegionInput[]>(() => {

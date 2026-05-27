@@ -98,7 +98,10 @@ const LineEditor: React.FC<Props> = ({
     status === "done" ? "border-green-300" : status === "warn" ? "border-amber-300" : "border-gray-200";
 
   return (
-    <div className={`line-card border ${borderClass} bg-white/60 rounded-lg overflow-hidden`}>
+    <div
+      data-line-index={index}
+      className={`line-card border ${borderClass} bg-white/60 rounded-lg overflow-hidden scroll-mt-24`}
+    >
       <LineCardHeader
         index={index}
         status={status}
