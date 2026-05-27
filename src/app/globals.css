@@ -283,3 +283,47 @@ body {
     transition-duration: 80ms !important;
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Mobile-first utilities (added 2026-05-27)
+ * ────────────────────────────────────────────────────────────────────── */
+
+/* Safe-area-inset-bottom padding for sticky bottom UI on iPhone notch */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pb-safe-tab {
+  padding-bottom: calc(56px + env(safe-area-inset-bottom));
+}
+.pb-safe-tab-with-player {
+  padding-bottom: calc(56px + 86px + env(safe-area-inset-bottom));
+}
+
+/* Amber accent — new for mobile redesign */
+.bg-accent { background-color: #D4A574; }
+.text-accent { color: #D4A574; }
+.border-accent { border-color: #D4A574; }
+.bg-accent-soft { background-color: #FDF5E6; }
+
+/* Touch target helper — ensures min 44x44 hit area */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Tab bar entry animation */
+@keyframes tab-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.anim-tab-fade-in { animation: tab-fade-in 200ms ease-out both; }
+
+/* Mini-player slide-up animation */
+@keyframes player-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.anim-player-slide-up { animation: player-slide-up 280ms ease-out both; }
