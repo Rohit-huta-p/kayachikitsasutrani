@@ -7,7 +7,10 @@ import type {
   ShlokaInput,
 } from './auth/types';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+// Empty base — relative `/api/*` paths are proxied to the backend by
+// Next.js rewrites in next.config.ts. This keeps cookies first-party
+// (browser sees only the frontend origin) which fixes Safari ITP blocking.
+const BASE = '';
 
 function qs(params?: Record<string, string | number | undefined>): string {
   if (!params) return '';
