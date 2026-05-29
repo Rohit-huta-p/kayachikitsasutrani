@@ -3,36 +3,45 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useCompletions } from "@/lib/completions/CompletionsContext";
 import TopBar from "@/components/student/TopBar";
 import AvatarCircle from "@/components/student/AvatarCircle";
 import ShlokaListItem from "@/components/student/ShlokaListItem";
 import StatsBanner from "@/components/student/StatsBanner";
 import ShlokaList from "./components/ShlokaList";
-import type { PublicShloka, MyCompletionRow, ApiError } from "@/lib/auth/types";
+import type { PublicShloka, ApiError } from "@/lib/auth/types";
 
 export default function Home() {
   const { state: authState } = useAuth();
   const me = authState.status === "authed" ? authState.user : null;
+  const {
+    items: completions,
+    loading: completionsLoading,
+    error: completionsError,
+  } = useCompletions();
   const [shlokas, setShlokas] = useState<PublicShloka[]>([]);
-  const [completions, setCompletions] = useState<MyCompletionRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [shlokasLoading, setShlokasLoading] = useState(true);
+  const [shlokasError, setShlokasError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api.shlokas.list(), api.me.completions()])
-      .then(([listRes, meRes]) => {
-        if (cancelled) return;
-        setShlokas(listRes.items);
-        setCompletions(meRes.items);
+    api.shlokas
+      .list()
+      .then((listRes) => {
+        if (!cancelled) setShlokas(listRes.items);
       })
       .catch((err: ApiError) => {
-        if (!cancelled) setError(err.message || "Failed to load");
+        if (!cancelled) setShlokasError(err.message || "Failed to load");
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => {
+        if (!cancelled) setShlokasLoading(false);
+      });
     return () => { cancelled = true; };
   }, []);
+
+  const loading = shlokasLoading || completionsLoading;
+  const error = shlokasError || completionsError;
 
   const completionsBySlug = useMemo(
     () => new Map(completions.map((c) => [c.slug, c])),

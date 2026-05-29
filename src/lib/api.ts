@@ -23,23 +23,36 @@ function qs(params?: Record<string, string | number | undefined>): string {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    ...init,
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
-  });
-  const body = (await res.json().catch(() => null)) as
-    | ({ error?: { code: string; message: string } } & Record<string, unknown>)
-    | null;
-  if (!res.ok) {
-    const code = body?.error?.code ?? `HTTP_${res.status}`;
-    const message = body?.error?.message ?? `Request failed (${res.status})`;
-    const err = new Error(message) as ApiError;
-    err.code = code;
-    err.status = res.status;
-    throw err;
+  const url = `${BASE}${path}`;
+  const maxAttempts = 3;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const res = await fetch(url, {
+      ...init,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+    });
+    if (res.status === 429 && attempt < maxAttempts - 1) {
+      const retryAfter = parseInt(res.headers.get('retry-after') || '0', 10);
+      // Honor Retry-After if present (seconds), else exponential backoff (500ms, 1500ms)
+      const delayMs = retryAfter > 0 ? retryAfter * 1000 : (500 * Math.pow(3, attempt));
+      await new Promise((r) => setTimeout(r, Math.min(delayMs, 5000)));
+      continue;
+    }
+    const body = (await res.json().catch(() => null)) as
+      | ({ error?: { code: string; message: string } } & Record<string, unknown>)
+      | null;
+    if (!res.ok) {
+      const code = body?.error?.code ?? `HTTP_${res.status}`;
+      const message = body?.error?.message ?? `Request failed (${res.status})`;
+      const err = new Error(message) as ApiError;
+      err.code = code;
+      err.status = res.status;
+      throw err;
+    }
+    return body as unknown as T;
   }
-  return body as unknown as T;
+  // Unreachable in practice — the loop either returns or throws inside
+  throw new Error('Request failed after retries');
 }
 
 async function uploadFile<T>(path: string, file: File): Promise<T> {

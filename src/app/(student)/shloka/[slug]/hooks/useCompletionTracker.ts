@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
+import { useCompletions } from "@/lib/completions/CompletionsContext";
 import type { PlayerState } from "./playerReducer";
 
 interface Result {
@@ -23,6 +24,7 @@ interface Result {
  * POSTs the completion to the backend.
  */
 export function useCompletionTracker(slug: string | undefined, state: PlayerState): Result {
+  const { refresh: refreshCompletions } = useCompletions();
   const [submitted, setSubmitted] = useState(false);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [attempts, setAttempts] = useState<number | undefined>();
@@ -58,12 +60,15 @@ export function useCompletionTracker(slug: string | undefined, state: PlayerStat
           setAttempts(res.completion.attempts);
           setElapsedSeconds(res.completion.elapsedSeconds);
           setCompletionVersion((v) => v + 1);
+          // Refresh shared completions so My Shlokas / Me / Home reflect the new
+          // completion immediately on next navigation.
+          void refreshCompletions();
         })
         .catch(() => {
           // Swallow — next DONE in this session won't retry. Could add retry later.
         });
     }
-  }, [state.status, slug, submitted]);
+  }, [state.status, slug, submitted, refreshCompletions]);
 
   return { submitted, alreadyCompleted, attempts, elapsedSeconds, completionVersion };
 }

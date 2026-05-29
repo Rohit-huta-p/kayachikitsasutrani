@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useCompletions } from "@/lib/completions/CompletionsContext";
 import TopBar from "@/components/student/TopBar";
 import AvatarCircle from "@/components/student/AvatarCircle";
-import type { MyCompletionRow, ApiError } from "@/lib/auth/types";
 
 function timeAgo(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -29,24 +28,8 @@ type Filter = "all" | "top5" | "recent";
 export default function MyShlokas() {
   const { state: authState } = useAuth();
   const me = authState.status === "authed" ? authState.user : null;
-  const [items, setItems] = useState<MyCompletionRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { items, loading, error } = useCompletions();
   const [filter, setFilter] = useState<Filter>("all");
-
-  useEffect(() => {
-    let cancelled = false;
-    api.me
-      .completions()
-      .then((res) => {
-        if (!cancelled) setItems(res.items);
-      })
-      .catch((err: ApiError) => {
-        if (!cancelled) setError(err.message || "Failed to load");
-      })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
 
   const best = useMemo(() => {
     if (items.length === 0) return null;

@@ -1,34 +1,17 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useCompletions } from "@/lib/completions/CompletionsContext";
 import TopBar from "@/components/student/TopBar";
 import AvatarCircle from "@/components/student/AvatarCircle";
-import type { MyCompletionRow, ApiError } from "@/lib/auth/types";
 
 export default function Me() {
   const router = useRouter();
   const { state: authState, logout } = useAuth();
   const me = authState.status === "authed" ? authState.user : null;
-  const [completions, setCompletions] = useState<MyCompletionRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    api.me
-      .completions()
-      .then((res) => {
-        if (!cancelled) setCompletions(res.items);
-      })
-      .catch((err: ApiError) => {
-        if (!cancelled) setError(err.message || "Failed to load stats");
-      })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+  const { items: completions, loading, error } = useCompletions();
 
   const stats = useMemo(() => {
     const totalAttempts = completions.reduce((sum, c) => sum + c.attempts, 0);
