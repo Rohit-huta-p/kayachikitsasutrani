@@ -37,7 +37,7 @@ const AudioUploadField: React.FC<Props> = ({ label, value, onChange }) => {
       <input
         ref={inputRef}
         type="file"
-        accept="audio/mpeg,audio/wav,audio/mp3"
+        accept="audio/mpeg,audio/wav,audio/mp3,audio/mp4,audio/x-m4a,audio/aac,.m4a"
         onChange={handleFile}
         disabled={uploading}
         className="hidden"
