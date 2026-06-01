@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import type { PublicUser, ApiError } from "@/lib/auth/types";
+import AvatarCircle from "@/components/student/AvatarCircle";
 
 const StudentListPage: React.FC = () => {
   const [items, setItems] = useState<PublicUser[]>([]);
@@ -39,57 +40,106 @@ const StudentListPage: React.FC = () => {
   });
 
   return (
-    <div className="p-10">
-      <h1 className="text-2xl text-brown mb-4">Students</h1>
-      <input
-        type="search"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search name or email"
-        className="border px-2 py-1 rounded text-sm mb-3 max-w-sm w-full"
-      />
-      {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+    <>
+      {/* ── Desktop ─────────────────────────────────────────────────── */}
+      <div className="hidden md:block p-10">
+        <h1 className="text-2xl text-brown mb-4">Students</h1>
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search name or email"
+          className="border px-2 py-1 rounded text-sm mb-3 max-w-sm w-full"
+        />
+        {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
 
-      <table className="w-full text-sm bg-white/40 rounded">
-        <thead>
-          <tr className="text-left border-b">
-            <th className="p-2">Name</th>
-            <th className="p-2">Email</th>
-            <th className="p-2">Role</th>
-            <th className="p-2">Joined</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.map((u) => (
-            <tr key={u.id} className="border-b hover:bg-white/60">
-              <td className="p-2">
-                <Link href={`/admin/students/${u.id}`} className="text-green underline">{u.name}</Link>
-              </td>
-              <td className="p-2">{u.email}</td>
-              <td className="p-2">{u.role}</td>
-              <td className="p-2 text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
+        <table className="w-full text-sm bg-white/40 rounded">
+          <thead>
+            <tr className="text-left border-b">
+              <th className="p-2">Name</th>
+              <th className="p-2">Email</th>
+              <th className="p-2">Role</th>
+              <th className="p-2">Joined</th>
             </tr>
-          ))}
-          {!loading && filtered.length === 0 && (
-            <tr>
-              <td colSpan={4} className="p-4 text-center text-gray-500">No students.</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filtered.map((u) => (
+              <tr key={u.id} className="border-b last:border-b-0">
+                <td className="p-2">
+                  <Link href={`/admin/students/${u.id}`} className="text-green underline">
+                    {u.name}
+                  </Link>
+                </td>
+                <td className="p-2">{u.email}</td>
+                <td className="p-2">{u.role}</td>
+                <td className="p-2">{new Date(u.createdAt).toLocaleDateString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-      {loading && <p className="text-sm mt-3">Loading…</p>}
+        {loading && <p className="text-sm text-gray-500 mt-3">Loading…</p>}
+        {!loading && filtered.length === 0 && (
+          <p className="text-sm text-gray-500 italic mt-3">No students match.</p>
+        )}
+        {nextCursor && (
+          <button
+            type="button"
+            onClick={() => void fetchPage(nextCursor, false)}
+            className="mt-3 text-xs text-green underline"
+          >
+            Load more
+          </button>
+        )}
+      </div>
 
-      {nextCursor && !loading && (
-        <button
-          type="button"
-          onClick={() => void fetchPage(nextCursor, false)}
-          className="mt-3 px-3 py-1 text-sm border rounded"
-        >
-          Load more
-        </button>
-      )}
-    </div>
+      {/* ── Mobile ──────────────────────────────────────────────────── */}
+      <div className="md:hidden px-4 py-4 flex flex-col gap-3 max-w-md mx-auto">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold text-brown">Students</h1>
+          <span className="text-xs text-gray-500">{filtered.length}</span>
+        </div>
+
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="🔍 Search name or email"
+          className="bg-white border border-[#E5DDD0] rounded-xl px-3 py-2.5 text-sm text-brown outline-none focus:border-accent"
+        />
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {loading && <p className="text-sm text-gray-500">Loading…</p>}
+        {!loading && filtered.length === 0 && (
+          <p className="text-sm text-gray-500 italic">No students match.</p>
+        )}
+
+        {filtered.map((u) => (
+          <Link
+            key={u.id}
+            href={`/admin/students/${u.id}`}
+            className="bg-white border border-[#E5DDD0] rounded-xl p-3 flex gap-3 items-center hover:bg-white/80 transition"
+          >
+            <AvatarCircle name={u.name} email={u.email} size={40} />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-brown truncate">{u.name}</div>
+              <div className="text-xs text-gray-500 truncate">{u.email}</div>
+            </div>
+            <span className="text-gray-400" aria-hidden="true">›</span>
+          </Link>
+        ))}
+
+        {nextCursor && (
+          <button
+            type="button"
+            onClick={() => void fetchPage(nextCursor, false)}
+            className="text-center text-xs text-accent font-semibold py-2"
+          >
+            Load more
+          </button>
+        )}
+      </div>
+    </>
   );
 };
 
