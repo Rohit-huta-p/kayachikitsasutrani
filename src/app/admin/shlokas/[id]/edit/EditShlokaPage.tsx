@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ShlokaForm from "../../components/ShlokaForm";
+import UseDesktopPrompt from "@/components/admin/UseDesktopPrompt";
 import { api } from "@/lib/api";
 import type { PublicShloka, ApiError } from "@/lib/auth/types";
 
@@ -26,18 +27,29 @@ const EditShlokaPage: React.FC = () => {
   if (!shloka) return <div className="p-10 text-brown">Loading…</div>;
 
   return (
-    <ShlokaForm
-      initial={shloka}
-      onSaved={(saved, status) => {
-        if (status === "published") {
-          router.push("/admin/shlokas");
-        } else {
-          // Draft saved — stay on page, refresh local snapshot with server's
-          // canonical version so subsequent saves reuse the same id.
-          setShloka(saved);
-        }
-      }}
-    />
+    <>
+      <div className="md:hidden">
+        <UseDesktopPrompt
+          backHref="/admin/shlokas"
+          backLabel="Back to shlokas"
+          body="Editing a shloka needs the waveform timing editor — open this page on a desktop or tablet."
+        />
+      </div>
+      <div className="hidden md:block">
+        <ShlokaForm
+          initial={shloka}
+          onSaved={(saved, status) => {
+            if (status === "published") {
+              router.push("/admin/shlokas");
+            } else {
+              // Draft saved — stay on page, refresh local snapshot with server's
+              // canonical version so subsequent saves reuse the same id.
+              setShloka(saved);
+            }
+          }}
+        />
+      </div>
+    </>
   );
 };
 
