@@ -3,18 +3,19 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Home, BookOpen, User } from "lucide-react";
 
 interface Tab {
   href: string;
-  icon: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
   matchPrefix?: string;
 }
 
 const tabs: Tab[] = [
-  { href: "/home", icon: "🏠", label: "Home", matchPrefix: "/home" },
-  { href: "/my-shlokas", icon: "📚", label: "My", matchPrefix: "/my-shlokas" },
-  { href: "/me", icon: "👤", label: "Me", matchPrefix: "/me" },
+  { href: "/home", icon: Home, label: "Home", matchPrefix: "/home" },
+  { href: "/my-shlokas", icon: BookOpen, label: "My", matchPrefix: "/my-shlokas" },
+  { href: "/me", icon: User, label: "Me", matchPrefix: "/me" },
 ];
 
 const TabBar: React.FC = () => {
@@ -32,7 +33,7 @@ const TabBar: React.FC = () => {
             }`}
             aria-current={active ? "page" : undefined}
           >
-            <span className="text-xl leading-none" aria-hidden="true">{t.icon}</span>
+            <t.icon size={20} aria-hidden="true" />
             <span>{t.label}</span>
           </Link>
         );

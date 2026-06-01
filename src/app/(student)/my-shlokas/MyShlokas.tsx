@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import { Star, ChevronRight, Check } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useCompletions } from "@/lib/completions/CompletionsContext";
 import TopBar from "@/components/student/TopBar";
@@ -117,7 +118,7 @@ export default function MyShlokas() {
               style={{ background: "linear-gradient(135deg,#7BA77B,#A5D6A7)" }}
               aria-hidden="true"
             >
-              ✓
+              <Check size={16} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-brown truncate">{row.title}</div>
@@ -126,9 +127,9 @@ export default function MyShlokas() {
               </div>
             </div>
             {row.rank === 1 ? (
-              <span className="text-accent text-base" aria-hidden="true">★</span>
+              <Star size={14} className="text-accent fill-accent" aria-hidden="true" />
             ) : (
-              <span className="text-gray-400" aria-hidden="true">›</span>
+              <ChevronRight size={16} className="text-gray-400" aria-hidden="true" />
             )}
           </Link>
         ))}

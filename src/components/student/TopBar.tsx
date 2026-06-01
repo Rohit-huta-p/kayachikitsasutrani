@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 interface Props {
   title: string;
@@ -21,7 +22,7 @@ const TopBar: React.FC<Props> = ({ title, subtitle, showBack = false, trailing }
           className="touch-target -ml-2"
           aria-label="Go back"
         >
-          <span className="text-xl" aria-hidden="true">←</span>
+          <ArrowLeft size={20} aria-hidden="true" />
         </button>
       )}
       <div className="flex-1 min-w-0">

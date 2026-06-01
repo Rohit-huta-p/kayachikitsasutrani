@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api";
 import type { PublicUser, ApiError } from "@/lib/auth/types";
 import AvatarCircle from "@/components/student/AvatarCircle";
@@ -62,8 +63,9 @@ const StudentDetailPage: React.FC = () => {
 
       {/* ── Mobile ──────────────────────────────────────────────────── */}
       <div className="md:hidden px-4 py-4 flex flex-col gap-3 max-w-md mx-auto">
-        <Link href="/admin/students" className="text-sm text-accent font-semibold">
-          ← Back to students
+        <Link href="/admin/students" className="text-sm text-accent font-semibold inline-flex items-center">
+          <ArrowLeft size={14} className="inline mr-1" />
+          Back to students
         </Link>
 
         {/* Profile card */}

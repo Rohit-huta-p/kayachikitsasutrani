@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { Search, ChevronRight } from "lucide-react";
 import { api } from "@/lib/api";
 import type { PublicUser, ApiError } from "@/lib/auth/types";
 import AvatarCircle from "@/components/student/AvatarCircle";
@@ -100,13 +101,16 @@ const StudentListPage: React.FC = () => {
           <span className="text-xs text-gray-500">{filtered.length}</span>
         </div>
 
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="🔍 Search name or email"
-          className="bg-white border border-[#E5DDD0] rounded-xl px-3 py-2.5 text-sm text-brown outline-none focus:border-accent"
-        />
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search name or email"
+            className="bg-white border border-[#E5DDD0] rounded-xl pl-9 pr-3 py-2.5 text-sm text-brown outline-none focus:border-accent w-full"
+          />
+        </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
         {loading && <p className="text-sm text-gray-500">Loading…</p>}
@@ -125,7 +129,7 @@ const StudentListPage: React.FC = () => {
               <div className="text-sm font-semibold text-brown truncate">{u.name}</div>
               <div className="text-xs text-gray-500 truncate">{u.email}</div>
             </div>
-            <span className="text-gray-400" aria-hidden="true">›</span>
+            <ChevronRight size={16} className="text-gray-400" aria-hidden="true" />
           </Link>
         ))}
 

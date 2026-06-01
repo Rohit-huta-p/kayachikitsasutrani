@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { Plus, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import type { PublicShloka, ApiError } from "@/lib/auth/types";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
@@ -81,9 +82,10 @@ const ShlokaListPage: React.FC = () => {
           <h1 className="text-2xl text-brown">Shlokas</h1>
           <Link
             href="/admin/shlokas/new"
-            className="bg-green text-white px-3 py-1.5 text-sm rounded hover:opacity-90"
+            className="inline-flex items-center gap-1 bg-green text-white px-3 py-1.5 text-sm rounded hover:opacity-90"
           >
-            + New
+            <Plus size={14} />
+            New
           </Link>
         </div>
 
@@ -170,9 +172,10 @@ const ShlokaListPage: React.FC = () => {
           <h1 className="text-xl font-bold text-brown">Shlokas</h1>
           <Link
             href="/admin/shlokas/new"
-            className="bg-accent text-white text-xs font-semibold px-3 py-1.5 rounded-full"
+            className="inline-flex items-center gap-1 bg-accent text-white text-xs font-semibold px-3 py-1.5 rounded-full"
           >
-            + New
+            <Plus size={14} />
+            New
           </Link>
         </div>
 
@@ -193,13 +196,16 @@ const ShlokaListPage: React.FC = () => {
           ))}
         </div>
 
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="🔍 Search title or slug"
-          className="bg-white border border-[#E5DDD0] rounded-xl px-3 py-2.5 text-sm text-brown outline-none focus:border-accent"
-        />
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search title or slug"
+            className="bg-white border border-[#E5DDD0] rounded-xl pl-9 pr-3 py-2.5 text-sm text-brown outline-none focus:border-accent w-full"
+          />
+        </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
         {loading && <p className="text-sm text-gray-500">Loading…</p>}

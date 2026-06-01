@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Heart } from "lucide-react";
+import { Heart, Check, Circle } from "lucide-react";
 import { MdOutlineSkipPrevious, MdPlayArrow, MdSkipNext } from "react-icons/md";
 import { CiPause1 } from "react-icons/ci";
 import { BiHide } from "react-icons/bi";
@@ -156,7 +156,15 @@ const ShlokaDesc = ({ shloka }) => {
                 }`}
               >
                 <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                  <span aria-hidden="true">{isDone ? "✓" : isCurrent ? "●" : "○"}</span>
+                  <span aria-hidden="true" className="inline-flex items-center">
+                    {isDone ? (
+                      <Check size={12} className="text-green-600" />
+                    ) : isCurrent ? (
+                      <Circle size={6} className="fill-accent stroke-accent inline-block" />
+                    ) : (
+                      <Circle size={10} className="text-gray-300" />
+                    )}
+                  </span>
                   <span className={isCurrent ? "text-accent font-bold" : ""}>
                     Line {i + 1}{isCurrent ? ` · playing` : isDone ? ` · done` : ""}
                   </span>

@@ -4,6 +4,7 @@ import React, { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useCompletions } from "@/lib/completions/CompletionsContext";
+import { Settings, Pencil, LogOut } from "lucide-react";
 import TopBar from "@/components/student/TopBar";
 import AvatarCircle from "@/components/student/AvatarCircle";
 
@@ -41,7 +42,7 @@ export default function Me() {
       <TopBar
         subtitle="Your profile"
         title="Me"
-        trailing={<span className="text-xl" aria-hidden="true">⚙️</span>}
+        trailing={<Settings size={20} aria-hidden="true" />}
       />
       <div className="px-4 py-4 flex flex-col gap-3 max-w-md mx-auto md:max-w-2xl">
         {/* Avatar block */}
@@ -88,7 +89,8 @@ export default function Me() {
           disabled
           className="bg-white border border-[#E5DDD0] rounded-xl px-3 py-3 text-sm font-semibold text-brown text-left opacity-60 cursor-not-allowed"
         >
-          📝 Edit profile <span className="text-xs text-gray-400 ml-2">(coming soon)</span>
+          <Pencil size={14} className="inline mr-1" />
+          Edit profile <span className="text-xs text-gray-400 ml-2">(coming soon)</span>
         </button>
         <button
           type="button"
@@ -98,7 +100,8 @@ export default function Me() {
           }}
           className="bg-white border border-red-300 text-red-600 rounded-xl px-3 py-3 text-sm font-semibold text-left hover:bg-red-50 transition"
         >
-          ↪ Log out
+          <LogOut size={14} className="inline mr-1" />
+          Log out
         </button>
       </div>
     </div>

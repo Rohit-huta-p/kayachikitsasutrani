@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { Check, ChevronRight } from "lucide-react";
 
 interface Props {
   slug: string;
@@ -42,7 +43,7 @@ const ShlokaListItem: React.FC<Props> = ({
         }}
         aria-hidden="true"
       >
-        {done ? "✓" : (index !== undefined ? String(index) : "•")}
+        {done ? <Check size={16} /> : (index !== undefined ? String(index) : "•")}
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-semibold text-brown truncate">
@@ -54,7 +55,7 @@ const ShlokaListItem: React.FC<Props> = ({
             : `${lineCount ?? 0} lines${totalCompletions !== undefined ? ` · ${totalCompletions} completed` : ""}`}
         </div>
       </div>
-      <span className="text-gray-400" aria-hidden="true">›</span>
+      <ChevronRight size={16} className="text-gray-400" aria-hidden="true" />
     </Link>
   );
 };

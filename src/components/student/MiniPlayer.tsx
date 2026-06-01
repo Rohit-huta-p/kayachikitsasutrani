@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { SkipBack, SkipForward, Play, Pause, Eye, EyeOff } from "lucide-react";
 
 interface Props {
   /** Current line number (1-indexed) */
@@ -38,7 +39,6 @@ const MiniPlayer: React.FC<Props> = ({
   currentLine, totalLines, rep, maxReps, status, progress, elapsedSec, totalSec, hidden,
   onPlayPause, onSkipPrev, onSkipNext, onToggleHide,
 }) => {
-  const mainIcon = status === "playing" ? "⏸" : "▶";
   const mainLabel = status === "playing" ? "Pause" : status === "paused" ? "Resume" : status === "done" ? "Replay" : "Play";
 
   return (
@@ -53,13 +53,17 @@ const MiniPlayer: React.FC<Props> = ({
         </div>
         <div className="flex items-center justify-center gap-2">
           <button type="button" onClick={onSkipPrev} className="touch-target rounded-full bg-white border border-[#E5DDD0] text-brown" aria-label="Skip previous line">
-            <span aria-hidden="true">⏮</span>
+            <SkipBack size={18} aria-hidden="true" />
           </button>
           <button type="button" onClick={onPlayPause} className="touch-target rounded-full bg-accent text-white text-lg" aria-label={mainLabel} title={mainLabel}>
-            <span aria-hidden="true">{mainIcon}</span>
+            {status === "playing" ? (
+              <Pause size={20} aria-hidden="true" />
+            ) : (
+              <Play size={20} aria-hidden="true" />
+            )}
           </button>
           <button type="button" onClick={onSkipNext} className="touch-target rounded-full bg-white border border-[#E5DDD0] text-brown" aria-label="Skip next line">
-            <span aria-hidden="true">⏭</span>
+            <SkipForward size={18} aria-hidden="true" />
           </button>
           {onToggleHide && (
             <button
@@ -69,7 +73,11 @@ const MiniPlayer: React.FC<Props> = ({
               aria-label={hidden ? "Show Sanskrit" : "Hide Sanskrit"}
               title={hidden ? "Show Sanskrit" : "Hide Sanskrit"}
             >
-              <span aria-hidden="true">🙈</span>
+              {hidden ? (
+                <EyeOff size={18} aria-hidden="true" />
+              ) : (
+                <Eye size={18} aria-hidden="true" />
+              )}
             </button>
           )}
         </div>

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { Pencil, LogOut } from "lucide-react";
 import AvatarCircle from "@/components/student/AvatarCircle";
 import type { ApiError } from "@/lib/auth/types";
 
@@ -89,7 +90,8 @@ export default function Me() {
         disabled
         className="bg-white border border-[#E5DDD0] rounded-xl px-3 py-3 text-sm font-semibold text-brown text-left opacity-60 cursor-not-allowed"
       >
-        📝 Edit profile <span className="text-xs text-gray-400 ml-2">(coming soon)</span>
+        <Pencil size={14} className="inline mr-1" />
+        Edit profile <span className="text-xs text-gray-400 ml-2">(coming soon)</span>
       </button>
       <button
         type="button"
@@ -99,7 +101,8 @@ export default function Me() {
         }}
         className="bg-white border border-red-300 text-red-600 rounded-xl px-3 py-3 text-sm font-semibold text-left hover:bg-red-50 transition"
       >
-        ↪ Log out
+        <LogOut size={14} className="inline mr-1" />
+        Log out
       </button>
     </div>
   );
