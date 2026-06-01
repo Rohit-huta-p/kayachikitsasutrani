@@ -25,7 +25,20 @@ const EditShlokaPage: React.FC = () => {
   if (error) return <div className="p-10 text-red-600">{error}</div>;
   if (!shloka) return <div className="p-10 text-brown">Loading…</div>;
 
-  return <ShlokaForm initial={shloka} onSaved={() => router.push("/admin/shlokas")} />;
+  return (
+    <ShlokaForm
+      initial={shloka}
+      onSaved={(saved, status) => {
+        if (status === "published") {
+          router.push("/admin/shlokas");
+        } else {
+          // Draft saved — stay on page, refresh local snapshot with server's
+          // canonical version so subsequent saves reuse the same id.
+          setShloka(saved);
+        }
+      }}
+    />
+  );
 };
 
 export default EditShlokaPage;

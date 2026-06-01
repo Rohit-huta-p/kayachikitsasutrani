@@ -13,7 +13,7 @@ import type { PublicShloka, ShlokaInput, ShlokaAssetInput } from "@/lib/auth/typ
 
 interface Props {
   initial?: PublicShloka;
-  onSaved: (s: PublicShloka) => void;
+  onSaved: (s: PublicShloka, status: "draft" | "published") => void;
 }
 
 function toEntries(line: PublicShloka["lines"][number]): WordEntry[] {
@@ -290,7 +290,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
           ? await api.admin.shlokas.update(initial.id, body)
           : await api.admin.shlokas.create(body);
       refreshSnapshot();
-      onSaved(saved);
+      onSaved(saved, nextStatus);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
     } finally {
