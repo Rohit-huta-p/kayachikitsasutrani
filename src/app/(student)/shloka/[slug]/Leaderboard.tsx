@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import LottieLoader from "@/components/LottieLoader";
 import type { LeaderboardRow, ApiError } from "@/lib/auth/types";
 
 interface Props {
@@ -62,7 +63,7 @@ const Leaderboard: React.FC<Props> = ({ slug, currentUserId, refreshKey }) => {
           <span className="text-xs font-normal text-gray-500">({total} completed)</span>
         </h3>
       </div>
-      {loading && <p className="text-sm text-gray-500">Loading…</p>}
+      {loading && <LottieLoader size={48} />}
       {error && (
         <div className="text-sm">
           <p className="text-red-600">{error}</p>

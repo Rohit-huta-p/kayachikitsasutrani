@@ -6,6 +6,7 @@ import { Plus, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import type { PublicShloka, ApiError } from "@/lib/auth/types";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
+import LottieLoader from "@/components/LottieLoader";
 
 type StatusFilter = "all" | "draft" | "published";
 
@@ -151,7 +152,7 @@ const ShlokaListPage: React.FC = () => {
           </tbody>
         </table>
 
-        {loading && <p className="text-sm text-gray-500 mt-3">Loading…</p>}
+        {loading && <LottieLoader />}
         {!loading && filtered.length === 0 && (
           <p className="text-sm text-gray-500 italic mt-3">No shlokas match.</p>
         )}
@@ -208,7 +209,7 @@ const ShlokaListPage: React.FC = () => {
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {loading && <p className="text-sm text-gray-500">Loading…</p>}
+        {loading && <LottieLoader />}
         {!loading && filtered.length === 0 && (
           <p className="text-sm text-gray-500 italic">No shlokas match.</p>
         )}

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ShlokaForm from "../../components/ShlokaForm";
 import UseDesktopPrompt from "@/components/admin/UseDesktopPrompt";
+import LottieLoader from "@/components/LottieLoader";
 import { api } from "@/lib/api";
 import type { PublicShloka, ApiError } from "@/lib/auth/types";
 
@@ -24,7 +25,7 @@ const EditShlokaPage: React.FC = () => {
   }, [id]);
 
   if (error) return <div className="p-10 text-red-600">{error}</div>;
-  if (!shloka) return <div className="p-10 text-brown">Loading…</div>;
+  if (!shloka) return <div className="p-10"><LottieLoader /></div>;
 
   return (
     <>

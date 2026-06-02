@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { useCompletions } from "@/lib/completions/CompletionsContext";
 import TopBar from "@/components/student/TopBar";
 import AvatarCircle from "@/components/student/AvatarCircle";
+import LottieLoader from "@/components/LottieLoader";
 
 function timeAgo(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -94,7 +95,7 @@ export default function MyShlokas() {
           Completed shlokas
         </div>
 
-        {loading && <p className="text-sm text-gray-500">Loading…</p>}
+        {loading && <LottieLoader />}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         {!loading && !error && items.length === 0 && (

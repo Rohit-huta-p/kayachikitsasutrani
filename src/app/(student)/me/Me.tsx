@@ -7,6 +7,7 @@ import { useCompletions } from "@/lib/completions/CompletionsContext";
 import { Settings, Pencil, LogOut } from "lucide-react";
 import TopBar from "@/components/student/TopBar";
 import AvatarCircle from "@/components/student/AvatarCircle";
+import LottieLoader from "@/components/LottieLoader";
 
 export default function Me() {
   const router = useRouter();
@@ -64,7 +65,7 @@ export default function Me() {
         {/* Stats card */}
         <div className="bg-white border border-[#E5DDD0] rounded-xl p-4">
           <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">Your stats</div>
-          {loading && <p className="text-sm text-gray-500">Loading…</p>}
+          {loading && <LottieLoader size={48} />}
           {error && <p className="text-sm text-red-600">{error}</p>}
           {!loading && !error && (
             <div className="flex justify-around text-center">

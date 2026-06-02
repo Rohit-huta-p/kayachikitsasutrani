@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Pencil, LogOut } from "lucide-react";
 import AvatarCircle from "@/components/student/AvatarCircle";
+import LottieLoader from "@/components/LottieLoader";
 import type { ApiError } from "@/lib/auth/types";
 
 export default function Me() {
@@ -73,7 +74,7 @@ export default function Me() {
       {/* Stats card */}
       <div className="bg-white border border-[#E5DDD0] rounded-xl p-4">
         <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">Catalog</div>
-        {loading && <p className="text-sm text-gray-500">Loading…</p>}
+        {loading && <LottieLoader size={48} />}
         {error && <p className="text-sm text-red-600">{error}</p>}
         {!loading && !error && (
           <div className="flex justify-around text-center">

@@ -6,6 +6,7 @@ import { Search, ChevronRight } from "lucide-react";
 import { api } from "@/lib/api";
 import type { PublicUser, ApiError } from "@/lib/auth/types";
 import AvatarCircle from "@/components/student/AvatarCircle";
+import LottieLoader from "@/components/LottieLoader";
 
 const StudentListPage: React.FC = () => {
   const [items, setItems] = useState<PublicUser[]>([]);
@@ -79,7 +80,7 @@ const StudentListPage: React.FC = () => {
           </tbody>
         </table>
 
-        {loading && <p className="text-sm text-gray-500 mt-3">Loading…</p>}
+        {loading && <LottieLoader />}
         {!loading && filtered.length === 0 && (
           <p className="text-sm text-gray-500 italic mt-3">No students match.</p>
         )}
@@ -113,7 +114,7 @@ const StudentListPage: React.FC = () => {
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {loading && <p className="text-sm text-gray-500">Loading…</p>}
+        {loading && <LottieLoader />}
         {!loading && filtered.length === 0 && (
           <p className="text-sm text-gray-500 italic">No students match.</p>
         )}

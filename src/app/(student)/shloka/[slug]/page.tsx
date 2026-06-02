@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ShlokaDesc from "./ShlokaDesc";
 import { api } from "@/lib/api";
+import LottieLoader from "@/components/LottieLoader";
 import type { PublicShloka, ApiError } from "@/lib/auth/types";
 
 const Page = () => {
@@ -33,7 +34,7 @@ const Page = () => {
       </div>
     );
   }
-  if (!shloka) return <div className="p-10">Loading…</div>;
+  if (!shloka) return <LottieLoader className="min-h-[40vh]" />;
   return <ShlokaDesc shloka={shloka} />;
 };
 

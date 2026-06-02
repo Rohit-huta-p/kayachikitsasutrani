@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api";
 import type { PublicUser, ApiError } from "@/lib/auth/types";
 import AvatarCircle from "@/components/student/AvatarCircle";
+import LottieLoader from "@/components/LottieLoader";
 
 const Row: React.FC<{ k: string; v?: string | number }> = ({ k, v }) => (
   <div className="flex border-b py-2 text-sm">
@@ -40,7 +41,7 @@ const StudentDetailPage: React.FC = () => {
   }, [id]);
 
   if (error) return <div className="p-10 text-red-600">{error}</div>;
-  if (!user) return <div className="p-10">Loading…</div>;
+  if (!user) return <div className="p-10"><LottieLoader /></div>;
 
   return (
     <>

@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useCompletions } from "@/lib/completions/CompletionsContext";
 import ShlokaList from "./components/ShlokaList";
+import LottieLoader from "@/components/LottieLoader";
 import type { PublicShloka, ApiError, MyCompletionRow } from "@/lib/auth/types";
 
 function timeAgo(iso: string): string {
@@ -145,7 +146,7 @@ export default function Home() {
             className="w-full bg-white border border-[#F0E7D8] rounded-xl px-3 py-2.5 text-sm text-brown outline-none focus:border-accent mb-3"
           />
 
-          {loading && <p className="text-sm text-gray-500">Loading…</p>}
+          {loading && <LottieLoader />}
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           {!loading && !error && filtered.length === 0 && (
@@ -182,7 +183,7 @@ export default function Home() {
           placeholder="Search for Shlokas"
           className="w-full max-w-md rounded bg-white border border-[#E5DDD0] px-3 py-2 text-sm text-brown outline-none focus:border-accent"
         />
-        {loading && <p>Loading…</p>}
+        {loading && <LottieLoader />}
         {error && <p className="text-red-600">{error}</p>}
         {!loading && !error && <ShlokaList shlokas={filtered} />}
       </div>
