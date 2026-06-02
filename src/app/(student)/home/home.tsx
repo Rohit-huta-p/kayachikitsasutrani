@@ -33,6 +33,14 @@ function greetingFor(date = new Date()): string {
   return "GOOD EVENING";
 }
 
+function prettifySlug(slug: string): string {
+  return slug
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
 export default function Home() {
   const { state: authState } = useAuth();
   const me = authState.status === "authed" ? authState.user : null;
@@ -210,7 +218,7 @@ function MobileShlokaCard({ shloka, index, completion }: MobileShlokaCardProps) 
       </div>
       <div className="flex-1 min-w-0 pr-8">
         <div className="text-[14px] font-bold text-[#2A1F12] truncate">
-          {shloka.title}
+          {prettifySlug(shloka.slug)}
         </div>
         <div className="text-[10px] text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
           {done && completion ? (
