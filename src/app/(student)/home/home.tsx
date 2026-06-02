@@ -210,7 +210,7 @@ function MobileShlokaCard({ shloka, index, completion }: MobileShlokaCardProps) 
       </div>
       <div className="flex-1 min-w-0 pr-8">
         <div className="text-[14px] font-bold text-[#2A1F12] truncate">
-          {shloka.lines?.[0]?.sanskrit || shloka.title}
+          {shloka.title}
         </div>
         <div className="text-[10px] text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
           {done && completion ? (
