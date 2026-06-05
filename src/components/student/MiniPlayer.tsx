@@ -22,10 +22,14 @@ interface Props {
   totalSec?: number;
   /** Whether Sanskrit is hidden (Hide button toggle) */
   hidden?: boolean;
+  /** Current playback speed multiplier (e.g. 1, 1.25) */
+  speed?: number;
   onPlayPause: () => void;
   onSkipPrev: () => void;
   onSkipNext: () => void;
   onToggleHide?: () => void;
+  /** Tap-to-cycle through speed options. */
+  onCycleSpeed?: () => void;
 }
 
 function mmss(s?: number): string {
@@ -35,9 +39,14 @@ function mmss(s?: number): string {
   return `${m}:${ss}`;
 }
 
+function fmtSpeed(s: number): string {
+  // 1 → "1x", 1.25 → "1.25x", 0.5 → "0.5x"
+  return `${Number.isInteger(s) ? s : s.toFixed(2).replace(/0$/, "")}x`;
+}
+
 const MiniPlayer: React.FC<Props> = ({
   currentLine, totalLines, rep, maxReps, status, progress, elapsedSec, totalSec, hidden,
-  onPlayPause, onSkipPrev, onSkipNext, onToggleHide,
+  speed, onPlayPause, onSkipPrev, onSkipNext, onToggleHide, onCycleSpeed,
 }) => {
   const mainLabel = status === "playing" ? "Pause" : status === "paused" ? "Resume" : status === "done" ? "Replay" : "Play";
 
@@ -46,7 +55,24 @@ const MiniPlayer: React.FC<Props> = ({
       <div className="max-w-md mx-auto px-3 py-2">
         <div className="flex items-center justify-between text-[10px] font-semibold text-brown mb-1.5">
           <span>Line {currentLine} · Rep {rep}/{maxReps}</span>
-          <span className="text-gray-500">{mmss(elapsedSec)} / {mmss(totalSec)}</span>
+          <div className="flex items-center gap-2">
+            {onCycleSpeed && speed !== undefined && (
+              <button
+                type="button"
+                onClick={onCycleSpeed}
+                aria-label={`Playback speed ${fmtSpeed(speed)} — tap to change`}
+                title="Tap to change playback speed"
+                className={`text-[10px] font-bold rounded-full px-2 py-0.5 border ${
+                  speed === 1
+                    ? "bg-white border-[#E5DDD0] text-brown"
+                    : "bg-accent text-white border-accent"
+                }`}
+              >
+                {fmtSpeed(speed)}
+              </button>
+            )}
+            <span className="text-gray-500">{mmss(elapsedSec)} / {mmss(totalSec)}</span>
+          </div>
         </div>
         <div className="bg-[#E5DDD0] rounded h-1 overflow-hidden mb-2">
           <div className="bg-accent h-full transition-all" style={{ width: `${Math.max(0, Math.min(1, progress)) * 100}%` }} />

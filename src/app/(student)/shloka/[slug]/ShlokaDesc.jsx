@@ -22,6 +22,24 @@ const ShlokaDesc = ({ shloka }) => {
   const [hideSanskrit, setHideSanskrit] = useState(false);
   const [lbOpen, setLbOpen] = useState(false);
 
+  // Playback speed (cycles through SPEED_OPTIONS on tap).
+  const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5];
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const cycleSpeed = () => {
+    const i = SPEED_OPTIONS.indexOf(playbackRate);
+    const next = SPEED_OPTIONS[(i + 1) % SPEED_OPTIONS.length];
+    setPlaybackRate(next);
+  };
+
+  // Apply playbackRate to the audio element. The browser resets rate to 1 on
+  // each src change, so we re-apply whenever the current line audio src or
+  // the user-selected rate changes.
+  useEffect(() => {
+    const audio = player.audioRef.current;
+    if (!audio) return;
+    audio.playbackRate = playbackRate;
+  }, [playbackRate, player.audioRef, player.currentSrc]);
+
   // Derive current rep audio progress (0..1) + elapsed/total seconds
   const [progress, setProgress] = useState(0);
   const [elapsed, setElapsed] = useState(0);
@@ -328,6 +346,24 @@ const ShlokaDesc = ({ shloka }) => {
                   className="cursor-pointer bg-red-100/50 text-black/40 hover:text-black hover:bg-red-100 p-1 rounded-2xl"
                 />
               </div>
+              {/* Playback speed selector */}
+              <div className="flex justify-center items-center gap-1.5 pt-1">
+                <span className="text-xs text-gray-500">Speed:</span>
+                {SPEED_OPTIONS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setPlaybackRate(s)}
+                    className={`text-xs px-2 py-0.5 rounded-full border transition ${
+                      playbackRate === s
+                        ? "bg-accent text-white border-accent font-bold"
+                        : "bg-white text-brown border-[#E5DDD0] hover:bg-accent-soft"
+                    }`}
+                  >
+                    {Number.isInteger(s) ? `${s}x` : `${s}x`}
+                  </button>
+                ))}
+              </div>
               <div className="bg-grey-50 h-1"></div>
             </div>
           </div>
@@ -380,10 +416,12 @@ const ShlokaDesc = ({ shloka }) => {
           elapsedSec={elapsed}
           totalSec={total}
           hidden={hideSanskrit}
+          speed={playbackRate}
           onPlayPause={handlePlayPause}
           onSkipPrev={player.skipPrev}
           onSkipNext={player.skipNext}
           onToggleHide={() => setHideSanskrit((v) => !v)}
+          onCycleSpeed={cycleSpeed}
         />
       </div>
     </>
