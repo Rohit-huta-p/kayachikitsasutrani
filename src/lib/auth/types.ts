@@ -45,7 +45,7 @@ export interface ShlokaAsset {
 
 export interface ShlokaLine {
   sanskrit: string;
-  words: WordTiming[];
+  words?: WordTiming[];
   fullTimings: WordTiming[];
 }
 
