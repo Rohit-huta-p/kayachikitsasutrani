@@ -2,10 +2,19 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Heart, BookText } from "lucide-react";
-import { MdOutlineSkipPrevious, MdPlayArrow, MdSkipNext } from "react-icons/md";
-import { CiPause1 } from "react-icons/ci";
-import { BiHide } from "react-icons/bi";
+import {
+  Heart,
+  BookText,
+  BookOpen,
+  Trophy,
+  SkipBack,
+  SkipForward,
+  Play,
+  Pause,
+  EyeOff,
+  ArrowLeft,
+  PartyPopper,
+} from "lucide-react";
 import Leaderboard from "./Leaderboard";
 import { useShlokaPlayer } from "./hooks/useShlokaPlayer";
 import { useCompletionTracker } from "./hooks/useCompletionTracker";
@@ -20,7 +29,6 @@ const ShlokaDesc = ({ shloka }) => {
   const tracker = useCompletionTracker(shloka.slug, player.state);
 
   const [hideSanskrit, setHideSanskrit] = useState(false);
-  const [lbOpen, setLbOpen] = useState(false);
 
   // Playback speed (cycles through SPEED_OPTIONS on tap).
   const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5];
@@ -185,16 +193,14 @@ const ShlokaDesc = ({ shloka }) => {
             </div>
           )}
 
-          {/* Meaning (collapsible) */}
-          <details className="bg-white border border-[#E5DDD0] rounded-xl" open>
-            <summary className="px-3 py-2.5 text-sm font-bold text-brown cursor-pointer list-none flex items-center justify-between">
-              <span>📖 Meaning</span>
-              <span className="text-gray-400 text-xs">▲</span>
-            </summary>
-            <div className="px-3 pb-3 text-xs text-brown leading-relaxed">
-              <p className="whitespace-pre-wrap">{shloka.meaning}</p>
+          {/* Meaning card */}
+          <div className="bg-white border border-[#E5DDD0] rounded-xl p-3">
+            <div className="text-sm font-bold text-brown mb-1.5 flex items-center gap-1.5">
+              <BookOpen size={14} />
+              Meaning
             </div>
-          </details>
+            <p className="text-xs text-brown leading-relaxed whitespace-pre-wrap">{shloka.meaning}</p>
+          </div>
 
           {/* Case Study (always visible, hidden if empty) */}
           {shloka.caseStudy && (
@@ -209,23 +215,22 @@ const ShlokaDesc = ({ shloka }) => {
 
           {/* Completion banner */}
           {tracker.submitted && (
-            <div className="mt-1 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-800">
-              {tracker.alreadyCompleted
-                ? "You completed this earlier 🎉"
-                : "🎉 You completed it! Check the leaderboard below."}
+            <div className="mt-1 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-800 flex items-center gap-2">
+              <PartyPopper size={16} className="shrink-0" />
+              <span>
+                {tracker.alreadyCompleted
+                  ? "You completed this earlier"
+                  : "You completed it! Check the leaderboard below."}
+              </span>
             </div>
           )}
 
-          {/* Leaderboard accordion */}
-          <details
-            className="bg-white border border-[#E5DDD0] rounded-xl"
-            open={lbOpen}
-            onToggle={(e) => setLbOpen(e.currentTarget.open)}
-          >
-            <summary className="px-3 py-2.5 text-sm font-bold text-brown cursor-pointer list-none flex items-center justify-between">
-              <span>🏆 Leaderboard</span>
-              <span className="text-gray-400 text-xs">{lbOpen ? "▲" : "▼"}</span>
-            </summary>
+          {/* Leaderboard — always visible */}
+          <div className="bg-white border border-[#E5DDD0] rounded-xl">
+            <div className="px-3 py-2.5 text-sm font-bold text-brown flex items-center gap-1.5 border-b border-[#F0E7D8]">
+              <Trophy size={14} />
+              Leaderboard
+            </div>
             <div className="px-1 pb-1">
               <Leaderboard
                 slug={shloka.slug}
@@ -233,13 +238,16 @@ const ShlokaDesc = ({ shloka }) => {
                 refreshKey={tracker.completionVersion}
               />
             </div>
-          </details>
+          </div>
         </div>
       </div>
 
       {/* Desktop (md+) */}
       <div className="hidden md:block p-10">
-        <p>Back to all shlokas</p>
+        <a href="/home" className="inline-flex items-center gap-1 text-sm text-accent font-semibold hover:underline mb-3">
+          <ArrowLeft size={16} />
+          Back to all shlokas
+        </a>
         <div className="grid md:grid-cols-6 gap-4">
           {/* Right Side */}
           <div className="col-span-4 space-y-4">
@@ -315,36 +323,45 @@ const ShlokaDesc = ({ shloka }) => {
               </button>
             </div>
 
-            {/* Skip / Play / Skip */}
+            {/* Skip / Play / Skip / Hide */}
             <div className="bg-white/50 hover:bg-white p-10 space-y-5">
-              <div className="flex justify-center items-center space-x-4">
-                <MdOutlineSkipPrevious
+              <div className="flex justify-center items-center gap-3">
+                <button
+                  type="button"
                   onClick={player.skipPrev}
-                  size={28}
-                  className="cursor-pointer bg-indigo-100/40 text-black/40 hover:text-black hover:bg-indigo-100 p-1 rounded-2xl"
-                />
-                {player.isPlaying ? (
-                  <CiPause1
-                    onClick={player.pause}
-                    size={28}
-                    className="cursor-pointer bg-green-100/50 text-black/40 hover:text-black hover:bg-green-100 p-1 rounded-2xl"
-                  />
-                ) : (
-                  <MdPlayArrow
-                    onClick={handlePlayPause}
-                    size={28}
-                    className="cursor-pointer bg-green-100/50 text-black/40 hover:text-black hover:bg-green-100 p-1 rounded-2xl"
-                  />
-                )}
-                <MdSkipNext
+                  aria-label="Skip previous line"
+                  className="w-12 h-12 rounded-full bg-white border border-[#E5DDD0] text-brown flex items-center justify-center hover:bg-accent-soft transition"
+                >
+                  <SkipBack size={22} />
+                </button>
+                <button
+                  type="button"
+                  onClick={player.isPlaying ? player.pause : handlePlayPause}
+                  aria-label={player.isPlaying ? "Pause" : "Play"}
+                  className="w-14 h-14 rounded-full bg-accent text-white flex items-center justify-center hover:opacity-90 transition"
+                >
+                  {player.isPlaying ? <Pause size={26} /> : <Play size={26} />}
+                </button>
+                <button
+                  type="button"
                   onClick={player.skipNext}
-                  size={28}
-                  className="cursor-pointer bg-indigo-100/40 text-black/40 hover:text-black hover:bg-indigo-100 p-1 rounded-2xl"
-                />
-                <BiHide
-                  size={28}
-                  className="cursor-pointer bg-red-100/50 text-black/40 hover:text-black hover:bg-red-100 p-1 rounded-2xl"
-                />
+                  aria-label="Skip next line"
+                  className="w-12 h-12 rounded-full bg-white border border-[#E5DDD0] text-brown flex items-center justify-center hover:bg-accent-soft transition"
+                >
+                  <SkipForward size={22} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHideSanskrit((v) => !v)}
+                  aria-label={hideSanskrit ? "Show Sanskrit" : "Hide Sanskrit"}
+                  className={`w-12 h-12 rounded-full border flex items-center justify-center transition ${
+                    hideSanskrit
+                      ? "bg-accent text-white border-accent"
+                      : "bg-white text-brown border-[#E5DDD0] hover:bg-accent-soft"
+                  }`}
+                >
+                  <EyeOff size={20} />
+                </button>
               </div>
               {/* Playback speed selector */}
               <div className="flex justify-center items-center gap-1.5 pt-1">
