@@ -59,8 +59,12 @@ const ShlokaDesc = ({ shloka }) => {
     }
   };
 
-  // Split the admin-provided full shloka text into words for highlighting.
-  const fullWords = (shloka.fullText ?? "").split(/\s+/).filter(Boolean);
+  // Split fullText into paragraphs (admin-entered line breaks preserved)
+  // and each paragraph into words. A flat global index drives the highlight.
+  const fullParagraphs = (shloka.fullText ?? "")
+    .split(/\r?\n/)
+    .map((p) => p.split(/[ \t]+/).filter(Boolean));
+  const fullWords = fullParagraphs.flat();
 
   // Map (currentLine, currentWordIndex) → a global word index into fullWords.
   // -1 means no word is currently being highlighted (idle/done).
@@ -115,20 +119,38 @@ const ShlokaDesc = ({ shloka }) => {
             </div>
           </div>
 
-          {/* Sanskrit display — full shloka text with current-word highlight */}
+          {/* Sanskrit display — full shloka text with current-word highlight + line breaks preserved */}
           {!hideSanskrit && (
             <div className="bg-white border border-[#E5DDD0] rounded-2xl p-4 text-center">
               {fullWords.length > 0 ? (
-                <p className="text-base leading-relaxed text-brown whitespace-pre-wrap" style={{ fontFamily: "Georgia, serif" }}>
-                  {fullWords.map((w, i) => (
-                    <span
-                      key={i}
-                      className={i === globalWordIndex ? "bg-yellow-200 rounded px-1 transition-colors duration-150" : ""}
-                    >
-                      {w}{i < fullWords.length - 1 ? " " : ""}
-                    </span>
-                  ))}
-                </p>
+                <div className="text-base leading-relaxed text-brown space-y-1" style={{ fontFamily: "Georgia, serif" }}>
+                  {(() => {
+                    let runningIdx = 0;
+                    return fullParagraphs.map((para, pi) => {
+                      if (para.length === 0) {
+                        // Empty line (admin hit Enter twice) — render a blank spacer.
+                        return <div key={pi} className="h-2" />;
+                      }
+                      const start = runningIdx;
+                      runningIdx += para.length;
+                      return (
+                        <p key={pi}>
+                          {para.map((w, wi) => {
+                            const gi = start + wi;
+                            return (
+                              <span
+                                key={wi}
+                                className={gi === globalWordIndex ? "bg-yellow-200 rounded px-1 transition-colors duration-150" : ""}
+                              >
+                                {w}{wi < para.length - 1 ? " " : ""}
+                              </span>
+                            );
+                          })}
+                        </p>
+                      );
+                    });
+                  })()}
+                </div>
               ) : (
                 <p className="text-xs text-gray-500 italic">
                   No full shloka text yet. Admin can add it in the edit form.
@@ -226,19 +248,36 @@ const ShlokaDesc = ({ shloka }) => {
               </div>
             </div>
 
-            {/* Shloka body — full text with word highlight */}
+            {/* Shloka body — full text with word highlight, line breaks preserved */}
             <div className="bg-white p-4 text-center place-items-center space-y-3 w-full">
               {fullWords.length > 0 ? (
-                <p className="text-2xl leading-relaxed text-brown" style={{ fontFamily: "Georgia, serif" }}>
-                  {fullWords.map((w, i) => (
-                    <span
-                      key={i}
-                      className={i === globalWordIndex ? "bg-yellow-200 rounded px-1 transition-colors duration-150" : ""}
-                    >
-                      {w}{i < fullWords.length - 1 ? " " : ""}
-                    </span>
-                  ))}
-                </p>
+                <div className="text-2xl leading-relaxed text-brown space-y-1" style={{ fontFamily: "Georgia, serif" }}>
+                  {(() => {
+                    let runningIdx = 0;
+                    return fullParagraphs.map((para, pi) => {
+                      if (para.length === 0) {
+                        return <div key={pi} className="h-3" />;
+                      }
+                      const start = runningIdx;
+                      runningIdx += para.length;
+                      return (
+                        <p key={pi}>
+                          {para.map((w, wi) => {
+                            const gi = start + wi;
+                            return (
+                              <span
+                                key={wi}
+                                className={gi === globalWordIndex ? "bg-yellow-200 rounded px-1 transition-colors duration-150" : ""}
+                              >
+                                {w}{wi < para.length - 1 ? " " : ""}
+                              </span>
+                            );
+                          })}
+                        </p>
+                      );
+                    });
+                  })()}
+                </div>
               ) : (
                 <p className="text-sm text-gray-500 italic">No full shloka text yet.</p>
               )}
