@@ -98,7 +98,9 @@ const ShlokaDesc = ({ shloka }) => {
     if (player.state.status === "IDLE" || player.state.status === "DONE") return -1;
     let g = 0;
     for (let i = 0; i < player.currentLine; i++) {
-      g += shloka.lines[i]?.words?.length ?? 0;
+      const line = shloka.lines[i];
+      const count = (line?.words?.length || 0) || (line?.fullTimings?.length || 0);
+      g += count;
     }
     return g + player.currentWordIndex;
   })();
