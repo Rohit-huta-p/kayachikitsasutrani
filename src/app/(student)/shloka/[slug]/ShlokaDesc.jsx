@@ -2,11 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Heart, Check, Circle, BookText } from "lucide-react";
+import { Heart, BookText } from "lucide-react";
 import { MdOutlineSkipPrevious, MdPlayArrow, MdSkipNext } from "react-icons/md";
 import { CiPause1 } from "react-icons/ci";
 import { BiHide } from "react-icons/bi";
-import ShlokaDisplay from "./ShlokaDisplay";
 import Leaderboard from "./Leaderboard";
 import { useShlokaPlayer } from "./hooks/useShlokaPlayer";
 import { useCompletionTracker } from "./hooks/useCompletionTracker";
@@ -60,14 +59,22 @@ const ShlokaDesc = ({ shloka }) => {
     }
   };
 
-  const playingFull =
-    player.state.status === "PLAYING_FULL" ||
-    (player.state.status === "PAUSING_REP" && player.state.mode === "FULL") ||
-    player.state.status === "PAUSING_FULL" ||
-    (player.state.status === "PAUSED" &&
-      (player.state.prev.status === "PLAYING_FULL" ||
-        player.state.prev.status === "PAUSING_FULL" ||
-        (player.state.prev.status === "PAUSING_REP" && player.state.prev.mode === "FULL")));
+  // Split the admin-provided full shloka text into words for highlighting.
+  const fullWords = (shloka.fullText ?? "").split(/\s+/).filter(Boolean);
+
+  // Map (currentLine, currentWordIndex) → a global word index into fullWords.
+  // -1 means no word is currently being highlighted (idle/done).
+  const globalWordIndex = (() => {
+    if (player.state.status === "IDLE" || player.state.status === "DONE") return -1;
+    let g = 0;
+    for (let i = 0; i < player.currentLine; i++) {
+      g += shloka.lines[i]?.words?.length ?? 0;
+    }
+    return g + player.currentWordIndex;
+  })();
+
+  const lineCount = shloka.lines.length;
+  const currentLineDisplay = Math.max(0, Math.min(player.currentLine, Math.max(0, lineCount - 1))) + 1;
 
   return (
     <>
@@ -108,17 +115,28 @@ const ShlokaDesc = ({ shloka }) => {
             </div>
           </div>
 
-          {/* Sanskrit display */}
+          {/* Sanskrit display — full shloka text with current-word highlight */}
           {!hideSanskrit && (
-            <div className="bg-white border border-[#E5DDD0] rounded-2xl p-3">
-              <ShlokaDisplay
-                shloka={shloka}
-                activeLine={Math.max(0, player.currentLine)}
-                currentWordIndex={player.currentWordIndex}
-                rep={player.rep}
-                maxReps={player.REPETITIONS}
-                playingFull={playingFull}
-              />
+            <div className="bg-white border border-[#E5DDD0] rounded-2xl p-4 text-center">
+              {fullWords.length > 0 ? (
+                <p className="text-base leading-relaxed text-brown whitespace-pre-wrap" style={{ fontFamily: "Georgia, serif" }}>
+                  {fullWords.map((w, i) => (
+                    <span
+                      key={i}
+                      className={i === globalWordIndex ? "bg-yellow-200 rounded px-1 transition-colors duration-150" : ""}
+                    >
+                      {w}{i < fullWords.length - 1 ? " " : ""}
+                    </span>
+                  ))}
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 italic">
+                  No full shloka text yet. Admin can add it in the edit form.
+                </p>
+              )}
+              <p className="inline-block mt-3 bg-[#F5EFE5] border border-[#E5DDD0] text-[10px] text-brown px-3 py-0.5 rounded-full">
+                Line {currentLineDisplay} of {lineCount} · Rep {player.rep || 0} / {player.REPETITIONS}
+              </p>
             </div>
           )}
           {hideSanskrit && (
@@ -148,44 +166,6 @@ const ShlokaDesc = ({ shloka }) => {
               <p className="text-xs text-brown leading-relaxed whitespace-pre-wrap">{shloka.caseStudy}</p>
             </div>
           )}
-
-          {/* Lines summary */}
-          <div className="text-[10px] uppercase tracking-wider text-gray-500 mt-1">Lines</div>
-          {shloka.lines.map((line, i) => {
-            const isCurrent = i === player.currentLine && player.state.status !== "IDLE" && player.state.status !== "DONE";
-            const isDone = i < player.currentLine;
-            return (
-              <div
-                key={i}
-                className={`rounded-xl p-2.5 border ${
-                  isCurrent
-                    ? "bg-accent-soft border-accent shadow-[0_0_0_2px_rgba(212,165,116,0.25)]"
-                    : isDone
-                    ? "bg-white border-[#E5DDD0] opacity-60"
-                    : "bg-white border-[#E5DDD0]"
-                }`}
-              >
-                <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                  <span aria-hidden="true" className="inline-flex items-center">
-                    {isDone ? (
-                      <Check size={12} className="text-green-600" />
-                    ) : isCurrent ? (
-                      <Circle size={6} className="fill-accent stroke-accent inline-block" />
-                    ) : (
-                      <Circle size={10} className="text-gray-300" />
-                    )}
-                  </span>
-                  <span className={isCurrent ? "text-accent font-bold" : ""}>
-                    Line {i + 1}{isCurrent ? ` · playing` : isDone ? ` · done` : ""}
-                  </span>
-                  {isCurrent && (
-                    <span className="ml-auto">{player.rep}/{player.REPETITIONS} reps</span>
-                  )}
-                </div>
-                <div className="text-xs text-brown mt-1">{line.sanskrit}</div>
-              </div>
-            );
-          })}
 
           {/* Completion banner */}
           {tracker.submitted && (
@@ -246,16 +226,25 @@ const ShlokaDesc = ({ shloka }) => {
               </div>
             </div>
 
-            {/* Shloka body */}
-            <div className="bg-white p-3 text-center place-items-center space-y-2 w-full">
-              <ShlokaDisplay
-                shloka={shloka}
-                activeLine={Math.max(0, player.currentLine)}
-                currentWordIndex={player.currentWordIndex}
-                rep={player.rep}
-                maxReps={player.REPETITIONS}
-                playingFull={playingFull}
-              />
+            {/* Shloka body — full text with word highlight */}
+            <div className="bg-white p-4 text-center place-items-center space-y-3 w-full">
+              {fullWords.length > 0 ? (
+                <p className="text-2xl leading-relaxed text-brown" style={{ fontFamily: "Georgia, serif" }}>
+                  {fullWords.map((w, i) => (
+                    <span
+                      key={i}
+                      className={i === globalWordIndex ? "bg-yellow-200 rounded px-1 transition-colors duration-150" : ""}
+                    >
+                      {w}{i < fullWords.length - 1 ? " " : ""}
+                    </span>
+                  ))}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500 italic">No full shloka text yet.</p>
+              )}
+              <p className="inline-block bg-[#F5EFE5] border border-[#E5DDD0] text-xs text-brown px-3 py-0.5 rounded-full">
+                Line {currentLineDisplay} of {lineCount} · Rep {player.rep || 0} / {player.REPETITIONS}
+              </p>
 
               <button
                 onClick={handlePlayPause}
@@ -316,17 +305,6 @@ const ShlokaDesc = ({ shloka }) => {
                 <p className="text-sm mt-1 whitespace-pre-wrap text-gray-700">{shloka.caseStudy}</p>
               </div>
             )}
-            <div className="bg-white/60 p-4 rounded-lg">
-              <h5 className="text-brown">Lines:</h5>
-              {shloka.lines.map((line, i) => (
-                <p
-                  key={i}
-                  className={i === 0 ? "" : "text-sm text-gray-400"}
-                >
-                  {line.sanskrit}
-                </p>
-              ))}
-            </div>
           </div>
         </div>
 

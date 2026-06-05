@@ -10,6 +10,7 @@ export interface ShlokaInfoValues {
   slug: string;
   title: string;
   meaning: string;
+  fullText: string;
   caseStudy: string;
   image?: ShlokaAssetInput;
   audioFull?: ShlokaAssetInput;
@@ -21,6 +22,7 @@ interface Props extends ShlokaInfoValues {
   onSlug: (v: string) => void;
   onTitle: (v: string) => void;
   onMeaning: (v: string) => void;
+  onFullText: (v: string) => void;
   onCaseStudy: (v: string) => void;
   onImage: (a: ShlokaAssetInput | undefined) => void;
   onAudioFull: (a: ShlokaAssetInput | undefined) => void;
@@ -76,6 +78,8 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
           <div className="col-span-2">{props.title || "—"}</div>
           <div className="text-gray-500">Meaning</div>
           <div className="col-span-2 text-gray-700">{props.meaning || "—"}</div>
+          <div className="text-gray-500">Full text</div>
+          <div className="col-span-2 text-gray-700 whitespace-pre-wrap">{props.fullText || "—"}</div>
           <div className="text-gray-500">Case Study</div>
           <div className="col-span-2 text-gray-700 whitespace-pre-wrap">{props.caseStudy || "—"}</div>
           <div className="text-gray-500">Image</div>
@@ -126,6 +130,18 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
               rows={3}
               className="w-full border px-2 py-1 rounded"
             />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-gray-600">Full shloka text (Sanskrit)</label>
+            <textarea
+              value={props.fullText}
+              onChange={(e) => props.onFullText(e.target.value)}
+              rows={4}
+              maxLength={5000}
+              placeholder="Paste the entire shloka here (multi-line). Word count must equal total words across all line waveform regions for highlighting to align."
+              className="w-full border px-2 py-1 rounded font-serif"
+            />
+            <div className="text-[10px] text-gray-400 text-right">{props.fullText.split(/\s+/).filter(Boolean).length} words</div>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Case Study (optional)</label>

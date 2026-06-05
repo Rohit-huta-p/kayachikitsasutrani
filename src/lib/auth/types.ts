@@ -54,6 +54,7 @@ export interface PublicShloka {
   slug: string;
   title: string;
   meaning: string;
+  fullText?: string;
   caseStudy?: string;
   status: 'draft' | 'published';
   audio: {
@@ -76,6 +77,7 @@ export interface ShlokaInput {
   slug: string;
   title: string;
   meaning: string;
+  fullText?: string;
   caseStudy?: string;
   status?: 'draft' | 'published';
   audio: {
