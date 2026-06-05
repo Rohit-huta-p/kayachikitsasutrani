@@ -59,7 +59,6 @@ export interface PublicShloka {
   audio: {
     full: ShlokaAsset;
     lines: ShlokaAsset[];
-    meaning?: ShlokaAsset;
   };
   image?: ShlokaAsset;
   lines: ShlokaLine[];
@@ -82,7 +81,6 @@ export interface ShlokaInput {
   audio: {
     full: ShlokaAssetInput;
     lines: ShlokaAssetInput[];
-    meaning?: ShlokaAssetInput;
   };
   image?: ShlokaAssetInput;
   lines: ShlokaLine[];

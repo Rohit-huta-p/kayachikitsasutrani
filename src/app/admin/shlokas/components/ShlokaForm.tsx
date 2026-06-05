@@ -64,11 +64,6 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       ? { url: initial.audio.full.url, publicId: initial.audio.full.publicId ?? "" }
       : undefined,
   );
-  const [audioMeaning, setAudioMeaning] = useState<ShlokaAssetInput | undefined>(
-    initial?.audio.meaning
-      ? { url: initial.audio.meaning.url, publicId: initial.audio.meaning.publicId ?? "" }
-      : undefined,
-  );
   const initialLines: LineDraft[] = initial
     ? initial.lines.map((l, i) =>
         toLineDraft(
@@ -94,14 +89,13 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     caseStudy: initial?.caseStudy ?? "",
     image: initial?.image,
     audioFull: initial?.audio.full,
-    audioMeaning: initial?.audio.meaning,
     lines: initial?.lines,
   }));
-  const currentSnapshot = JSON.stringify({ slug, title, meaning, caseStudy, image, audioFull, audioMeaning, lines });
+  const currentSnapshot = JSON.stringify({ slug, title, meaning, caseStudy, image, audioFull, lines });
   const dirty = currentSnapshot !== initialSnapshot.current;
 
   const refreshSnapshot = () => {
-    initialSnapshot.current = JSON.stringify({ slug, title, meaning, caseStudy, image, audioFull, audioMeaning, lines });
+    initialSnapshot.current = JSON.stringify({ slug, title, meaning, caseStudy, image, audioFull, lines });
   };
 
   // ── Lines mutators ───────────────────────────────────────────────────
@@ -279,7 +273,6 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       audio: {
         full: audioFull ?? { url: "", publicId: "" },
         lines: lines.map((l) => l.audio ?? { url: "", publicId: "" }),
-        meaning: audioMeaning ?? undefined,
       },
       image,
       lines: builtLines,
@@ -351,7 +344,6 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
             caseStudy={caseStudy}
             image={image}
             audioFull={audioFull}
-            audioMeaning={audioMeaning}
             slugDisabled={isEdit}
             onSlug={setSlug}
             onTitle={setTitle}
@@ -359,7 +351,6 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
             onCaseStudy={setCaseStudy}
             onImage={setImage}
             onAudioFull={setAudioFull}
-            onAudioMeaning={setAudioMeaning}
           />
 
           <div className="soft-card p-5">
