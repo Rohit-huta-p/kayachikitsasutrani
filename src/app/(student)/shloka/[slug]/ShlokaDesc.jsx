@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Heart, Check, Circle } from "lucide-react";
+import { Heart, Check, Circle, Play, Pause, BookText } from "lucide-react";
 import { MdOutlineSkipPrevious, MdPlayArrow, MdSkipNext } from "react-icons/md";
 import { CiPause1 } from "react-icons/ci";
 import { BiHide } from "react-icons/bi";
@@ -22,6 +22,59 @@ const ShlokaDesc = ({ shloka }) => {
 
   const [hideSanskrit, setHideSanskrit] = useState(false);
   const [lbOpen, setLbOpen] = useState(false);
+
+  // ── Meaning audio (independent of main player) ───────────────────────
+  const meaningAudioRef = useRef(null);
+  const [meaningPlaying, setMeaningPlaying] = useState(false);
+  const [meaningElapsed, setMeaningElapsed] = useState(0);
+  const [meaningTotal, setMeaningTotal] = useState(0);
+  const meaningUrl = shloka.audio?.meaning?.url;
+
+  useEffect(() => {
+    const a = meaningAudioRef.current;
+    if (!a) return;
+    const onTime = () => {
+      setMeaningElapsed(a.currentTime || 0);
+      setMeaningTotal(a.duration || 0);
+    };
+    const onPlay = () => setMeaningPlaying(true);
+    const onPause = () => setMeaningPlaying(false);
+    const onEnded = () => {
+      setMeaningPlaying(false);
+      setMeaningElapsed(0);
+    };
+    a.addEventListener("timeupdate", onTime);
+    a.addEventListener("durationchange", onTime);
+    a.addEventListener("play", onPlay);
+    a.addEventListener("pause", onPause);
+    a.addEventListener("ended", onEnded);
+    return () => {
+      a.removeEventListener("timeupdate", onTime);
+      a.removeEventListener("durationchange", onTime);
+      a.removeEventListener("play", onPlay);
+      a.removeEventListener("pause", onPause);
+      a.removeEventListener("ended", onEnded);
+    };
+  }, [meaningUrl]);
+
+  const toggleMeaningAudio = () => {
+    const a = meaningAudioRef.current;
+    if (!a) return;
+    if (a.paused) {
+      a.play().catch(() => {});
+    } else {
+      a.pause();
+    }
+  };
+
+  const fmtTime = (s) => {
+    if (!isFinite(s) || s < 0) return "0:00";
+    const m = Math.floor(s / 60);
+    const ss = Math.floor(s % 60).toString().padStart(2, "0");
+    return `${m}:${ss}`;
+  };
+
+  const meaningProgressPct = meaningTotal > 0 ? (meaningElapsed / meaningTotal) * 100 : 0;
 
   // Derive current rep audio progress (0..1) + elapsed/total seconds
   const [progress, setProgress] = useState(0);
@@ -127,17 +180,48 @@ const ShlokaDesc = ({ shloka }) => {
             </div>
           )}
 
-          {/* Meaning + Translation (collapsible) */}
+          {/* Meaning (collapsible) — with optional play button + progress */}
           <details className="bg-white border border-[#E5DDD0] rounded-xl" open>
-            <summary className="px-3 py-2.5 text-sm font-bold text-brown cursor-pointer list-none flex items-center justify-between">
-              <span>📖 Meaning &amp; Translation</span>
-              <span className="text-gray-400 text-xs">▲</span>
+            <summary className="px-3 py-2.5 text-sm font-bold text-brown cursor-pointer list-none flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5">📖 Meaning</span>
+              <span className="flex items-center gap-2">
+                {meaningUrl && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); toggleMeaningAudio(); }}
+                    aria-label={meaningPlaying ? "Pause meaning audio" : "Play meaning audio"}
+                    className="touch-target rounded-full bg-accent text-white w-7 h-7 flex items-center justify-center hover:opacity-90"
+                  >
+                    {meaningPlaying ? <Pause size={14} /> : <Play size={14} />}
+                  </button>
+                )}
+                <span className="text-gray-400 text-xs">▲</span>
+              </span>
             </summary>
             <div className="px-3 pb-3 text-xs text-brown leading-relaxed">
-              <p className="italic mb-2">{shloka.translation}</p>
-              <p>{shloka.meaning}</p>
+              <p className="whitespace-pre-wrap">{shloka.meaning}</p>
+              {meaningUrl && (meaningPlaying || meaningElapsed > 0) && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-[10px] text-gray-500 font-mono w-8 shrink-0">{fmtTime(meaningElapsed)}</span>
+                  <div className="flex-1 bg-[#F0E7D8] rounded h-1 overflow-hidden">
+                    <div className="h-full bg-accent transition-all" style={{ width: `${meaningProgressPct}%` }} />
+                  </div>
+                  <span className="text-[10px] text-gray-500 font-mono w-8 shrink-0 text-right">{fmtTime(meaningTotal)}</span>
+                </div>
+              )}
             </div>
           </details>
+
+          {/* Case Study (always visible, hidden if empty) */}
+          {shloka.caseStudy && (
+            <div className="bg-white border border-[#E5DDD0] rounded-xl p-3">
+              <div className="text-sm font-bold text-brown mb-1.5 flex items-center gap-1.5">
+                <BookText size={14} />
+                Case Study
+              </div>
+              <p className="text-xs text-brown leading-relaxed whitespace-pre-wrap">{shloka.caseStudy}</p>
+            </div>
+          )}
 
           {/* Lines summary */}
           <div className="text-[10px] uppercase tracking-wider text-gray-500 mt-1">Lines</div>
@@ -297,10 +381,36 @@ const ShlokaDesc = ({ shloka }) => {
           {/* Left Side */}
           <div className="col-span-2 space-y-5">
             <div className="bg-indigo-50 p-4 rounded-lg">
-              <h2 className="text-xl text-brown">Meaning</h2>
-              <p className="text-sm">{shloka.translation}</p>
-              <p className="text-sm">{shloka.meaning}</p>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl text-brown">Meaning</h2>
+                {meaningUrl && (
+                  <button
+                    type="button"
+                    onClick={toggleMeaningAudio}
+                    aria-label={meaningPlaying ? "Pause meaning audio" : "Play meaning audio"}
+                    className="rounded-full bg-accent text-white w-8 h-8 flex items-center justify-center hover:opacity-90"
+                  >
+                    {meaningPlaying ? <Pause size={16} /> : <Play size={16} />}
+                  </button>
+                )}
+              </div>
+              <p className="text-sm whitespace-pre-wrap">{shloka.meaning}</p>
+              {meaningUrl && (meaningPlaying || meaningElapsed > 0) && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xs text-gray-500 font-mono w-10 shrink-0">{fmtTime(meaningElapsed)}</span>
+                  <div className="flex-1 bg-white/60 rounded h-1.5 overflow-hidden">
+                    <div className="h-full bg-accent transition-all" style={{ width: `${meaningProgressPct}%` }} />
+                  </div>
+                  <span className="text-xs text-gray-500 font-mono w-10 shrink-0 text-right">{fmtTime(meaningTotal)}</span>
+                </div>
+              )}
             </div>
+            {shloka.caseStudy && (
+              <div className="bg-white p-4 rounded-lg">
+                <h2 className="text-xl text-brown flex items-center gap-2"><BookText size={18} /> Case Study</h2>
+                <p className="text-sm mt-1 whitespace-pre-wrap text-gray-700">{shloka.caseStudy}</p>
+              </div>
+            )}
             <div className="bg-white/60 p-4 rounded-lg">
               <h5 className="text-brown">Lines:</h5>
               {shloka.lines.map((line, i) => (
@@ -335,6 +445,8 @@ const ShlokaDesc = ({ shloka }) => {
 
       {/* Shared: hidden audio element driven by hook */}
       <audio ref={player.audioRef} src={player.currentSrc ?? undefined} />
+      {/* Independent meaning audio element */}
+      {meaningUrl && <audio ref={meaningAudioRef} src={meaningUrl} preload="metadata" />}
 
       {/* Sticky mini-player — mobile only */}
       <div className="md:hidden">

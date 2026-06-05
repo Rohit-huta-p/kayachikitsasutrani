@@ -54,11 +54,12 @@ export interface PublicShloka {
   slug: string;
   title: string;
   meaning: string;
-  translation: string;
+  caseStudy?: string;
   status: 'draft' | 'published';
   audio: {
     full: ShlokaAsset;
     lines: ShlokaAsset[];
+    meaning?: ShlokaAsset;
   };
   image?: ShlokaAsset;
   lines: ShlokaLine[];
@@ -76,11 +77,12 @@ export interface ShlokaInput {
   slug: string;
   title: string;
   meaning: string;
-  translation: string;
+  caseStudy?: string;
   status?: 'draft' | 'published';
   audio: {
     full: ShlokaAssetInput;
     lines: ShlokaAssetInput[];
+    meaning?: ShlokaAssetInput;
   };
   image?: ShlokaAssetInput;
   lines: ShlokaLine[];

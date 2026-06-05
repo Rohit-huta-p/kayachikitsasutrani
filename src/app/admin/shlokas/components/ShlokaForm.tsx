@@ -55,13 +55,18 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [title, setTitle] = useState(initial?.title ?? "");
   const [meaning, setMeaning] = useState(initial?.meaning ?? "");
-  const [translation, setTranslation] = useState(initial?.translation ?? "");
+  const [caseStudy, setCaseStudy] = useState(initial?.caseStudy ?? "");
   const [image, setImage] = useState<ShlokaAssetInput | undefined>(
     initial?.image ? { url: initial.image.url, publicId: initial.image.publicId ?? "" } : undefined,
   );
   const [audioFull, setAudioFull] = useState<ShlokaAssetInput | undefined>(
     initial?.audio.full
       ? { url: initial.audio.full.url, publicId: initial.audio.full.publicId ?? "" }
+      : undefined,
+  );
+  const [audioMeaning, setAudioMeaning] = useState<ShlokaAssetInput | undefined>(
+    initial?.audio.meaning
+      ? { url: initial.audio.meaning.url, publicId: initial.audio.meaning.publicId ?? "" }
       : undefined,
   );
   const initialLines: LineDraft[] = initial
@@ -86,16 +91,17 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     slug: initial?.slug ?? "",
     title: initial?.title ?? "",
     meaning: initial?.meaning ?? "",
-    translation: initial?.translation ?? "",
+    caseStudy: initial?.caseStudy ?? "",
     image: initial?.image,
     audioFull: initial?.audio.full,
+    audioMeaning: initial?.audio.meaning,
     lines: initial?.lines,
   }));
-  const currentSnapshot = JSON.stringify({ slug, title, meaning, translation, image, audioFull, lines });
+  const currentSnapshot = JSON.stringify({ slug, title, meaning, caseStudy, image, audioFull, audioMeaning, lines });
   const dirty = currentSnapshot !== initialSnapshot.current;
 
   const refreshSnapshot = () => {
-    initialSnapshot.current = JSON.stringify({ slug, title, meaning, translation, image, audioFull, lines });
+    initialSnapshot.current = JSON.stringify({ slug, title, meaning, caseStudy, image, audioFull, audioMeaning, lines });
   };
 
   // ── Lines mutators ───────────────────────────────────────────────────
@@ -211,7 +217,6 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     if (!isEdit && !slug.trim()) return "Slug is required";
     if (!title.trim()) return "Title is required";
     if (!meaning.trim()) return "Meaning is required";
-    if (!translation.trim()) return "Translation is required";
     if (!audioFull) return "Full audio is required";
     if (lines.length === 0) return "At least one line is required";
     for (let i = 0; i < lines.length; i++) {
@@ -231,7 +236,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       }
     }
     return undefined;
-  }, [isEdit, slug, title, meaning, translation, audioFull, lines]);
+  }, [isEdit, slug, title, meaning, audioFull, lines]);
 
   // ── Submit ───────────────────────────────────────────────────────────
   const submit = async (nextStatus: "draft" | "published") => {
@@ -269,11 +274,12 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       slug,
       title,
       meaning,
-      translation,
+      caseStudy: caseStudy.trim() || undefined,
       status: nextStatus,
       audio: {
         full: audioFull ?? { url: "", publicId: "" },
         lines: lines.map((l) => l.audio ?? { url: "", publicId: "" }),
+        meaning: audioMeaning ?? undefined,
       },
       image,
       lines: builtLines,
@@ -342,16 +348,18 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
             slug={slug}
             title={title}
             meaning={meaning}
-            translation={translation}
+            caseStudy={caseStudy}
             image={image}
             audioFull={audioFull}
+            audioMeaning={audioMeaning}
             slugDisabled={isEdit}
             onSlug={setSlug}
             onTitle={setTitle}
             onMeaning={setMeaning}
-            onTranslation={setTranslation}
+            onCaseStudy={setCaseStudy}
             onImage={setImage}
             onAudioFull={setAudioFull}
+            onAudioMeaning={setAudioMeaning}
           />
 
           <div className="soft-card p-5">

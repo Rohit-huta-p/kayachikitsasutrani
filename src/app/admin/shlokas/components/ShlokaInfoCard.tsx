@@ -10,9 +10,10 @@ export interface ShlokaInfoValues {
   slug: string;
   title: string;
   meaning: string;
-  translation: string;
+  caseStudy: string;
   image?: ShlokaAssetInput;
   audioFull?: ShlokaAssetInput;
+  audioMeaning?: ShlokaAssetInput;
 }
 
 interface Props extends ShlokaInfoValues {
@@ -21,13 +22,15 @@ interface Props extends ShlokaInfoValues {
   onSlug: (v: string) => void;
   onTitle: (v: string) => void;
   onMeaning: (v: string) => void;
-  onTranslation: (v: string) => void;
+  onCaseStudy: (v: string) => void;
   onImage: (a: ShlokaAssetInput | undefined) => void;
   onAudioFull: (a: ShlokaAssetInput | undefined) => void;
+  onAudioMeaning: (a: ShlokaAssetInput | undefined) => void;
 }
 
 function isComplete(v: ShlokaInfoValues): boolean {
-  return Boolean(v.title.trim() && v.meaning.trim() && v.translation.trim() && v.audioFull);
+  // caseStudy + audioMeaning are optional — do not gate completeness on them.
+  return Boolean(v.title.trim() && v.meaning.trim() && v.audioFull);
 }
 
 const ShlokaInfoCard: React.FC<Props> = (props) => {
@@ -75,8 +78,12 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
           <div className="col-span-2">{props.title || "—"}</div>
           <div className="text-gray-500">Meaning</div>
           <div className="col-span-2 text-gray-700">{props.meaning || "—"}</div>
-          <div className="text-gray-500">Translation</div>
-          <div className="col-span-2 text-gray-700">{props.translation || "—"}</div>
+          <div className="text-gray-500">Case Study</div>
+          <div className="col-span-2 text-gray-700 whitespace-pre-wrap">{props.caseStudy || "—"}</div>
+          <div className="text-gray-500">Meaning audio</div>
+          <div className="col-span-2 text-xs">
+            {props.audioMeaning ? "uploaded" : <span className="text-gray-400">none</span>}
+          </div>
           <div className="text-gray-500">Image</div>
           <div className="col-span-2 flex items-center gap-2">
             {props.image ? (
@@ -127,16 +134,24 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-600">Translation</label>
+            <label className="text-xs font-semibold text-gray-600">Case Study (optional)</label>
             <textarea
-              value={props.translation}
-              onChange={(e) => props.onTranslation(e.target.value)}
-              rows={3}
+              value={props.caseStudy}
+              onChange={(e) => props.onCaseStudy(e.target.value)}
+              rows={6}
+              maxLength={5000}
+              placeholder="Clinical context, examples, or notes (up to 5000 characters)"
               className="w-full border px-2 py-1 rounded"
             />
+            <div className="text-[10px] text-gray-400 text-right">{props.caseStudy.length} / 5000</div>
           </div>
           <ImageUploadField label="Image (optional)" value={props.image} onChange={props.onImage} />
-          <AudioUploadField label="Full audio (MP3)" value={props.audioFull} onChange={props.onAudioFull} />
+          <AudioUploadField label="Full audio" value={props.audioFull} onChange={props.onAudioFull} />
+          <AudioUploadField
+            label="Meaning audio (optional)"
+            value={props.audioMeaning}
+            onChange={props.onAudioMeaning}
+          />
         </div>
       )}
     </div>
