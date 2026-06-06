@@ -91,9 +91,12 @@ const ShlokaDesc = ({ shloka }) => {
   // once, finding each logical word's char position, so we can highlight
   // exactly those chars even when the admin joined them in the display
   // (e.g. "कासंमादौ" with no space).
-  const fullTextStr = shloka.fullText ?? "";
+  // Normalize to NFC so combining-diacritic variants (admin paste vs DB
+  // store) compare equal — otherwise indexOf() silently fails on visually
+  // identical Devanagari strings.
+  const fullTextStr = (shloka.fullText ?? "").normalize("NFC");
   const logicalWords = shloka.lines.flatMap((l) =>
-    (l?.sanskrit ?? "").split(/\s+/).filter(Boolean),
+    ((l?.sanskrit ?? "").normalize("NFC")).split(/\s+/).filter(Boolean),
   );
   // Pre-compute fullText whitespace-separated tokens (fallback positions for
   // older shlokas whose bucket sanskrit doesn't substring-match fullText).
