@@ -116,6 +116,10 @@ const ShlokaDesc = ({ shloka }) => {
   // -1 means no word is currently being highlighted (idle/done).
   const globalWordIndex = (() => {
     if (player.state.status === "IDLE" || player.state.status === "DONE") return -1;
+    // currentWordIndex < 0 means "no word active right now" — typically a
+    // brief frame during line transitions or between word windows. Don't
+    // highlight anything (otherwise g + (-1) wraps back to the prior word).
+    if (player.currentWordIndex < 0) return -1;
     let g = 0;
     for (let i = 0; i < player.currentLine; i++) {
       const line = shloka.lines[i];
