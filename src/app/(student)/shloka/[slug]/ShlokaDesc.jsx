@@ -95,24 +95,45 @@ const ShlokaDesc = ({ shloka }) => {
   const logicalWords = shloka.lines.flatMap((l) =>
     (l?.sanskrit ?? "").split(/\s+/).filter(Boolean),
   );
+  // Pre-compute fullText whitespace-separated tokens (fallback positions for
+  // older shlokas whose bucket sanskrit doesn't substring-match fullText).
+  const fullTextTokens = (() => {
+    const out = [];
+    let i = 0;
+    while (i < fullTextStr.length) {
+      while (i < fullTextStr.length && /\s/.test(fullTextStr[i])) i++;
+      if (i >= fullTextStr.length) break;
+      const start = i;
+      while (i < fullTextStr.length && !/\s/.test(fullTextStr[i])) i++;
+      out.push({ start, end: i });
+    }
+    return out;
+  })();
+
   const wordPositions = (() => {
     const out = [];
-    // Cursor advances by only +1 per word (not the full word length). This
-    // lets consecutive logical words OVERLAP in fullText — common with
-    // Sandhi-style joining where two words share characters at the
-    // boundary (e.g. "स्नेहाद्यै" + "द्यैर्धूमैर्लेहैश्च" share "द्यै" in the
-    // rendered "स्नेहाद्यैर्धूमैर्लेहैश्च"). Each next search starts one char
-    // past the prior word's start, so duplicates aren't infinite-looped but
-    // overlap is allowed.
+    // Primary: substring search with cursor +1 per word so consecutive
+    // logical words can OVERLAP in fullText — Sandhi-style joining where
+    // two words share characters (e.g. "स्नेहाद्यै" + "द्यैर्धूमैर्लेहैश्च"
+    // both appearing in the rendered "स्नेहाद्यैर्धूमैर्लेहैश्च"). Each next
+    // search starts one char past the prior word's start.
+    //
+    // Fallback: when the bucket sanskrit doesn't substring-match fullText
+    // at all (older shlokas whose per-line sanskrit was hand-segmented
+    // differently from the fullText), use the fullText whitespace token at
+    // the same global word index. Imperfect but visible.
     let cursor = 0;
-    for (const w of logicalWords) {
+    for (let i = 0; i < logicalWords.length; i++) {
+      const w = logicalWords[i];
       const start = fullTextStr.indexOf(w, cursor);
-      if (start === -1) {
+      if (start !== -1) {
+        out.push({ start, end: start + w.length });
+        cursor = start + 1;
+      } else if (i < fullTextTokens.length) {
+        out.push(fullTextTokens[i]);
+      } else {
         out.push(null);
-        continue;
       }
-      out.push({ start, end: start + w.length });
-      cursor = start + 1;
     }
     return out;
   })();
