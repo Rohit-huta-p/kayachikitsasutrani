@@ -97,6 +97,13 @@ const ShlokaDesc = ({ shloka }) => {
   );
   const wordPositions = (() => {
     const out = [];
+    // Cursor advances by only +1 per word (not the full word length). This
+    // lets consecutive logical words OVERLAP in fullText — common with
+    // Sandhi-style joining where two words share characters at the
+    // boundary (e.g. "स्नेहाद्यै" + "द्यैर्धूमैर्लेहैश्च" share "द्यै" in the
+    // rendered "स्नेहाद्यैर्धूमैर्लेहैश्च"). Each next search starts one char
+    // past the prior word's start, so duplicates aren't infinite-looped but
+    // overlap is allowed.
     let cursor = 0;
     for (const w of logicalWords) {
       const start = fullTextStr.indexOf(w, cursor);
@@ -105,7 +112,7 @@ const ShlokaDesc = ({ shloka }) => {
         continue;
       }
       out.push({ start, end: start + w.length });
-      cursor = start + w.length;
+      cursor = start + 1;
     }
     return out;
   })();
