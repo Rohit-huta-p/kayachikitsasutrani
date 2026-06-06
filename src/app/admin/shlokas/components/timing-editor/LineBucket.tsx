@@ -49,9 +49,30 @@ const LineBucket: React.FC<Props> = ({
           placeholder="Sanskrit text for this line"
           className="flex-1 text-sm border border-[#E5DDD0] rounded px-2 py-1 outline-none focus:border-accent"
         />
-        <span className="text-[10px] text-gray-500 shrink-0">
-          {regions.length} word{regions.length === 1 ? "" : "s"}
-        </span>
+        {(() => {
+          const expectedWords = sanskrit.split(/\s+/).filter(Boolean).length;
+          const ok = expectedWords > 0 && regions.length === expectedWords;
+          return (
+            <span
+              className={`text-[10px] shrink-0 font-semibold px-1.5 py-0.5 rounded ${
+                expectedWords === 0
+                  ? "text-gray-400"
+                  : ok
+                    ? "text-green-700 bg-green-100"
+                    : "text-red-700 bg-red-100"
+              }`}
+              title={
+                expectedWords === 0
+                  ? "Add sanskrit text to set expected word count"
+                  : ok
+                    ? "Region count matches sanskrit word count"
+                    : `Sanskrit has ${expectedWords} word(s) but ${regions.length} region(s) assigned`
+              }
+            >
+              {regions.length} / {expectedWords} {expectedWords === 1 ? "region" : "regions"}
+            </span>
+          );
+        })()}
       </div>
       <div className="flex flex-wrap gap-1.5 min-h-[28px]">
         {regions.length === 0 ? (
