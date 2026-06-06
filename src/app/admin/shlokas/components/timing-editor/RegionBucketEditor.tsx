@@ -135,17 +135,22 @@ const RegionBucketEditor: React.FC<Props> = ({
             </button>
           </div>
         </div>
-        {lineSanskrit.map((sanskrit, i) => (
-          <LineBucket
-            key={i}
-            lineIndex={i}
-            sanskrit={sanskrit}
-            regions={ra.byLine(i)}
-            onSanskritChange={(next) => setSanskritAt(i, next)}
-            onDropRegion={(regionId) => ra.assign(regionId, i)}
-            onRemoveRegion={(regionId) => ra.removeRegion(regionId)}
-          />
-        ))}
+        <div
+          className="max-h-[360px] overflow-y-auto space-y-2 pr-1"
+          style={{ scrollbarGutter: "stable" }}
+        >
+          {lineSanskrit.map((sanskrit, i) => (
+            <LineBucket
+              key={i}
+              lineIndex={i}
+              sanskrit={sanskrit}
+              regions={ra.byLine(i)}
+              onSanskritChange={(next) => setSanskritAt(i, next)}
+              onDropRegion={(regionId) => ra.assign(regionId, i)}
+              onRemoveRegion={(regionId) => ra.removeRegion(regionId)}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
