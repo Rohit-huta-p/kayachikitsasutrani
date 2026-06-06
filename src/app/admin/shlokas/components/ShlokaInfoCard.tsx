@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Image from "next/image";
 import AudioUploadField from "./AudioUploadField";
 import ImageUploadField from "./ImageUploadField";
@@ -11,6 +11,7 @@ export interface ShlokaInfoValues {
   title: string;
   meaning: string;
   fullText: string;
+  highlightWords: string[];
   caseStudy: string;
   image?: ShlokaAssetInput;
   audioFull?: ShlokaAssetInput;
@@ -23,6 +24,7 @@ interface Props extends ShlokaInfoValues {
   onTitle: (v: string) => void;
   onMeaning: (v: string) => void;
   onFullText: (v: string) => void;
+  onHighlightWords: (next: string[]) => void;
   onCaseStudy: (v: string) => void;
   onImage: (a: ShlokaAssetInput | undefined) => void;
   onAudioFull: (a: ShlokaAssetInput | undefined) => void;
@@ -37,6 +39,22 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
   const complete = isComplete(props);
   // Edit mode opens by default if anything's missing; otherwise summary view.
   const [editing, setEditing] = useState(!complete);
+  const fullTextRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const addSelectionAsHighlight = () => {
+    const el = fullTextRef.current;
+    if (!el) return;
+    const s = el.selectionStart;
+    const e = el.selectionEnd;
+    if (s === e) return; // nothing selected
+    const sel = props.fullText.slice(s, e).trim();
+    if (!sel) return;
+    if (props.highlightWords.includes(sel)) return;
+    props.onHighlightWords([...props.highlightWords, sel]);
+  };
+  const removeHighlight = (w: string) => {
+    props.onHighlightWords(props.highlightWords.filter((x) => x !== w));
+  };
 
   return (
     <div className="soft-card p-5">
@@ -134,6 +152,7 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Full shloka text (Sanskrit)</label>
             <textarea
+              ref={fullTextRef}
               value={props.fullText}
               onChange={(e) => props.onFullText(e.target.value)}
               rows={4}
@@ -141,7 +160,43 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
               placeholder="Paste the entire shloka here (multi-line). Word count must equal total words across all line waveform regions for highlighting to align."
               className="w-full border px-2 py-1 rounded font-serif"
             />
-            <div className="text-[10px] text-gray-400 text-right">{props.fullText.split(/\s+/).filter(Boolean).length} words</div>
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={addSelectionAsHighlight}
+                disabled={!props.fullText}
+                className="text-xs px-2 py-1 rounded bg-brown text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                ✎ Highlight selected text
+              </button>
+              <span className="text-[10px] text-gray-400">{props.fullText.split(/\s+/).filter(Boolean).length} words</span>
+            </div>
+            {props.highlightWords.length > 0 && (
+              <div className="mt-2">
+                <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                  Highlighted ({props.highlightWords.length})
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {props.highlightWords.map((w) => (
+                    <span
+                      key={w}
+                      className="inline-flex items-center gap-1 text-sm px-2 py-0.5 rounded bg-brown text-white"
+                      style={{ fontFamily: "Georgia, serif" }}
+                    >
+                      {w}
+                      <button
+                        type="button"
+                        onClick={() => removeHighlight(w)}
+                        aria-label={`Remove highlight ${w}`}
+                        className="text-white/80 hover:text-white"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Case Study (optional)</label>
