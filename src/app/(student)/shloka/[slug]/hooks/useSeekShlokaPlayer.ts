@@ -3,10 +3,34 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PublicShloka as Shloka } from '@/lib/auth/types';
-import type { ShlokaPlayerApi } from './useLegacyShlokaPlayer';
-import { type PlayerState, REPETITIONS } from './playerReducer';
 
+export const REPETITIONS = 3;
 const PAUSE_MS = 500;
+
+export type PlayerState =
+  | { status: 'IDLE' }
+  | { status: 'PLAYING_LINE'; line: number; rep: number }
+  | { status: 'PLAYING_FULL'; rep: number }
+  | { status: 'PAUSED'; prev: PlayerState }
+  | { status: 'DONE' };
+
+export interface ShlokaPlayerApi {
+  state: PlayerState;
+  currentLine: number;
+  currentWordIndex: number;
+  rep: number;
+  totalLines: number;
+  REPETITIONS: number;
+  isPlaying: boolean;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
+  currentSrc: string | null;
+  play: () => void;
+  pause: () => void;
+  resume: () => void;
+  reset: () => void;
+  skipNext: () => void;
+  skipPrev: () => void;
+}
 
 type Mode = 'LINE' | 'FULL';
 

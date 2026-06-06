@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { useCompletions } from "@/lib/completions/CompletionsContext";
-import type { PlayerState } from "./playerReducer";
+import type { PlayerState } from "./useSeekShlokaPlayer";
 
 interface Result {
   /** True after a successful POST in this session (either creation or already-completed). */

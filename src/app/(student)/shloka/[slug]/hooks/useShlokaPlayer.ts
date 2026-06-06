@@ -1,23 +1,17 @@
 "use client";
 
 import type { PublicShloka } from "@/lib/auth/types";
-import { useLegacyShlokaPlayer, type ShlokaPlayerApi } from "./useLegacyShlokaPlayer";
 import { useSeekShlokaPlayer } from "./useSeekShlokaPlayer";
+import type { ShlokaPlayerApi } from "./useSeekShlokaPlayer";
 
 /**
- * Picks the right player based on shloka shape:
- * - Legacy (per-line audio files): use `useLegacyShlokaPlayer` (src-swap playback)
- * - New (single full-audio only): use `useSeekShlokaPlayer` (seek-based playback)
- *
- * Both hooks are called (React rules), but only the active branch's audioRef is
- * returned and bound to the <audio> element. The inactive hook's effects see
- * `audioRef.current === null` and exit early.
+ * Single-audio player. Reads `audio.full` + `lines[].fullTimings` and drives
+ * playback by seeking into the full audio file. The legacy per-line-audio
+ * branch was removed; existing shlokas with `audio.lines` populated will
+ * still work as long as their `fullTimings` are present.
  */
 export function useShlokaPlayer(shloka: PublicShloka): ShlokaPlayerApi {
-  const isLegacy = (shloka.audio.lines?.length ?? 0) > 0;
-  const legacy = useLegacyShlokaPlayer(shloka);
-  const seek = useSeekShlokaPlayer(shloka);
-  return isLegacy ? legacy : seek;
+  return useSeekShlokaPlayer(shloka);
 }
 
 export type { ShlokaPlayerApi };

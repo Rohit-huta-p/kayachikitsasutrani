@@ -25,7 +25,7 @@ interface Props {
   /** Top-level error (e.g. backend submit failure). */
   error?: string | null;
   left: React.ReactNode;
-  right: React.ReactNode;
+  right?: React.ReactNode;
 }
 
 const EditPageShell: React.FC<Props> = ({
@@ -132,13 +132,15 @@ const EditPageShell: React.FC<Props> = ({
         )}
       </div>
 
-      {/* Two-column grid */}
+      {/* Two-column grid (right column collapses if no right slot) */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 space-y-4 stagger">{left}</div>
-          <div className="lg:col-span-5 space-y-4">
-            <div className="lg:sticky lg:top-20 space-y-4">{right}</div>
-          </div>
+        <div className={`grid grid-cols-1 ${right ? "lg:grid-cols-12" : ""} gap-6`}>
+          <div className={`${right ? "lg:col-span-7" : ""} space-y-4 stagger`}>{left}</div>
+          {right && (
+            <div className="lg:col-span-5 space-y-4">
+              <div className="lg:sticky lg:top-20 space-y-4">{right}</div>
+            </div>
+          )}
         </div>
       </div>
     </div>
