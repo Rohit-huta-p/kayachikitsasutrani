@@ -116,6 +116,57 @@ const ShlokaDesc = ({ shloka }) => {
     }
     return out;
   })();
+
+  // Brown-highlight ranges: every occurrence of every admin-marked word.
+  const brownRanges = (() => {
+    const out = [];
+    for (const w of shloka.highlightWords ?? []) {
+      if (!w) continue;
+      let from = 0;
+      while (true) {
+        const idx = fullTextStr.indexOf(w, from);
+        if (idx === -1) break;
+        out.push({ start: idx, end: idx + w.length });
+        from = idx + 1;
+      }
+    }
+    return out;
+  })();
+
+  // Build a sorted list of cut points to slice fullText into segments where
+  // each segment has uniform styling (brown? yellow?).
+  const renderFullText = () => {
+    if (!fullTextStr) return null;
+    const yellowRange = globalWordIndex >= 0 ? wordPositions[globalWordIndex] : null;
+    const cuts = new Set([0, fullTextStr.length]);
+    for (const r of brownRanges) { cuts.add(r.start); cuts.add(r.end); }
+    if (yellowRange) { cuts.add(yellowRange.start); cuts.add(yellowRange.end); }
+    const points = Array.from(cuts).sort((a, b) => a - b);
+    const segments = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      const segStart = points[i];
+      const segEnd = points[i + 1];
+      const text = fullTextStr.slice(segStart, segEnd);
+      if (text.length === 0) continue;
+      const isBrown = brownRanges.some((r) => r.start <= segStart && segStart < r.end);
+      const isYellow = !!yellowRange && yellowRange.start <= segStart && segStart < yellowRange.end;
+      segments.push({ text, isBrown, isYellow });
+    }
+    return segments.map((s, i) => (
+      <span
+        key={i}
+        className={
+          s.isYellow
+            ? "bg-yellow-200 rounded px-1 transition-colors duration-150"
+            : s.isBrown
+              ? "text-brown"
+              : ""
+        }
+      >
+        {s.text}
+      </span>
+    ));
+  };
   // Legacy variable kept for the status-pill / fallback display checks
   const fullWords = logicalWords;
 
@@ -183,22 +234,10 @@ const ShlokaDesc = ({ shloka }) => {
             <div className="bg-white border border-[#E5DDD0] rounded-2xl p-4 text-center">
               {fullTextStr ? (
                 <p
-                  className="text-base leading-relaxed text-brown whitespace-pre-wrap"
+                  className="text-base leading-relaxed text-black whitespace-pre-wrap"
                   style={{ fontFamily: "Georgia, serif" }}
                 >
-                  {(() => {
-                    const pos = globalWordIndex >= 0 ? wordPositions[globalWordIndex] : null;
-                    if (!pos) return fullTextStr;
-                    return (
-                      <>
-                        {fullTextStr.slice(0, pos.start)}
-                        <span className="bg-yellow-200 rounded px-1 transition-colors duration-150">
-                          {fullTextStr.slice(pos.start, pos.end)}
-                        </span>
-                        {fullTextStr.slice(pos.end)}
-                      </>
-                    );
-                  })()}
+                  {renderFullText()}
                 </p>
               ) : (
                 <p className="text-xs text-gray-500 italic">
@@ -301,22 +340,10 @@ const ShlokaDesc = ({ shloka }) => {
             <div className="bg-white p-4 text-center place-items-center space-y-3 w-full">
               {fullTextStr ? (
                 <p
-                  className="text-2xl leading-relaxed text-brown whitespace-pre-wrap"
+                  className="text-2xl leading-relaxed text-black whitespace-pre-wrap"
                   style={{ fontFamily: "Georgia, serif" }}
                 >
-                  {(() => {
-                    const pos = globalWordIndex >= 0 ? wordPositions[globalWordIndex] : null;
-                    if (!pos) return fullTextStr;
-                    return (
-                      <>
-                        {fullTextStr.slice(0, pos.start)}
-                        <span className="bg-yellow-200 rounded px-1 transition-colors duration-150">
-                          {fullTextStr.slice(pos.start, pos.end)}
-                        </span>
-                        {fullTextStr.slice(pos.end)}
-                      </>
-                    );
-                  })()}
+                  {renderFullText()}
                 </p>
               ) : (
                 <p className="text-sm text-gray-500 italic">No full shloka text yet.</p>

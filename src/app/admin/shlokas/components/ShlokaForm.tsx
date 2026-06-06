@@ -59,6 +59,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [meaning, setMeaning] = useState(initial?.meaning ?? "");
   const [fullText, setFullText] = useState(initial?.fullText ?? "");
+  const [highlightWords, setHighlightWords] = useState<string[]>(initial?.highlightWords ?? []);
   const [caseStudy, setCaseStudy] = useState(initial?.caseStudy ?? "");
   const [image, setImage] = useState<ShlokaAssetInput | undefined>(
     initial?.image ? { url: initial.image.url, publicId: initial.image.publicId ?? "" } : undefined,
@@ -300,6 +301,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
           title,
           meaning,
           fullText: fullText.trim() || undefined,
+          highlightWords,
           caseStudy: caseStudy.trim() || undefined,
           status: nextStatus,
           audio: {
@@ -314,6 +316,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
           title,
           meaning,
           fullText: fullText.trim() || undefined,
+          highlightWords,
           caseStudy: caseStudy.trim() || undefined,
           status: nextStatus,
           audio: {
@@ -403,6 +406,45 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
             onImage={setImage}
             onAudioFull={setAudioFull}
           />
+
+          {/* Highlight words — admin marks words from fullText to display brown in detail page */}
+          {fullText.trim() && (
+            <div className="soft-card p-5">
+              <h2 className="text-base font-semibold text-brown mb-2">Highlight words</h2>
+              <p className="text-xs text-gray-500 mb-3">
+                Tap a word to mark it as a highlight. Highlighted words display in brown on the shloka detail page (yellow when actively being spoken).
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {Array.from(new Set(fullText.split(/\s+/).filter(Boolean))).map((w) => {
+                  const active = highlightWords.includes(w);
+                  return (
+                    <button
+                      key={w}
+                      type="button"
+                      onClick={() =>
+                        setHighlightWords((prev) =>
+                          prev.includes(w) ? prev.filter((x) => x !== w) : [...prev, w],
+                        )
+                      }
+                      className={`text-sm px-2 py-1 rounded border transition ${
+                        active
+                          ? "bg-brown text-white border-brown"
+                          : "bg-white text-brown border-[#E5DDD0] hover:bg-accent-soft"
+                      }`}
+                      style={{ fontFamily: "Georgia, serif" }}
+                    >
+                      {w}
+                    </button>
+                  );
+                })}
+              </div>
+              {highlightWords.length > 0 && (
+                <div className="mt-3 text-[10px] text-gray-500">
+                  {highlightWords.length} word{highlightWords.length === 1 ? "" : "s"} marked
+                </div>
+              )}
+            </div>
+          )}
 
           {isLegacy ? (
             <div className="soft-card p-5">

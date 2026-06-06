@@ -55,6 +55,7 @@ export interface PublicShloka {
   title: string;
   meaning: string;
   fullText?: string;
+  highlightWords?: string[];
   caseStudy?: string;
   status: 'draft' | 'published';
   audio: {
@@ -78,6 +79,7 @@ export interface ShlokaInput {
   title: string;
   meaning: string;
   fullText?: string;
+  highlightWords?: string[];
   caseStudy?: string;
   status?: 'draft' | 'published';
   audio: {
