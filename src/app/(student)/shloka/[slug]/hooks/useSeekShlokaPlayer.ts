@@ -132,14 +132,19 @@ export function useSeekShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
         /* user-gesture / autoplay blocked */
       });
     } else if (s.status === 'PLAYING_FULL') {
-      try {
-        audio.currentTime = 0;
-      } catch {
-        /* ignore */
+      // Only seek-to-start when entering a fresh rep (audio is paused or near 0).
+      // Otherwise s.line tracking updates during playback would constantly reset
+      // the playhead and prevent any progress.
+      if (audio.paused || audio.currentTime < 0.1) {
+        try {
+          audio.currentTime = 0;
+        } catch {
+          /* ignore */
+        }
+        void audio.play().catch(() => {
+          /* */
+        });
       }
-      void audio.play().catch(() => {
-        /* */
-      });
     } else {
       // IDLE | PAUSED | DONE → stop the element.
       audio.pause();
