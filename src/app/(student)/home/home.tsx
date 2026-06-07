@@ -199,7 +199,11 @@ interface MobileShlokaCardProps {
 
 function MobileShlokaCard({ shloka, index, completion }: MobileShlokaCardProps) {
   const done = !!completion;
-  const lineCount = shloka.lines?.length ?? 0;
+  // Count visual lines as \n-separated paragraphs in fullText (what users see).
+  // Falls back to bucket count when fullText is empty (older shlokas).
+  const lineCount = shloka.fullText
+    ? shloka.fullText.split(/\r?\n/).filter((p) => p.trim().length > 0).length
+    : shloka.lines?.length ?? 0;
   return (
     <Link
       href={`/shloka/${encodeURIComponent(shloka.slug)}`}
