@@ -181,10 +181,10 @@ const ShlokaDesc = ({ shloka }) => {
         key={i}
         className={
           s.isYellow
-            ? "bg-yellow-200 rounded px-1 transition-colors duration-150"
+            ? "lyric-active"
             : s.isBrown
-              ? "text-brown"
-              : ""
+              ? "lyric-brown"
+              : "lyric-idle"
         }
       >
         {s.text}
