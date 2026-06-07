@@ -87,8 +87,16 @@ const MiniPlayer: React.FC<Props> = ({
               <span
                 key={i}
                 aria-hidden="true"
-                className="absolute top-[-2px] bottom-[-2px] w-px bg-brown/70"
-                style={{ left: `${pct}%` }}
+                className="absolute"
+                style={{
+                  left: `${pct}%`,
+                  top: -3,
+                  bottom: -3,
+                  width: 2,
+                  background: "#5C4A33",
+                  borderRadius: 1,
+                  transform: "translateX(-1px)",
+                }}
               />
             );
           })}
