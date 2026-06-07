@@ -295,11 +295,12 @@ const ShlokaDesc = ({ shloka }) => {
           {/* Hero */}
           <div className="relative h-32 rounded-2xl overflow-hidden">
             <Image
-              src="/images/shloka_img_2.jpg"
+              src={shloka.image?.url ?? "/images/shloka_img_2.jpg"}
               alt=""
               fill
               className="object-cover"
               aria-hidden="true"
+              unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
             <div className="absolute bottom-3 left-3 right-3 text-white">
@@ -420,11 +421,12 @@ const ShlokaDesc = ({ shloka }) => {
               <div className="h-64 w-full flex justify-center z-5">
                 <div className="black-overlay rounded-lg"></div>
                 <Image
-                  src={"/images/shloka_img_2.jpg"}
+                  src={shloka.image?.url ?? "/images/shloka_img_2.jpg"}
                   alt="Shloka"
                   width={1400}
                   height={240}
                   className="rounded-lg w-full object-cover h-full"
+                  unoptimized
                 />
                 <div className="flex items-center justify-between absolute bottom-4 left-3 text-left w-full text-white">
                   <div>
