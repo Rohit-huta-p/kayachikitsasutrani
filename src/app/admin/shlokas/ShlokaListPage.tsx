@@ -131,7 +131,7 @@ const ShlokaListPage: React.FC = () => {
                 <td className="p-2">{s.title}</td>
                 <td className="p-2 font-mono text-xs">{s.slug}</td>
                 <td className="p-2"><StatusPill status={s.status} /></td>
-                <td className="p-2">{s.lines?.length ?? 0}</td>
+                <td className="p-2">{s.fullText ? s.fullText.split(/\r?\n/).filter((p) => p.trim().length > 0).length : s.lines?.length ?? 0}</td>
                 <td className="p-2 space-x-2">
                   <Link
                     href={`/admin/shlokas/${s.id}/edit`}
@@ -225,7 +225,7 @@ const ShlokaListPage: React.FC = () => {
               <StatusPill status={s.status} />
             </div>
             <div className="text-[10px] font-mono text-gray-500 truncate">{s.slug}</div>
-            <div className="text-[10px] text-gray-500">{s.lines?.length ?? 0} lines</div>
+            <div className="text-[10px] text-gray-500">{s.fullText ? s.fullText.split(/\r?\n/).filter((p) => p.trim().length > 0).length : s.lines?.length ?? 0} lines</div>
           </Link>
         ))}
 
