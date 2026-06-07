@@ -57,6 +57,7 @@ export interface PublicShloka {
   fullText?: string;
   highlightWords?: string[];
   caseStudy?: string;
+  reference?: string;
   status: 'draft' | 'published';
   audio: {
     full: ShlokaAsset;
@@ -81,6 +82,7 @@ export interface ShlokaInput {
   fullText?: string;
   highlightWords?: string[];
   caseStudy?: string;
+  reference?: string;
   status?: 'draft' | 'published';
   audio: {
     full: ShlokaAssetInput;

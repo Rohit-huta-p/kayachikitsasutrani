@@ -28,6 +28,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
   const [fullText, setFullText] = useState(initial?.fullText ?? "");
   const [highlightWords, setHighlightWords] = useState<string[]>(initial?.highlightWords ?? []);
   const [caseStudy, setCaseStudy] = useState(initial?.caseStudy ?? "");
+  const [reference, setReference] = useState(initial?.reference ?? "");
   const [image, setImage] = useState<ShlokaAssetInput | undefined>(
     initial?.image ? { url: initial.image.url, publicId: initial.image.publicId ?? "" } : undefined,
   );
@@ -62,6 +63,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       fullText: initial?.fullText ?? "",
       highlightWords: initial?.highlightWords ?? [],
       caseStudy: initial?.caseStudy ?? "",
+      reference: initial?.reference ?? "",
       image: initial?.image,
       audioFull: initial?.audio.full,
       lines: initial?.lines,
@@ -74,6 +76,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     fullText,
     highlightWords,
     caseStudy,
+    reference,
     image,
     audioFull,
     modelLines,
@@ -143,6 +146,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       fullText: fullText.trim() || undefined,
       highlightWords,
       caseStudy: caseStudy.trim() || undefined,
+      reference: reference.trim() || undefined,
       status: nextStatus,
       audio: {
         full: audioFull ?? { url: "", publicId: "" },
@@ -204,6 +208,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
             fullText={fullText}
             highlightWords={highlightWords}
             caseStudy={caseStudy}
+            reference={reference}
             image={image}
             audioFull={audioFull}
             slugDisabled={isEdit}
@@ -213,6 +218,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
             onFullText={setFullText}
             onHighlightWords={setHighlightWords}
             onCaseStudy={setCaseStudy}
+            onReference={setReference}
             onImage={setImage}
             onAudioFull={setAudioFull}
           />

@@ -13,6 +13,7 @@ export interface ShlokaInfoValues {
   fullText: string;
   highlightWords: string[];
   caseStudy: string;
+  reference: string;
   image?: ShlokaAssetInput;
   audioFull?: ShlokaAssetInput;
 }
@@ -26,6 +27,7 @@ interface Props extends ShlokaInfoValues {
   onFullText: (v: string) => void;
   onHighlightWords: (next: string[]) => void;
   onCaseStudy: (v: string) => void;
+  onReference: (v: string) => void;
   onImage: (a: ShlokaAssetInput | undefined) => void;
   onAudioFull: (a: ShlokaAssetInput | undefined) => void;
 }
@@ -98,8 +100,10 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
           <div className="col-span-2 text-gray-700">{props.meaning || "—"}</div>
           <div className="text-gray-500">Full text</div>
           <div className="col-span-2 text-gray-700 whitespace-pre-wrap">{props.fullText || "—"}</div>
-          <div className="text-gray-500">Case Study</div>
+          <div className="text-gray-500">Case Scenario</div>
           <div className="col-span-2 text-gray-700 whitespace-pre-wrap">{props.caseStudy || "—"}</div>
+          <div className="text-gray-500">Reference</div>
+          <div className="col-span-2 text-gray-700">{props.reference || "—"}</div>
           <div className="text-gray-500">Image</div>
           <div className="col-span-2 flex items-center gap-2">
             {props.image ? (
@@ -199,7 +203,7 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
             )}
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-600">Case Study (optional)</label>
+            <label className="text-xs font-semibold text-gray-600">Case Scenario (optional)</label>
             <textarea
               value={props.caseStudy}
               onChange={(e) => props.onCaseStudy(e.target.value)}
@@ -209,6 +213,18 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
               className="w-full border px-2 py-1 rounded"
             />
             <div className="text-[10px] text-gray-400 text-right">{props.caseStudy.length} / 5000</div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-gray-600">Reference (optional)</label>
+            <input
+              type="text"
+              value={props.reference}
+              onChange={(e) => props.onReference(e.target.value)}
+              maxLength={500}
+              placeholder="e.g. Charaka Samhita · Chikitsa Sthana · 3/32–33"
+              className="w-full border px-2 py-1 rounded"
+            />
+            <div className="text-[10px] text-gray-400 text-right">{props.reference.length} / 500</div>
           </div>
           <ImageUploadField label="Image (optional)" value={props.image} onChange={props.onImage} />
           <AudioUploadField label="Full audio" value={props.audioFull} onChange={props.onAudioFull} />

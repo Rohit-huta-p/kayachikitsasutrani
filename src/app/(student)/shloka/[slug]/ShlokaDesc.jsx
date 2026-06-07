@@ -325,6 +325,9 @@ const ShlokaDesc = ({ shloka }) => {
                   No full shloka text yet. Admin can add it in the edit form.
                 </p>
               )}
+              {shloka.reference && (
+                <p className="mt-2 text-[11px] text-gray-500 italic">— {shloka.reference}</p>
+              )}
               <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
                 <span
                   className={`inline-flex items-center gap-1 text-[10px] px-3 py-1 rounded-full border ${
@@ -363,12 +366,12 @@ const ShlokaDesc = ({ shloka }) => {
             <p className="text-xs text-brown leading-relaxed whitespace-pre-wrap">{shloka.meaning}</p>
           </div>
 
-          {/* Case Study (always visible, hidden if empty) */}
+          {/* Case Scenario (always visible, hidden if empty) */}
           {shloka.caseStudy && (
             <div className="bg-white border border-[#E5DDD0] rounded-xl p-3">
               <div className="text-sm font-bold text-brown mb-1.5 flex items-center gap-1.5">
                 <BookText size={14} />
-                Case Study
+                Case Scenario
               </div>
               <p className="text-xs text-brown leading-relaxed whitespace-pre-wrap">{shloka.caseStudy}</p>
             </div>
@@ -446,6 +449,9 @@ const ShlokaDesc = ({ shloka }) => {
                 </p>
               ) : (
                 <p className="text-sm text-gray-500 italic">No full shloka text yet.</p>
+              )}
+              {shloka.reference && (
+                <p className="text-sm text-gray-500 italic">— {shloka.reference}</p>
               )}
               <div className="flex items-center justify-center gap-3 flex-wrap">
                 <span
@@ -551,7 +557,7 @@ const ShlokaDesc = ({ shloka }) => {
             </div>
             {shloka.caseStudy && (
               <div className="bg-white p-4 rounded-lg">
-                <h2 className="text-xl text-brown flex items-center gap-2"><BookText size={18} /> Case Study</h2>
+                <h2 className="text-xl text-brown flex items-center gap-2"><BookText size={18} /> Case Scenario</h2>
                 <p className="text-sm mt-1 whitespace-pre-wrap text-gray-700">{shloka.caseStudy}</p>
               </div>
             )}
