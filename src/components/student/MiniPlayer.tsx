@@ -30,6 +30,8 @@ interface Props {
   onToggleHide?: () => void;
   /** Tap-to-cycle through speed options. */
   onCycleSpeed?: () => void;
+  /** Fractional positions (0..1) along the bar where each line ends. */
+  lineBoundaries?: number[];
 }
 
 function mmss(s?: number): string {
@@ -46,7 +48,7 @@ function fmtSpeed(s: number): string {
 
 const MiniPlayer: React.FC<Props> = ({
   currentLine, totalLines, rep, maxReps, status, progress, elapsedSec, totalSec, hidden,
-  speed, onPlayPause, onSkipPrev, onSkipNext, onToggleHide, onCycleSpeed,
+  speed, onPlayPause, onSkipPrev, onSkipNext, onToggleHide, onCycleSpeed, lineBoundaries,
 }) => {
   const mainLabel = status === "playing" ? "Pause" : status === "paused" ? "Resume" : status === "done" ? "Replay" : "Play";
 
@@ -74,8 +76,22 @@ const MiniPlayer: React.FC<Props> = ({
             <span className="text-gray-500">{mmss(elapsedSec)} / {mmss(totalSec)}</span>
           </div>
         </div>
-        <div className="bg-[#E5DDD0] rounded h-1 overflow-hidden mb-2">
-          <div className="bg-accent h-full transition-all" style={{ width: `${Math.max(0, Math.min(1, progress)) * 100}%` }} />
+        <div className="relative bg-[#E5DDD0] rounded h-1.5 overflow-visible mb-2">
+          <div
+            className="bg-accent h-full rounded transition-all"
+            style={{ width: `${Math.max(0, Math.min(1, progress)) * 100}%` }}
+          />
+          {lineBoundaries?.map((frac, i) => {
+            const pct = Math.max(0, Math.min(1, frac)) * 100;
+            return (
+              <span
+                key={i}
+                aria-hidden="true"
+                className="absolute top-[-2px] bottom-[-2px] w-px bg-brown/70"
+                style={{ left: `${pct}%` }}
+              />
+            );
+          })}
         </div>
         <div className="flex items-center justify-center gap-2">
           <button type="button" onClick={onSkipPrev} className="touch-target rounded-full bg-white border border-[#E5DDD0] text-brown" aria-label="Skip previous line">

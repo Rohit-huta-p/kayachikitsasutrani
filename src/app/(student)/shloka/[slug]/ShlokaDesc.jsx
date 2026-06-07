@@ -592,6 +592,16 @@ const ShlokaDesc = ({ shloka }) => {
           totalSec={total}
           hidden={hideSanskrit}
           speed={playbackRate}
+          lineBoundaries={(() => {
+            if (!total || total <= 0) return [];
+            return shloka.lines
+              .map((l) => {
+                const ft = l.fullTimings ?? [];
+                return ft.length > 0 ? ft[ft.length - 1].end : 0;
+              })
+              .filter((t) => t > 0 && t < total)
+              .map((t) => t / total);
+          })()}
           onPlayPause={handlePlayPause}
           onSkipPrev={player.skipPrev}
           onSkipNext={player.skipNext}
