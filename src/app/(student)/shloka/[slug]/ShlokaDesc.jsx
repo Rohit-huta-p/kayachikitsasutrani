@@ -293,21 +293,18 @@ const ShlokaDesc = ({ shloka }) => {
         {/* Body padded to clear sticky mini-player (~86px) + safe area + tab bar (already padded by (student) layout) */}
         <div className="px-4 py-3 flex flex-col gap-3 max-w-md mx-auto pb-[110px]">
           {/* Hero */}
-          <div className="relative h-32 rounded-2xl overflow-hidden">
+          <div className="relative h-44 rounded-2xl overflow-hidden bg-[#2A1F12]">
             <Image
               src={shloka.image?.url ?? "/images/shloka_img_2.jpg"}
               alt=""
               fill
-              className="object-cover"
+              className="object-contain"
               aria-hidden="true"
               unoptimized
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none" />
             <div className="absolute bottom-3 left-3 right-3 text-white">
               <h1 className="text-base font-bold leading-tight">{shloka.title}</h1>
-              <p className="text-[10px] opacity-90 mt-1">
-                Guiding the Early Healing of Fever through Detox and Lightness
-              </p>
             </div>
           </div>
 
@@ -418,24 +415,18 @@ const ShlokaDesc = ({ shloka }) => {
           <div className="col-span-4 space-y-4">
             {/* Shloka Heading */}
             <div className="relative flex flex-col items-center w-full">
-              <div className="h-64 w-full flex justify-center z-5">
-                <div className="black-overlay rounded-lg"></div>
+              <div className="relative h-64 w-full bg-[#2A1F12] rounded-lg overflow-hidden">
                 <Image
                   src={shloka.image?.url ?? "/images/shloka_img_2.jpg"}
                   alt="Shloka"
-                  width={1400}
-                  height={240}
-                  className="rounded-lg w-full object-cover h-full"
+                  fill
+                  className="object-contain"
                   unoptimized
                 />
-                <div className="flex items-center justify-between absolute bottom-4 left-3 text-left w-full text-white">
-                  <div>
-                    <h1 className="text-2xl">{shloka.title}</h1>
-                    <p className="text-xs">
-                      Guiding the Early Healing of Fever through Detox and Lightness
-                    </p>
-                  </div>
-                  <Heart size={18} className="absolute right-6 bottom-1" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none" />
+                <div className="flex items-center justify-between absolute bottom-4 left-3 right-3 text-left text-white">
+                  <h1 className="text-2xl">{shloka.title}</h1>
+                  <Heart size={18} />
                 </div>
               </div>
             </div>
