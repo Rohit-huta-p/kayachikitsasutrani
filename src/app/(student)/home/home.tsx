@@ -134,7 +134,7 @@ export default function Home() {
         {/* List */}
         <div className="px-4 pt-4 pb-4 max-w-md mx-auto">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[16px] font-bold text-[#2A1F12] tracking-[-0.3px]">All Shlokas</h2>
+            <h2 className="text-[16px] font-bold text-[#2A1F12] tracking-[-0.3px]">Sutras</h2>
             <span className="text-[11px] text-gray-500 font-semibold">{total} total</span>
           </div>
 
