@@ -25,6 +25,8 @@ export interface ShlokaPlayerApi {
   audioRef: React.RefObject<HTMLAudioElement | null>;
   currentSrc: string | null;
   play: () => void;
+  /** Skip the per-line repetition phase entirely and play the full audio 3x. */
+  playFull: () => void;
   pause: () => void;
   resume: () => void;
   reset: () => void;
@@ -261,6 +263,12 @@ export function useSeekShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
     });
   }, [clearPauseTimer]);
 
+  const playFull = useCallback(() => {
+    clearPauseTimer();
+    setS({ status: 'PLAYING_FULL', mode: 'FULL', line: 0, rep: 1 });
+    setCurrentWordIndex(-1);
+  }, [clearPauseTimer]);
+
   const pause = useCallback(() => {
     clearPauseTimer();
     setS((prev) => {
@@ -337,6 +345,7 @@ export function useSeekShlokaPlayer(shloka: Shloka): ShlokaPlayerApi {
     audioRef,
     currentSrc: fullUrl,
     play,
+    playFull,
     pause,
     resume,
     reset,

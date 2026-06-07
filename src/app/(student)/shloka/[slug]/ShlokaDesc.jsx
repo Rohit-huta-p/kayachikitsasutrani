@@ -214,6 +214,57 @@ const ShlokaDesc = ({ shloka }) => {
   const lineCount = shloka.lines.length;
   const currentLineDisplay = Math.max(0, Math.min(player.currentLine, Math.max(0, lineCount - 1))) + 1;
 
+  // ── Paragraph-aware status (counts visual `\n`-separated lines in fullText) ─
+  const paragraphRanges = (() => {
+    const parts = fullTextStr.split(/\r?\n/);
+    const ranges = [];
+    let cursor = 0;
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i];
+      const trimmed = p.trim().length > 0;
+      ranges.push({ start: cursor, end: cursor + p.length, hasContent: trimmed });
+      cursor += p.length + 1; // +1 for the \n separator
+    }
+    return ranges;
+  })();
+  const contentParagraphCount = paragraphRanges.filter((r) => r.hasContent).length;
+  const paragraphFromCharPos = (charPos) => {
+    const all = paragraphRanges.findIndex((r) => charPos >= r.start && charPos < r.end);
+    if (all < 0) return -1;
+    // Convert to "content-only" index (skip empty paragraphs).
+    let idx = -1;
+    for (let i = 0; i <= all; i++) if (paragraphRanges[i].hasContent) idx++;
+    return idx;
+  };
+  // First word position of the currently-playing line bucket.
+  const currentBucketFirstPos = (() => {
+    if (player.currentLine < 0) return null;
+    let g = 0;
+    for (let i = 0; i < player.currentLine; i++) {
+      g += shloka.lines[i]?.fullTimings?.length ?? shloka.lines[i]?.words?.length ?? 0;
+    }
+    return wordPositions[g] ?? null;
+  })();
+  const currentParagraphIdx =
+    currentBucketFirstPos ? paragraphFromCharPos(currentBucketFirstPos.start) : -1;
+
+  // Mode flags for UI
+  const isPlayingFull =
+    player.state.status === "PLAYING_FULL" ||
+    (player.state.status === "PAUSED" && player.state.prev?.status === "PLAYING_FULL");
+  const isPlayingLine =
+    player.state.status === "PLAYING_LINE" ||
+    (player.state.status === "PAUSED" && player.state.prev?.status === "PLAYING_LINE");
+  const isIdle = player.state.status === "IDLE" || player.state.status === "DONE";
+
+  const statusLabel = isPlayingFull
+    ? `Full audio · Rep ${player.rep || 0} / ${player.REPETITIONS}`
+    : isPlayingLine && contentParagraphCount > 0 && currentParagraphIdx >= 0
+      ? `Line ${currentParagraphIdx + 1} of ${contentParagraphCount} · Rep ${player.rep || 0} / ${player.REPETITIONS}`
+      : isIdle && player.state.status === "DONE"
+        ? "Finished"
+        : "Tap play to start";
+
   return (
     <>
       {/* Mobile (<md) */}
@@ -268,9 +319,27 @@ const ShlokaDesc = ({ shloka }) => {
                   No full shloka text yet. Admin can add it in the edit form.
                 </p>
               )}
-              <p className="inline-block mt-3 bg-[#F5EFE5] border border-[#E5DDD0] text-[10px] text-brown px-3 py-0.5 rounded-full">
-                Line {currentLineDisplay} of {lineCount} · Rep {player.rep || 0} / {player.REPETITIONS}
-              </p>
+              <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+                <span
+                  className={`inline-flex items-center gap-1 text-[10px] px-3 py-1 rounded-full border ${
+                    isPlayingFull
+                      ? "bg-accent text-white border-accent font-semibold"
+                      : "bg-[#F5EFE5] text-brown border-[#E5DDD0]"
+                  }`}
+                >
+                  {isPlayingFull && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+                  {statusLabel}
+                </span>
+                {!isPlayingFull && (
+                  <button
+                    type="button"
+                    onClick={() => player.playFull()}
+                    className="text-[10px] px-3 py-1 rounded-full border border-brown text-brown hover:bg-brown hover:text-white transition"
+                  >
+                    ▶ Play full audio
+                  </button>
+                )}
+              </div>
             </div>
           )}
           {hideSanskrit && (
@@ -372,9 +441,27 @@ const ShlokaDesc = ({ shloka }) => {
               ) : (
                 <p className="text-sm text-gray-500 italic">No full shloka text yet.</p>
               )}
-              <p className="inline-block bg-[#F5EFE5] border border-[#E5DDD0] text-xs text-brown px-3 py-0.5 rounded-full">
-                Line {currentLineDisplay} of {lineCount} · Rep {player.rep || 0} / {player.REPETITIONS}
-              </p>
+              <div className="flex items-center justify-center gap-3 flex-wrap">
+                <span
+                  className={`inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full border ${
+                    isPlayingFull
+                      ? "bg-accent text-white border-accent font-semibold"
+                      : "bg-[#F5EFE5] text-brown border-[#E5DDD0]"
+                  }`}
+                >
+                  {isPlayingFull && <span className="w-2 h-2 rounded-full bg-white animate-pulse" />}
+                  {statusLabel}
+                </span>
+                {!isPlayingFull && (
+                  <button
+                    type="button"
+                    onClick={() => player.playFull()}
+                    className="text-xs px-3 py-1 rounded-full border border-brown text-brown hover:bg-brown hover:text-white transition"
+                  >
+                    ▶ Play full audio
+                  </button>
+                )}
+              </div>
 
               <button
                 onClick={handlePlayPause}
