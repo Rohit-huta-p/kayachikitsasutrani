@@ -582,8 +582,8 @@ const ShlokaDesc = ({ shloka }) => {
       {/* Sticky mini-player — mobile only */}
       <div className="md:hidden">
         <MiniPlayer
-          currentLine={Math.max(1, player.currentLine + 1)}
-          totalLines={shloka.lines.length}
+          currentLine={displayedLineIdx}
+          totalLines={displayedLineTotal}
           rep={player.rep || 1}
           maxReps={player.REPETITIONS}
           status={miniStatus}
