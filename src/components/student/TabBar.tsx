@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, User } from "lucide-react";
+import { Home, BookOpen } from "lucide-react";
 
 interface Tab {
   href: string;
@@ -15,7 +15,6 @@ interface Tab {
 const tabs: Tab[] = [
   { href: "/home", icon: Home, label: "Home", matchPrefix: "/home" },
   { href: "/my-shlokas", icon: BookOpen, label: "My", matchPrefix: "/my-shlokas" },
-  { href: "/me", icon: User, label: "Me", matchPrefix: "/me" },
 ];
 
 const TabBar: React.FC = () => {

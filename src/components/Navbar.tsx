@@ -3,12 +3,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Shield, ChevronDown, LogIn } from "lucide-react";
+import { LogOut, Shield, ChevronDown, LogIn, User } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import AvatarCircle from "@/components/student/AvatarCircle";
-
-/** Routes already wrapped by the (student) tab bar — hide Navbar there on mobile. */
-const STUDENT_TAB_BAR_PREFIXES = ["/home", "/my-shlokas", "/me", "/shloka"];
 
 const Navbar: React.FC = () => {
   const { state, logout } = useAuth();
@@ -16,9 +13,6 @@ const Navbar: React.FC = () => {
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
-
-  // Hide on student tab-bar routes for mobile (they have their own bottom nav).
-  const hideOnMobile = STUDENT_TAB_BAR_PREFIXES.some((p) => pathname.startsWith(p));
 
   // Close dropdown on outside click.
   useEffect(() => {
@@ -38,9 +32,7 @@ const Navbar: React.FC = () => {
   const isAuthed = state.status === "authed";
 
   return (
-    <header
-      className={`bg-white border-b border-[#E5DDD0] ${hideOnMobile ? "hidden md:block" : ""}`}
-    >
+    <header className="bg-white border-b border-[#E5DDD0] sticky top-0 z-40">
       <div className="max-w-7xl mx-auto relative flex items-center justify-end px-4 py-2.5 md:px-6 md:py-3 min-h-[44px]">
         <Link
           href={isAuthed ? "/home" : "/"}
@@ -86,6 +78,15 @@ const Navbar: React.FC = () => {
                       {state.user.email}
                     </div>
                   </div>
+
+                  <Link
+                    href="/me"
+                    role="menuitem"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-brown hover:bg-accent-soft transition"
+                  >
+                    <User size={14} className="shrink-0" />
+                    Profile
+                  </Link>
 
                   {state.user.role === "admin" && (
                     <Link
