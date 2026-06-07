@@ -41,10 +41,13 @@ const Navbar: React.FC = () => {
     <header
       className={`bg-white border-b border-[#E5DDD0] ${hideOnMobile ? "hidden md:block" : ""}`}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-2.5 md:px-6 md:py-3">
-        <Link href={isAuthed ? "/home" : "/"} className="flex items-center gap-2">
+      <div className="max-w-7xl mx-auto relative flex items-center justify-end px-4 py-2.5 md:px-6 md:py-3 min-h-[44px]">
+        <Link
+          href={isAuthed ? "/home" : "/"}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+        >
           <span className="font-bold text-brown text-base md:text-lg tracking-tight">
-            Shloka Sutra
+            Chikitsa Sutra
           </span>
         </Link>
 

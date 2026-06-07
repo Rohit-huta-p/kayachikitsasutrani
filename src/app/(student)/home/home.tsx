@@ -102,7 +102,7 @@ export default function Home() {
         <div className="bg-[#2A1F12] text-white px-5 pt-6 pb-8 rounded-b-[28px]">
           <div className="text-[11px] tracking-[1.2px] opacity-60">{greetingFor()}</div>
           <h1 className="text-[24px] font-extrabold mt-1 leading-tight tracking-[-0.5px]">
-            {firstName || "Shloka Sutra"}
+            {firstName || "Chikitsa Sutra"}
           </h1>
 
           <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-3.5">
