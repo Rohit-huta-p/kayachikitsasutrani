@@ -257,10 +257,16 @@ const ShlokaDesc = ({ shloka }) => {
     (player.state.status === "PAUSED" && player.state.prev?.status === "PLAYING_LINE");
   const isIdle = player.state.status === "IDLE" || player.state.status === "DONE";
 
+  // Pick the most accurate line count + index. Prefer paragraph-by-\n
+  // mapping; fall back to bucket index if mapping fails (e.g. no fullText).
+  const useParagraphLabel = contentParagraphCount > 0 && currentParagraphIdx >= 0;
+  const displayedLineIdx = useParagraphLabel ? currentParagraphIdx + 1 : currentLineDisplay;
+  const displayedLineTotal = useParagraphLabel ? contentParagraphCount : lineCount;
+
   const statusLabel = isPlayingFull
     ? `Full audio · Rep ${player.rep || 0} / ${player.REPETITIONS}`
-    : isPlayingLine && contentParagraphCount > 0 && currentParagraphIdx >= 0
-      ? `Line ${currentParagraphIdx + 1} of ${contentParagraphCount} · Rep ${player.rep || 0} / ${player.REPETITIONS}`
+    : isPlayingLine
+      ? `Line ${displayedLineIdx} of ${displayedLineTotal} · Rep ${player.rep || 0} / ${player.REPETITIONS}`
       : isIdle && player.state.status === "DONE"
         ? "Finished"
         : "Tap play to start";
