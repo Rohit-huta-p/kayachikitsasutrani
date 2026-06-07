@@ -13,7 +13,7 @@ export default function Landing() {
           }}
         >
           <div className="text-5xl mb-2" aria-hidden="true">📜</div>
-          <h1 className="text-3xl font-bold">Shloka Sutra</h1>
+          <h1 className="text-3xl font-bold">Chikitsa Sutra</h1>
           <p className="mt-2 text-sm opacity-90 max-w-sm mx-auto">
             Learn Ayurvedic shlokas through guided audio recitation
           </p>
@@ -51,7 +51,7 @@ export default function Landing() {
           }}
         >
           <div className="text-6xl mb-3" aria-hidden="true">📜</div>
-          <h1 className="text-5xl font-bold">Shloka Sutra</h1>
+          <h1 className="text-5xl font-bold">Chikitsa Sutra</h1>
           <p className="mt-4 text-lg opacity-90 max-w-2xl mx-auto">
             Learn Ayurvedic shlokas through guided audio recitation
           </p>
