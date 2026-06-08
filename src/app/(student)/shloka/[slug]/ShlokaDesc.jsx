@@ -407,7 +407,7 @@ const ShlokaDesc = ({ shloka }) => {
               <BookOpen size={14} />
               Meaning
             </div>
-            <p className="text-xs text-brown leading-relaxed whitespace-pre-wrap">{shloka.meaning}</p>
+            <p className="text-xs text-black leading-relaxed whitespace-pre-wrap">{shloka.meaning}</p>
           </div>
 
           {/* Case Scenario (always visible, hidden if empty) */}
@@ -417,7 +417,7 @@ const ShlokaDesc = ({ shloka }) => {
                 <BookText size={14} />
                 Case Scenario
               </div>
-              <p className="text-xs text-brown leading-relaxed whitespace-pre-wrap">{shloka.caseStudy}</p>
+              <p className="text-xs text-black leading-relaxed whitespace-pre-wrap">{shloka.caseStudy}</p>
             </div>
           )}
 
@@ -646,12 +646,12 @@ const ShlokaDesc = ({ shloka }) => {
           <div className="col-span-2 space-y-5">
             <div className="bg-indigo-50 p-4 rounded-lg">
               <h2 className="text-xl text-brown mb-2">Meaning</h2>
-              <p className="text-sm whitespace-pre-wrap">{shloka.meaning}</p>
+              <p className="text-sm whitespace-pre-wrap text-black">{shloka.meaning}</p>
             </div>
             {shloka.caseStudy && (
               <div className="bg-white p-4 rounded-lg">
                 <h2 className="text-xl text-brown flex items-center gap-2"><BookText size={18} /> Case Scenario</h2>
-                <p className="text-sm mt-1 whitespace-pre-wrap text-gray-700">{shloka.caseStudy}</p>
+                <p className="text-sm mt-1 whitespace-pre-wrap text-black">{shloka.caseStudy}</p>
               </div>
             )}
           </div>

@@ -332,7 +332,7 @@ body {
  * Lyrics highlighting — karaoke-style smooth transitions
  * ────────────────────────────────────────────────────────────────────── */
 .lyric-idle {
-  color: rgba(0, 0, 0, 0.55);
+  color: #000;
   transition: color 320ms cubic-bezier(0.4, 0, 0.2, 1),
               background-color 320ms cubic-bezier(0.4, 0, 0.2, 1),
               text-shadow 320ms cubic-bezier(0.4, 0, 0.2, 1);
