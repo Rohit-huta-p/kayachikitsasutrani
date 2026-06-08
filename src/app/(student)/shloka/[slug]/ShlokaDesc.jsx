@@ -298,7 +298,7 @@ const ShlokaDesc = ({ shloka }) => {
               src={shloka.image?.url ?? "/images/shloka_img_2.jpg"}
               alt=""
               fill
-              className="object-contain"
+              className="object-cover"
               aria-hidden="true"
               unoptimized
             />
@@ -420,7 +420,7 @@ const ShlokaDesc = ({ shloka }) => {
                   src={shloka.image?.url ?? "/images/shloka_img_2.jpg"}
                   alt="Shloka"
                   fill
-                  className="object-contain"
+                  className="object-cover"
                   unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none" />
