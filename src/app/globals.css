@@ -338,7 +338,7 @@ body {
               text-shadow 320ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 .lyric-brown {
-  color: #6B3F1D;
+  color: #A67C52;
   font-weight: 700;
   text-shadow: 0 0 0.5px currentColor;
   transition: color 320ms cubic-bezier(0.4, 0, 0.2, 1),
