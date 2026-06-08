@@ -207,19 +207,27 @@ function MobileShlokaCard({ shloka, index, completion }: MobileShlokaCardProps) 
   return (
     <Link
       href={`/shloka/${encodeURIComponent(shloka.slug)}`}
-      className={`relative bg-white border-[1.5px] rounded-2xl p-3.5 flex items-center gap-3 transition hover:bg-white/85 ${
-        done ? "bg-[#FBF8F2] border-[#E5DDD0]" : "border-[#F0E7D8]"
+      className={`relative border-[1.5px] rounded-2xl p-3.5 flex items-center gap-3 transition hover:bg-white/85 overflow-hidden ${
+        done
+          ? "bg-[#F1F8F3] border-[#CFE6D3]"
+          : "bg-white border-[#F0E7D8]"
       }`}
     >
+      {done && (
+        <span
+          aria-hidden="true"
+          className="absolute left-0 top-0 bottom-0 w-1 bg-[#5FAE69]"
+        />
+      )}
       <div
         className={`w-9 h-9 rounded-[10px] flex items-center justify-center font-bold text-[13px] shrink-0 ${
           done
-            ? "bg-[#2A1F12] text-[#F4C95D]"
+            ? "bg-white text-[#2E7D32] border border-[#CFE6D3]"
             : "bg-[#FAF6EE] text-[#8B6F4F]"
         }`}
         style={done ? {} : { fontFamily: "Georgia, serif" }}
       >
-        {done ? <Check size={16} strokeWidth={3} /> : index}
+        {done ? <Check size={18} strokeWidth={3} /> : index}
       </div>
       <div className="flex-1 min-w-0 pr-8">
         <div className="text-[14px] font-bold text-[#2A1F12] truncate">
@@ -241,10 +249,17 @@ function MobileShlokaCard({ shloka, index, completion }: MobileShlokaCardProps) 
           )}
         </div>
       </div>
-      {done && completion && completion.rank > 0 && (
-        <span className="absolute top-3 right-3.5 bg-[#F4C95D] text-[#2A1F12] text-[10px] font-extrabold px-1.5 py-0.5 rounded-md">
-          #{completion.rank}
-        </span>
+      {done && (
+        <div className="absolute top-3 right-3.5 flex items-center gap-1">
+          {completion && completion.rank > 0 && (
+            <span className="bg-[#F4C95D] text-[#2A1F12] text-[10px] font-extrabold px-1.5 py-0.5 rounded-md">
+              #{completion.rank}
+            </span>
+          )}
+          <span className="bg-[#E8F5E9] text-[#2E7D32] text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border border-[#CFE6D3]">
+            Done
+          </span>
+        </div>
       )}
     </Link>
   );
