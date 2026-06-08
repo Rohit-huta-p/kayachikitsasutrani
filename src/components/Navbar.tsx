@@ -33,17 +33,17 @@ const Navbar: React.FC = () => {
 
   return (
     <header className="bg-white border-b border-[#E5DDD0] sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto relative flex items-center justify-end px-4 py-2.5 md:px-6 md:py-3 min-h-[44px]">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 px-4 py-2.5 md:px-6 md:py-3 min-h-[44px]">
         <Link
           href={isAuthed ? "/home" : "/"}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          className="shrink-0"
         >
           <span className="font-bold text-brown text-base md:text-lg tracking-tight">
             Chikitsa Sutra
           </span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {isAuthed && state.status === "authed" ? (
             <div className="relative" ref={menuRef}>
               <button
