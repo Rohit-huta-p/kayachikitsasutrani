@@ -302,10 +302,27 @@ const ShlokaDesc = ({ shloka }) => {
 
         {/* Body padded to clear sticky mini-player (~86px) + safe area + tab bar (already padded by (student) layout) */}
         <div className="px-4 py-3 flex flex-col gap-3 max-w-md mx-auto pb-[110px]">
-          {/* Hero — swipeable image carousel */}
-          <div className="flex flex-col gap-2">
+          {/* Hero — swipeable image carousel with left thumbnail strip */}
+          <div className="flex gap-2 items-stretch">
+            {gallery.length > 1 && (
+              <div className="flex flex-col gap-1.5 overflow-y-auto shrink-0 w-14 h-44 pr-0.5">
+                {gallery.map((url, i) => (
+                  <button
+                    key={url + i}
+                    type="button"
+                    onClick={() => setCarouselIdx(i)}
+                    aria-label={`View image ${i + 1}`}
+                    className={`relative h-12 w-14 rounded-md overflow-hidden shrink-0 border-2 transition ${
+                      i === carouselIdx ? "border-accent" : "border-transparent opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <Image src={url} alt="" fill className="object-cover" unoptimized />
+                  </button>
+                ))}
+              </div>
+            )}
             <div
-              className="relative h-44 rounded-2xl overflow-hidden bg-[#2A1F12]"
+              className="relative h-44 flex-1 rounded-2xl overflow-hidden bg-[#2A1F12]"
               onTouchStart={(e) => { e.currentTarget.dataset.touchX = String(e.touches[0].clientX); }}
               onTouchEnd={(e) => {
                 const startX = parseFloat(e.currentTarget.dataset.touchX || "0");
@@ -335,23 +352,6 @@ const ShlokaDesc = ({ shloka }) => {
                 </div>
               )}
             </div>
-            {gallery.length > 1 && (
-              <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-                {gallery.map((url, i) => (
-                  <button
-                    key={url + i}
-                    type="button"
-                    onClick={() => setCarouselIdx(i)}
-                    aria-label={`View image ${i + 1}`}
-                    className={`relative h-12 w-16 rounded-lg overflow-hidden shrink-0 border-2 transition ${
-                      i === carouselIdx ? "border-accent" : "border-transparent opacity-70 hover:opacity-100"
-                    }`}
-                  >
-                    <Image src={url} alt="" fill className="object-cover" unoptimized />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Sanskrit display — verbatim fullText with current-word highlight via char positions */}
@@ -459,10 +459,27 @@ const ShlokaDesc = ({ shloka }) => {
         <div className="grid md:grid-cols-6 gap-4">
           {/* Right Side */}
           <div className="col-span-4 space-y-4">
-            {/* Shloka Heading — swipeable image carousel */}
-            <div className="relative flex flex-col items-stretch w-full gap-2">
+            {/* Shloka Heading — swipeable image carousel with left thumbnail strip */}
+            <div className="relative flex items-stretch w-full gap-2">
+              {gallery.length > 1 && (
+                <div className="flex flex-col gap-2 overflow-y-auto shrink-0 w-20 h-64 pr-0.5">
+                  {gallery.map((url, i) => (
+                    <button
+                      key={url + i}
+                      type="button"
+                      onClick={() => setCarouselIdx(i)}
+                      aria-label={`View image ${i + 1}`}
+                      className={`relative h-16 w-20 rounded-md overflow-hidden shrink-0 border-2 transition ${
+                        i === carouselIdx ? "border-accent" : "border-transparent opacity-70 hover:opacity-100"
+                      }`}
+                    >
+                      <Image src={url} alt="" fill className="object-cover" unoptimized />
+                    </button>
+                  ))}
+                </div>
+              )}
               <div
-                className="relative h-64 w-full bg-[#2A1F12] rounded-lg overflow-hidden"
+                className="relative h-64 flex-1 bg-[#2A1F12] rounded-lg overflow-hidden"
                 onTouchStart={(e) => { e.currentTarget.dataset.touchX = String(e.touches[0].clientX); }}
                 onTouchEnd={(e) => {
                   const startX = parseFloat(e.currentTarget.dataset.touchX || "0");
@@ -512,23 +529,6 @@ const ShlokaDesc = ({ shloka }) => {
                   <Heart size={18} />
                 </div>
               </div>
-              {gallery.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {gallery.map((url, i) => (
-                    <button
-                      key={url + i}
-                      type="button"
-                      onClick={() => setCarouselIdx(i)}
-                      aria-label={`View image ${i + 1}`}
-                      className={`relative h-16 w-24 rounded-md overflow-hidden shrink-0 border-2 transition ${
-                        i === carouselIdx ? "border-accent" : "border-transparent opacity-70 hover:opacity-100"
-                      }`}
-                    >
-                      <Image src={url} alt="" fill className="object-cover" unoptimized />
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Shloka body — verbatim fullText with current-word highlight via char positions */}
