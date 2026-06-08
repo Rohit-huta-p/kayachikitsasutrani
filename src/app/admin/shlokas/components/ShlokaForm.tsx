@@ -29,9 +29,17 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
   const [highlightWords, setHighlightWords] = useState<string[]>(initial?.highlightWords ?? []);
   const [caseStudy, setCaseStudy] = useState(initial?.caseStudy ?? "");
   const [reference, setReference] = useState(initial?.reference ?? "");
-  const [image, setImage] = useState<ShlokaAssetInput | undefined>(
-    initial?.image ? { url: initial.image.url, publicId: initial.image.publicId ?? "" } : undefined,
-  );
+  // Seed images from the new `images` array, falling back to the legacy
+  // single `image` field for older shlokas.
+  const [images, setImages] = useState<ShlokaAssetInput[]>(() => {
+    if (initial?.images && initial.images.length > 0) {
+      return initial.images.map((i) => ({ url: i.url, publicId: i.publicId ?? "" }));
+    }
+    if (initial?.image) {
+      return [{ url: initial.image.url, publicId: initial.image.publicId ?? "" }];
+    }
+    return [];
+  });
   const [audioFull, setAudioFull] = useState<ShlokaAssetInput | undefined>(
     initial?.audio.full
       ? { url: initial.audio.full.url, publicId: initial.audio.full.publicId ?? "" }
@@ -64,7 +72,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       highlightWords: initial?.highlightWords ?? [],
       caseStudy: initial?.caseStudy ?? "",
       reference: initial?.reference ?? "",
-      image: initial?.image,
+      images: initial?.images ?? [],
       audioFull: initial?.audio.full,
       lines: initial?.lines,
     }),
@@ -77,7 +85,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     highlightWords,
     caseStudy,
     reference,
-    image,
+    images,
     audioFull,
     modelLines,
   });
@@ -91,7 +99,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       fullText,
       highlightWords,
       caseStudy,
-      image,
+      images,
       audioFull,
       modelLines,
     });
@@ -152,7 +160,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
         full: audioFull ?? { url: "", publicId: "" },
         lines: [],
       },
-      image,
+      images,
       lines: modelLines,
     };
 
@@ -209,7 +217,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
             highlightWords={highlightWords}
             caseStudy={caseStudy}
             reference={reference}
-            image={image}
+            images={images}
             audioFull={audioFull}
             slugDisabled={isEdit}
             onSlug={setSlug}
@@ -219,7 +227,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
             onHighlightWords={setHighlightWords}
             onCaseStudy={setCaseStudy}
             onReference={setReference}
-            onImage={setImage}
+            onImages={setImages}
             onAudioFull={setAudioFull}
           />
           <div className="soft-card p-5 space-y-3">

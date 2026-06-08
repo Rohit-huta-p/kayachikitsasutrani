@@ -3,7 +3,7 @@
 import React, { useRef, useState } from "react";
 import Image from "next/image";
 import AudioUploadField from "./AudioUploadField";
-import ImageUploadField from "./ImageUploadField";
+import ImagesGalleryField from "./ImagesGalleryField";
 import type { ShlokaAssetInput } from "@/lib/auth/types";
 
 export interface ShlokaInfoValues {
@@ -14,7 +14,7 @@ export interface ShlokaInfoValues {
   highlightWords: string[];
   caseStudy: string;
   reference: string;
-  image?: ShlokaAssetInput;
+  images: ShlokaAssetInput[];
   audioFull?: ShlokaAssetInput;
 }
 
@@ -28,12 +28,12 @@ interface Props extends ShlokaInfoValues {
   onHighlightWords: (next: string[]) => void;
   onCaseStudy: (v: string) => void;
   onReference: (v: string) => void;
-  onImage: (a: ShlokaAssetInput | undefined) => void;
+  onImages: (next: ShlokaAssetInput[]) => void;
   onAudioFull: (a: ShlokaAssetInput | undefined) => void;
 }
 
 function isComplete(v: ShlokaInfoValues): boolean {
-  // caseStudy + audioMeaning are optional — do not gate completeness on them.
+  // images + caseStudy are optional — do not gate completeness on them.
   return Boolean(v.title.trim() && v.meaning.trim() && v.audioFull);
 }
 
@@ -104,18 +104,18 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
           <div className="col-span-2 text-gray-700 whitespace-pre-wrap">{props.caseStudy || "—"}</div>
           <div className="text-gray-500">Reference</div>
           <div className="col-span-2 text-gray-700">{props.reference || "—"}</div>
-          <div className="text-gray-500">Image</div>
-          <div className="col-span-2 flex items-center gap-2">
-            {props.image ? (
-              <>
-                <div className="relative w-12 h-9">
-                  <Image src={props.image.url} alt="" fill className="object-cover rounded" sizes="48px" />
-                </div>
-                <span className="text-xs text-gray-500">uploaded</span>
-              </>
-            ) : (
+          <div className="text-gray-500">Images</div>
+          <div className="col-span-2 flex items-center gap-1.5 flex-wrap">
+            {props.images.length === 0 ? (
               <span className="text-xs text-gray-400">none</span>
+            ) : (
+              props.images.map((img, i) => (
+                <div key={img.url + i} className="relative w-12 h-9">
+                  <Image src={img.url} alt="" fill className="object-cover rounded" sizes="48px" unoptimized />
+                </div>
+              ))
             )}
+            <span className="text-xs text-gray-500">{props.images.length} / 5</span>
           </div>
           <div className="text-gray-500">Full audio</div>
           <div className="col-span-2 text-xs">
@@ -226,7 +226,7 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
             />
             <div className="text-[10px] text-gray-400 text-right">{props.reference.length} / 500</div>
           </div>
-          <ImageUploadField label="Image (optional)" value={props.image} onChange={props.onImage} />
+          <ImagesGalleryField values={props.images} onChange={props.onImages} />
           <AudioUploadField label="Full audio" value={props.audioFull} onChange={props.onAudioFull} />
         </div>
       )}

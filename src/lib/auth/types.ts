@@ -64,6 +64,7 @@ export interface PublicShloka {
     lines: ShlokaAsset[];
   };
   image?: ShlokaAsset;
+  images: ShlokaAsset[];
   lines: ShlokaLine[];
   createdAt: string;
   updatedAt: string;
@@ -89,6 +90,7 @@ export interface ShlokaInput {
     lines: ShlokaAssetInput[];
   };
   image?: ShlokaAssetInput;
+  images?: ShlokaAssetInput[];
   lines: ShlokaLine[];
 }
 

@@ -29,6 +29,16 @@ const ShlokaDesc = ({ shloka }) => {
   const tracker = useCompletionTracker(shloka.slug, player.state);
 
   const [hideSanskrit, setHideSanskrit] = useState(false);
+  const [carouselIdx, setCarouselIdx] = useState(0);
+  // Build the gallery list — prefer new images array, fall back to legacy single image.
+  const gallery = (() => {
+    const arr = shloka.images && shloka.images.length > 0
+      ? shloka.images.map((i) => i.url)
+      : shloka.image?.url
+        ? [shloka.image.url]
+        : [];
+    return arr.length > 0 ? arr : ["/images/shloka_img_2.jpg"];
+  })();
 
   // Playback speed (cycles through SPEED_OPTIONS on tap).
   const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5];
@@ -292,20 +302,56 @@ const ShlokaDesc = ({ shloka }) => {
 
         {/* Body padded to clear sticky mini-player (~86px) + safe area + tab bar (already padded by (student) layout) */}
         <div className="px-4 py-3 flex flex-col gap-3 max-w-md mx-auto pb-[110px]">
-          {/* Hero */}
-          <div className="relative h-44 rounded-2xl overflow-hidden bg-[#2A1F12]">
-            <Image
-              src={shloka.image?.url ?? "/images/shloka_img_2.jpg"}
-              alt=""
-              fill
-              className="object-cover"
-              aria-hidden="true"
-              unoptimized
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none" />
-            <div className="absolute bottom-3 left-3 right-3 text-white">
-              <h1 className="text-base font-bold leading-tight">{shloka.title}</h1>
+          {/* Hero — swipeable image carousel */}
+          <div className="flex flex-col gap-2">
+            <div
+              className="relative h-44 rounded-2xl overflow-hidden bg-[#2A1F12]"
+              onTouchStart={(e) => { e.currentTarget.dataset.touchX = String(e.touches[0].clientX); }}
+              onTouchEnd={(e) => {
+                const startX = parseFloat(e.currentTarget.dataset.touchX || "0");
+                const endX = e.changedTouches[0].clientX;
+                const dx = endX - startX;
+                if (Math.abs(dx) < 30) return;
+                if (dx < 0 && carouselIdx < gallery.length - 1) setCarouselIdx(carouselIdx + 1);
+                if (dx > 0 && carouselIdx > 0) setCarouselIdx(carouselIdx - 1);
+              }}
+            >
+              <Image
+                key={carouselIdx}
+                src={gallery[carouselIdx]}
+                alt=""
+                fill
+                className="object-cover"
+                aria-hidden="true"
+                unoptimized
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none" />
+              <div className="absolute bottom-3 left-3 right-3 text-white">
+                <h1 className="text-base font-bold leading-tight">{shloka.title}</h1>
+              </div>
+              {gallery.length > 1 && (
+                <div className="absolute top-2 right-2 bg-black/55 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                  {carouselIdx + 1} / {gallery.length}
+                </div>
+              )}
             </div>
+            {gallery.length > 1 && (
+              <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+                {gallery.map((url, i) => (
+                  <button
+                    key={url + i}
+                    type="button"
+                    onClick={() => setCarouselIdx(i)}
+                    aria-label={`View image ${i + 1}`}
+                    className={`relative h-12 w-16 rounded-lg overflow-hidden shrink-0 border-2 transition ${
+                      i === carouselIdx ? "border-accent" : "border-transparent opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <Image src={url} alt="" fill className="object-cover" unoptimized />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Sanskrit display — verbatim fullText with current-word highlight via char positions */}
@@ -413,22 +459,76 @@ const ShlokaDesc = ({ shloka }) => {
         <div className="grid md:grid-cols-6 gap-4">
           {/* Right Side */}
           <div className="col-span-4 space-y-4">
-            {/* Shloka Heading */}
-            <div className="relative flex flex-col items-center w-full">
-              <div className="relative h-64 w-full bg-[#2A1F12] rounded-lg overflow-hidden">
+            {/* Shloka Heading — swipeable image carousel */}
+            <div className="relative flex flex-col items-stretch w-full gap-2">
+              <div
+                className="relative h-64 w-full bg-[#2A1F12] rounded-lg overflow-hidden"
+                onTouchStart={(e) => { e.currentTarget.dataset.touchX = String(e.touches[0].clientX); }}
+                onTouchEnd={(e) => {
+                  const startX = parseFloat(e.currentTarget.dataset.touchX || "0");
+                  const endX = e.changedTouches[0].clientX;
+                  const dx = endX - startX;
+                  if (Math.abs(dx) < 30) return;
+                  if (dx < 0 && carouselIdx < gallery.length - 1) setCarouselIdx(carouselIdx + 1);
+                  if (dx > 0 && carouselIdx > 0) setCarouselIdx(carouselIdx - 1);
+                }}
+              >
                 <Image
-                  src={shloka.image?.url ?? "/images/shloka_img_2.jpg"}
+                  key={carouselIdx}
+                  src={gallery[carouselIdx]}
                   alt="Shloka"
                   fill
                   className="object-cover"
                   unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none" />
+                {gallery.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setCarouselIdx((i) => Math.max(0, i - 1))}
+                      disabled={carouselIdx === 0}
+                      className="absolute top-1/2 left-2 -translate-y-1/2 bg-black/55 text-white rounded-full w-9 h-9 flex items-center justify-center disabled:opacity-30"
+                      aria-label="Previous image"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCarouselIdx((i) => Math.min(gallery.length - 1, i + 1))}
+                      disabled={carouselIdx === gallery.length - 1}
+                      className="absolute top-1/2 right-2 -translate-y-1/2 bg-black/55 text-white rounded-full w-9 h-9 flex items-center justify-center disabled:opacity-30"
+                      aria-label="Next image"
+                    >
+                      ›
+                    </button>
+                    <div className="absolute top-2 right-2 bg-black/55 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                      {carouselIdx + 1} / {gallery.length}
+                    </div>
+                  </>
+                )}
                 <div className="flex items-center justify-between absolute bottom-4 left-3 right-3 text-left text-white">
                   <h1 className="text-2xl">{shloka.title}</h1>
                   <Heart size={18} />
                 </div>
               </div>
+              {gallery.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {gallery.map((url, i) => (
+                    <button
+                      key={url + i}
+                      type="button"
+                      onClick={() => setCarouselIdx(i)}
+                      aria-label={`View image ${i + 1}`}
+                      className={`relative h-16 w-24 rounded-md overflow-hidden shrink-0 border-2 transition ${
+                        i === carouselIdx ? "border-accent" : "border-transparent opacity-70 hover:opacity-100"
+                      }`}
+                    >
+                      <Image src={url} alt="" fill className="object-cover" unoptimized />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Shloka body — verbatim fullText with current-word highlight via char positions */}
