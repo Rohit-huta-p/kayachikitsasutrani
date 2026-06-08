@@ -225,9 +225,9 @@ function MobileShlokaCard({ shloka, index, completion }: MobileShlokaCardProps) 
             ? "bg-white text-[#2E7D32] border border-[#CFE6D3]"
             : "bg-[#FAF6EE] text-[#8B6F4F]"
         }`}
-        style={done ? {} : { fontFamily: "Georgia, serif" }}
+        style={{ fontFamily: "Georgia, serif" }}
       >
-        {done ? <Check size={18} strokeWidth={3} /> : index}
+        {index}
       </div>
       <div className="flex-1 min-w-0 pr-8">
         <div className="text-[14px] font-bold text-[#2A1F12] truncate">

@@ -72,7 +72,6 @@ export default function MyShlokas() {
       <TopBar
         subtitle="Your library"
         title="My Shlokas"
-        trailing={me ? <AvatarCircle name={me.name} email={me.email} size={34} /> : null}
       />
       <div className="px-4 py-4 flex flex-col gap-3 max-w-md mx-auto md:max-w-2xl">
         <div className="flex gap-2 flex-wrap">
@@ -108,30 +107,43 @@ export default function MyShlokas() {
           <p className="text-sm text-gray-500 italic">No shlokas match this filter.</p>
         )}
 
-        {!loading && !error && filtered.map((row) => (
+        {!loading && !error && filtered.map((row, i) => (
           <Link
             key={row.shlokaId}
             href={`/shloka/${encodeURIComponent(row.slug)}`}
-            className="bg-white border border-[#E5DDD0] rounded-xl p-3 flex gap-3 items-center hover:bg-white/80 transition"
+            className="relative bg-[#F1F8F3] border-[1.5px] border-[#CFE6D3] rounded-2xl p-3.5 flex gap-3 items-center hover:bg-white/85 transition overflow-hidden"
           >
-            <div
-              className="w-11 h-11 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0"
-              style={{ background: "linear-gradient(135deg,#7BA77B,#A5D6A7)" }}
+            <span
               aria-hidden="true"
+              className="absolute left-0 top-0 bottom-0 w-1 bg-[#5FAE69]"
+            />
+            <div
+              className="w-9 h-9 rounded-[10px] bg-white border border-[#CFE6D3] flex items-center justify-center text-[#2E7D32] font-bold text-[13px] shrink-0"
+              style={{ fontFamily: "Georgia, serif" }}
             >
-              <Check size={16} />
+              {i + 1}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-brown truncate">{row.title}</div>
-              <div className="text-xs text-gray-500 mt-0.5 truncate">
-                #{row.rank} · {row.attempts} attempt{row.attempts === 1 ? "" : "s"} · {mmss(row.elapsedSeconds)} · {timeAgo(row.completedAt)}
+            <div className="flex-1 min-w-0 pr-16">
+              <div className="text-[14px] font-bold text-[#2A1F12] truncate">{row.title}</div>
+              <div className="text-[10px] text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
+                <span>{row.attempts} attempt{row.attempts === 1 ? "" : "s"}</span>
+                <span className="w-[3px] h-[3px] bg-[#C9B89A] rounded-full" />
+                <span>{mmss(row.elapsedSeconds)}</span>
+                <span className="w-[3px] h-[3px] bg-[#C9B89A] rounded-full" />
+                <span>{timeAgo(row.completedAt)}</span>
               </div>
             </div>
-            {row.rank === 1 ? (
-              <Star size={14} className="text-accent fill-accent" aria-hidden="true" />
-            ) : (
-              <ChevronRight size={16} className="text-gray-400" aria-hidden="true" />
-            )}
+            <div className="absolute top-3 right-3.5 flex items-center gap-1">
+              {row.rank > 0 && (
+                <span className="bg-[#F4C95D] text-[#2A1F12] text-[10px] font-extrabold px-1.5 py-0.5 rounded-md inline-flex items-center gap-0.5">
+                  {row.rank === 1 && <Star size={10} className="fill-current" />}
+                  #{row.rank}
+                </span>
+              )}
+              <span className="bg-[#E8F5E9] text-[#2E7D32] text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border border-[#CFE6D3]">
+                Done
+              </span>
+            </div>
           </Link>
         ))}
       </div>
