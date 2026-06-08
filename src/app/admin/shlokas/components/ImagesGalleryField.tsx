@@ -61,7 +61,7 @@ const ImagesGalleryField: React.FC<Props> = ({
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,.jpg,.jpeg"
+        accept="image/jpeg,image/png,.jpg,.jpeg,.png"
         onChange={handleFile}
         disabled={uploading || values.length >= max}
         className="hidden"
@@ -117,7 +117,7 @@ const ImagesGalleryField: React.FC<Props> = ({
       </div>
       {error && <p className="text-[10px] text-red-600">{error}</p>}
       <p className="text-[10px] text-gray-400">
-        {values.length} / {max} · .jpg only · drag-reorder via the ← buttons
+        {values.length} / {max} · .jpg or .png · drag-reorder via the ← buttons
       </p>
     </div>
   );

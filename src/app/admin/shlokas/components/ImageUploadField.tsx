@@ -38,7 +38,7 @@ const ImageUploadField: React.FC<Props> = ({ label, value, onChange }) => {
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,.jpg,.jpeg"
+        accept="image/jpeg,image/png,.jpg,.jpeg,.png"
         onChange={handleFile}
         disabled={uploading}
         className="hidden"
