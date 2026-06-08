@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useCompletions } from "@/lib/completions/CompletionsContext";

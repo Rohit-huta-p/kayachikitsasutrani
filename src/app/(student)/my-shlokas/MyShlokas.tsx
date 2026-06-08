@@ -2,11 +2,9 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { Star, ChevronRight, Check } from "lucide-react";
-import { useAuth } from "@/lib/auth/AuthContext";
+import { Star } from "lucide-react";
 import { useCompletions } from "@/lib/completions/CompletionsContext";
 import TopBar from "@/components/student/TopBar";
-import AvatarCircle from "@/components/student/AvatarCircle";
 import LottieLoader from "@/components/LottieLoader";
 
 function timeAgo(iso: string): string {
@@ -28,8 +26,6 @@ function mmss(s: number): string {
 type Filter = "all" | "top5" | "recent";
 
 export default function MyShlokas() {
-  const { state: authState } = useAuth();
-  const me = authState.status === "authed" ? authState.user : null;
   const { items, loading, error } = useCompletions();
   const [filter, setFilter] = useState<Filter>("all");
 
