@@ -16,6 +16,7 @@ import {
   PartyPopper,
 } from "lucide-react";
 import Leaderboard from "./Leaderboard";
+import PracticeCard from "./PracticeCard";
 import { useShlokaPlayer } from "./hooks/useShlokaPlayer";
 import { useCompletionTracker } from "./hooks/useCompletionTracker";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -421,6 +422,9 @@ const ShlokaDesc = ({ shloka }) => {
             </div>
           )}
 
+          {/* Practice card — type (transliteration) + draw */}
+          <PracticeCard targetText={shloka.fullText ?? ""} />
+
           {/* Completion banner */}
           {tracker.submitted && (
             <div className="mt-1 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-800 flex items-center gap-2">
@@ -654,6 +658,8 @@ const ShlokaDesc = ({ shloka }) => {
                 <p className="text-sm mt-1 whitespace-pre-wrap text-black">{shloka.caseStudy}</p>
               </div>
             )}
+            {/* Practice card — type (transliteration) + draw */}
+            <PracticeCard targetText={shloka.fullText ?? ""} />
           </div>
         </div>
 
