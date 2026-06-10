@@ -1,18 +1,17 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Sanscript from "@indic-transliteration/sanscript";
 import {
   Keyboard,
   Pencil,
-  Eraser,
-  Trash2,
   CheckCircle2,
   RotateCcw,
   Maximize2,
   Minimize2,
   X,
 } from "lucide-react";
+import InfiniteCanvas from "./InfiniteCanvas";
 
 const SCHEMES = [
   { id: "iast", label: "IAST", hint: "ā ī ū ṛ ṣ ṅ ñ" },
@@ -28,21 +27,12 @@ function tokenize(s) {
  * Practice surface for memorizing a shloka.
  *
  * Type tab — live Latin → Devanagari transliteration (IAST / ITRANS / HK).
- * A "Check" button compares the rendered Devanagari to shloka.fullText
- * word-by-word and shows a green/red diff with a score.
  *
- * Draw tab — HTML <canvas> whiteboard for finger / stylus practice.
- *   • Pen / Eraser / Clear.
- *   • Infinite-scroll board: when the student's stroke reaches the bottom
- *     edge, the canvas auto-grows in 280-px steps and the container scrolls
- *     to follow. Previous strokes are preserved across resize via a dataURL
- *     save/restore step.
- *   • Full-screen toggle: the draw wrapper enters the browser Fullscreen
- *     API. On entry the canvas snaps up to fill the viewport (preserving
- *     drawing), and exiting collapses back to the inline footprint with
- *     drawing intact. Works on desktop, iPad, and Android Chrome / Edge;
- *     Safari iOS falls back to a fixed-position overlay if the API is
- *     blocked.
+ * Draw tab — an Excalidraw-style infinite canvas (see InfiniteCanvas.jsx).
+ *   Strokes are stored as vectors in world coordinates, the viewport pans
+ *   and zooms freely (pinch / two-finger / wheel / trackpad), and a
+ *   "Full screen" button promotes the wrapper to the browser Fullscreen
+ *   API (or a fixed-position overlay if the API isn't available).
  */
 const PracticeCard = ({ targetText }) => {
   const [tab, setTab] = useState("type");
@@ -50,7 +40,6 @@ const PracticeCard = ({ targetText }) => {
   const [input, setInput] = useState("");
   const [result, setResult] = useState(null);
 
-  // Live Devanagari preview.
   const devanagari = (() => {
     if (!input) return "";
     try {
@@ -81,128 +70,22 @@ const PracticeCard = ({ targetText }) => {
     setResult(null);
   };
 
-  // ───────────────────────── Draw tab (canvas) ─────────────────────────
-  const GROW_TRIGGER_PX = 70;
-  const GROW_STEP_PX = 280;
-  const INITIAL_HEIGHT = 320;
-
+  // ───────────────────────── Draw tab plumbing ─────────────────────────
   const drawWrapRef = useRef(null);
-  const scrollRef = useRef(null);
-  const canvasRef = useRef(null);
-  const drawingRef = useRef(false);
-  const lastRef = useRef({ x: 0, y: 0 });
-  const pendingRestoreRef = useRef(null);
-  const lastGrowAtRef = useRef(0);
-
   const [tool, setTool] = useState("pen");
-  const [canvasHeight, setCanvasHeight] = useState(INITIAL_HEIGHT);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  // For browsers/contexts where Fullscreen API is blocked, we render a
-  // fixed-position overlay instead. Tracked separately from isFullscreen
-  // so we can pick the right exit path.
   const [overlayFs, setOverlayFs] = useState(false);
-
   const inFullView = isFullscreen || overlayFs;
 
-  // (Re)initialise the canvas backing store at the current size. If a
-  // pendingRestoreRef snapshot exists (data URL from before a resize), the
-  // previous drawing is painted back onto the new canvas at its original
-  // logical dimensions.
-  const setupCanvas = useCallback(() => {
-    const c = canvasRef.current;
-    if (!c) return;
-    const rect = c.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    c.width = rect.width * dpr;
-    c.height = rect.height * dpr;
-    const ctx = c.getContext("2d");
-    if (!ctx) return;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(dpr, dpr);
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.imageSmoothingEnabled = true;
-
-    // White background so the eraser (which paints white) visually erases.
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, rect.width, rect.height);
-
-    if (pendingRestoreRef.current) {
-      const { url, width: prevW, height: prevH } = pendingRestoreRef.current;
-      const img = new Image();
-      img.onload = () => {
-        // Draw at original CSS dimensions, top-left aligned.
-        ctx.drawImage(img, 0, 0, prevW, prevH);
-      };
-      img.src = url;
-      pendingRestoreRef.current = null;
-    }
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
 
-  // Snapshot the current canvas as a CSS-pixel-dimensioned data URL so it
-  // can be restored after the next resize.
-  const snapshotCanvas = () => {
-    const c = canvasRef.current;
-    if (!c) return;
-    const rect = c.getBoundingClientRect();
-    pendingRestoreRef.current = {
-      url: c.toDataURL("image/png"),
-      width: rect.width,
-      height: rect.height,
-    };
-  };
-
-  // Initial / tab-switch setup.
-  useEffect(() => {
-    if (tab !== "draw") return;
-    setupCanvas();
-  }, [tab, setupCanvas]);
-
-  // Re-setup whenever the canvas needs to change size.
-  useEffect(() => {
-    if (tab !== "draw") return;
-    setupCanvas();
-  }, [canvasHeight, isFullscreen, overlayFs, tab, setupCanvas]);
-
-  // Wire Fullscreen API events.
-  useEffect(() => {
-    const handler = () => {
-      const fs = !!document.fullscreenElement;
-      if (fs !== isFullscreen) {
-        snapshotCanvas();
-        setIsFullscreen(fs);
-      }
-    };
-    document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
-  }, [isFullscreen]);
-
-  // On entering full view, expand canvas to at least the visible scroll
-  // area so the student gets a big drawing surface immediately.
-  useEffect(() => {
-    if (!inFullView) return;
-    const scroller = scrollRef.current;
-    if (!scroller) return;
-    const targetH = Math.max(canvasHeight, scroller.clientHeight - 4);
-    if (targetH > canvasHeight) {
-      snapshotCanvas();
-      setCanvasHeight(targetH);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inFullView]);
-
-  // ESC handler for the overlay fallback (the real Fullscreen API exits on
-  // ESC for free).
   useEffect(() => {
     if (!overlayFs) return;
-    const onKey = (e) => {
-      if (e.key === "Escape") {
-        snapshotCanvas();
-        setOverlayFs(false);
-      }
-    };
+    const onKey = (e) => { if (e.key === "Escape") setOverlayFs(false); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [overlayFs]);
@@ -210,208 +93,88 @@ const PracticeCard = ({ targetText }) => {
   const toggleFullscreen = async () => {
     const el = drawWrapRef.current;
     if (!el) return;
-    snapshotCanvas();
     try {
       if (!document.fullscreenElement) {
-        if (el.requestFullscreen) {
-          await el.requestFullscreen();
-        } else {
-          // Older / Safari iOS — fall back to the overlay.
-          setOverlayFs(true);
-        }
+        if (el.requestFullscreen) await el.requestFullscreen();
+        else setOverlayFs(true);
       } else {
         await document.exitFullscreen();
       }
     } catch {
-      // API blocked → fall back to overlay.
       setOverlayFs((v) => !v);
     }
   };
 
-  const exitOverlay = () => {
-    snapshotCanvas();
-    setOverlayFs(false);
-  };
+  // Pen / Eraser / Pan keyboard shortcuts when the draw tab is active.
+  useEffect(() => {
+    if (tab !== "draw") return;
+    const onKey = (e) => {
+      // Don't hijack while typing into the Type tab (handled by tab guard)
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "p" || e.key === "P") setTool("pen");
+      else if (e.key === "e" || e.key === "E") setTool("eraser");
+      else if (e.key === "h" || e.key === "H") setTool("pan");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [tab]);
 
-  const getPos = (e) => {
-    const c = canvasRef.current;
-    if (!c) return { x: 0, y: 0 };
-    const rect = c.getBoundingClientRect();
-    const t = e.touches?.[0];
-    const cx = t ? t.clientX : e.clientX;
-    const cy = t ? t.clientY : e.clientY;
-    return { x: cx - rect.left, y: cy - rect.top };
-  };
-
-  const start = (e) => {
-    e.preventDefault();
-    drawingRef.current = true;
-    lastRef.current = getPos(e);
-  };
-
-  const move = (e) => {
-    if (!drawingRef.current) return;
-    e.preventDefault();
-    const c = canvasRef.current;
-    if (!c) return;
-    const ctx = c.getContext("2d");
-    if (!ctx) return;
-    const p = getPos(e);
-    ctx.beginPath();
-    ctx.moveTo(lastRef.current.x, lastRef.current.y);
-    ctx.lineTo(p.x, p.y);
-    ctx.strokeStyle = tool === "eraser" ? "#FFFFFF" : "#5C4A33";
-    ctx.lineWidth = tool === "eraser" ? 18 : 3;
-    ctx.stroke();
-    lastRef.current = p;
-
-    // Infinite-scroll growth: when the stroke nears the bottom edge of the
-    // current canvas, extend it. Throttled to 500ms so a single long stroke
-    // doesn't fire 60 growths in a row.
-    if (p.y > canvasHeight - GROW_TRIGGER_PX) {
-      const now = Date.now();
-      if (now - lastGrowAtRef.current > 500) {
-        lastGrowAtRef.current = now;
-        snapshotCanvas();
-        setCanvasHeight((h) => h + GROW_STEP_PX);
-        // Auto-scroll the container after the next layout so the freshly
-        // added space is visible without the student having to hunt for it.
-        setTimeout(() => {
-          const s = scrollRef.current;
-          if (s) s.scrollTo({ top: s.scrollHeight, behavior: "smooth" });
-        }, 60);
-      }
-    }
-  };
-
-  const end = () => {
-    drawingRef.current = false;
-  };
-
-  const clearCanvas = () => {
-    const c = canvasRef.current;
-    if (!c) return;
-    const ctx = c.getContext("2d");
-    if (!ctx) return;
-    const rect = c.getBoundingClientRect();
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, c.width, c.height);
-    ctx.restore();
-    // No reset of canvasHeight — student can keep their grown surface.
-    void rect;
-  };
-
-  const resetBoard = () => {
-    clearCanvas();
-    setCanvasHeight(INITIAL_HEIGHT);
-  };
-
-  // ─────────────────────────── Render: Draw tab ──────────────────────────
   const drawSurface = (
     <div
       ref={drawWrapRef}
       className={
         inFullView
-          ? // Fixed overlay or :fullscreen-styled container — fill viewport,
-            // white background, comfortable padding.
-            "fixed inset-0 z-[1000] bg-white flex flex-col p-3 sm:p-4"
+          ? "fixed inset-0 z-[1000] bg-white flex flex-col p-2 sm:p-3"
           : "flex flex-col gap-2"
       }
     >
-      {/* Toolbar */}
-      <div className="flex items-center gap-1.5 flex-wrap">
-        <button
-          type="button"
-          onClick={() => setTool("pen")}
-          className={`text-[11px] px-2 py-1 rounded-full border flex items-center gap-1 transition ${
-            tool === "pen"
-              ? "bg-brown text-white border-brown"
-              : "bg-white text-brown border-[#E5DDD0]"
-          }`}
-        >
-          <Pencil size={11} /> Pen
-        </button>
-        <button
-          type="button"
-          onClick={() => setTool("eraser")}
-          className={`text-[11px] px-2 py-1 rounded-full border flex items-center gap-1 transition ${
-            tool === "eraser"
-              ? "bg-brown text-white border-brown"
-              : "bg-white text-brown border-[#E5DDD0]"
-          }`}
-        >
-          <Eraser size={11} /> Eraser
-        </button>
-        <button
-          type="button"
-          onClick={resetBoard}
-          className="text-[11px] px-2 py-1 rounded-full border bg-white text-red-600 border-[#E5DDD0] flex items-center gap-1"
-        >
-          <Trash2 size={11} /> Clear
-        </button>
-
-        <div className="ml-auto flex items-center gap-1.5">
-          {!inFullView ? (
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              aria-label="Expand to full screen"
-              className="text-[11px] px-2 py-1 rounded-full border bg-white text-brown border-[#E5DDD0] flex items-center gap-1 hover:bg-accent-soft transition"
-            >
-              <Maximize2 size={11} /> Full screen
-            </button>
-          ) : isFullscreen ? (
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              aria-label="Exit full screen"
-              className="text-[11px] px-2 py-1 rounded-full border bg-white text-brown border-[#E5DDD0] flex items-center gap-1 hover:bg-accent-soft transition"
-            >
-              <Minimize2 size={11} /> Exit
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={exitOverlay}
-              aria-label="Close"
-              className="text-[11px] px-2 py-1 rounded-full border bg-white text-brown border-[#E5DDD0] flex items-center gap-1 hover:bg-accent-soft transition"
-            >
-              <X size={11} /> Close
-            </button>
-          )}
-        </div>
+      {/* Top bar — full-screen toggle + label */}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] text-gray-500 italic">
+          {inFullView
+            ? "Pan with two fingers / drag, pinch or ⌘+wheel to zoom · Esc to exit"
+            : "Pan with two fingers / Hand tool, pinch or ⌘+wheel to zoom"}
+        </span>
+        {!inFullView ? (
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            aria-label="Expand to full screen"
+            className="text-[11px] px-2 py-1 rounded-full border bg-white text-brown border-[#E5DDD0] flex items-center gap-1 hover:bg-accent-soft transition shrink-0"
+          >
+            <Maximize2 size={11} /> Full screen
+          </button>
+        ) : isFullscreen ? (
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            aria-label="Exit full screen"
+            className="text-[11px] px-2 py-1 rounded-full border bg-white text-brown border-[#E5DDD0] flex items-center gap-1 hover:bg-accent-soft transition shrink-0"
+          >
+            <Minimize2 size={11} /> Exit
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setOverlayFs(false)}
+            aria-label="Close"
+            className="text-[11px] px-2 py-1 rounded-full border bg-white text-brown border-[#E5DDD0] flex items-center gap-1 hover:bg-accent-soft transition shrink-0"
+          >
+            <X size={11} /> Close
+          </button>
+        )}
       </div>
 
-      {/* Scroll container — fixed height inline, flex-1 in full view */}
+      {/* Canvas frame — fixed height inline, flex-1 in full view */}
       <div
-        ref={scrollRef}
         className={
           inFullView
-            ? "flex-1 rounded-lg border border-dashed border-[#E5DDD0] bg-white overflow-y-auto"
-            : "rounded-lg border border-dashed border-[#E5DDD0] bg-white overflow-y-auto h-[320px] sm:h-[360px]"
+            ? "flex-1 rounded-lg border border-dashed border-[#E5DDD0] bg-white overflow-hidden"
+            : "rounded-lg border border-dashed border-[#E5DDD0] bg-white overflow-hidden h-[360px] sm:h-[420px]"
         }
       >
-        <canvas
-          ref={canvasRef}
-          onMouseDown={start}
-          onMouseMove={move}
-          onMouseUp={end}
-          onMouseLeave={end}
-          onTouchStart={start}
-          onTouchMove={move}
-          onTouchEnd={end}
-          style={{ height: `${canvasHeight}px` }}
-          className="block w-full touch-none cursor-crosshair"
-        />
+        <InfiniteCanvas tool={tool} setTool={setTool} inFullView={inFullView} />
       </div>
-
-      <p className="text-[10px] text-gray-500 italic">
-        {inFullView
-          ? "Draw freely. Board grows as you write — scroll to fit. Press Esc or tap Exit to return."
-          : "Use finger or stylus. Board grows as you reach the bottom — tap Full screen for more room."}
-      </p>
     </div>
   );
 
@@ -477,7 +240,6 @@ const PracticeCard = ({ targetText }) => {
             </span>
           </div>
 
-          {/* Latin input */}
           <textarea
             value={input}
             onChange={(e) => {
@@ -498,7 +260,6 @@ const PracticeCard = ({ targetText }) => {
             className="w-full text-sm border border-[#E5DDD0] rounded-lg p-2 focus:outline-none focus:border-brown resize-none"
           />
 
-          {/* Live Devanagari preview */}
           <div className="bg-accent-soft border border-[#F0E7D8] rounded-lg p-2 min-h-[44px]">
             <div className="text-[10px] text-gray-500 mb-0.5">Preview</div>
             <p
@@ -513,7 +274,6 @@ const PracticeCard = ({ targetText }) => {
             </p>
           </div>
 
-          {/* Actions */}
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
@@ -532,7 +292,6 @@ const PracticeCard = ({ targetText }) => {
             </button>
           </div>
 
-          {/* Result */}
           {result && (
             <div className="mt-1 p-2 rounded-lg bg-white border border-[#E5DDD0] space-y-1.5">
               <div className="text-xs font-semibold text-brown flex items-center gap-2">
