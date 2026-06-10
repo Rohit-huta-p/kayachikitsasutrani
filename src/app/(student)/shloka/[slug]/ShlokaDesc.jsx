@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Leaderboard from "./Leaderboard";
 import PracticeCard from "./PracticeCard";
+import WordOrderGame from "./WordOrderGame";
 import { useShlokaPlayer } from "./hooks/useShlokaPlayer";
 import { useCompletionTracker } from "./hooks/useCompletionTracker";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -425,6 +426,9 @@ const ShlokaDesc = ({ shloka }) => {
           {/* Practice card — type (transliteration) + draw */}
           <PracticeCard targetText={shloka.fullText ?? ""} />
 
+          {/* Word-order arrangement game */}
+          <WordOrderGame lines={shloka.lines} fullText={shloka.fullText ?? ""} />
+
           {/* Completion banner */}
           {tracker.submitted && (
             <div className="mt-1 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-800 flex items-center gap-2">
@@ -660,6 +664,8 @@ const ShlokaDesc = ({ shloka }) => {
             )}
             {/* Practice card — type (transliteration) + draw */}
             <PracticeCard targetText={shloka.fullText ?? ""} />
+            {/* Word-order arrangement game */}
+            <WordOrderGame lines={shloka.lines} fullText={shloka.fullText ?? ""} />
           </div>
         </div>
 
