@@ -8,6 +8,7 @@ import {
   PointerSensor,
   TouchSensor,
   closestCenter,
+  defaultDropAnimationSideEffects,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -19,7 +20,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Shuffle, PartyPopper, Sparkles, RotateCcw, GripVertical } from "lucide-react";
+import { PartyPopper, Sparkles, Shuffle, RotateCcw } from "lucide-react";
 
 function tokenize(s) {
   return (s || "").normalize("NFC").trim().split(/\s+/).filter(Boolean);
@@ -27,6 +28,8 @@ function tokenize(s) {
 
 function shuffleArray(arr) {
   const a = [...arr];
+  // Fisher–Yates with a retry guard so we don't open the puzzle already
+  // solved on small word counts.
   for (let attempt = 0; attempt < 5; attempt++) {
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -39,14 +42,13 @@ function shuffleArray(arr) {
 }
 
 /**
- * One draggable, sortable pill.
+ * One draggable pill.
  *
- * dnd-kit gives us a transform on every reorder so reflow is smooth, plus
- * a transition for the items that get pushed out of the way. While a pill
- * is being dragged we hide its placeholder (opacity 0.35) and render an
- * elevated clone via <DragOverlay> at the parent level.
+ * While dragging, the source becomes wog-pill--ghost (opacity 0) so the
+ * <DragOverlay> clone is the only visible representation of the pill —
+ * no double-image, no blurred half-ghost.
  */
-function SortablePill({ id, text, solved }) {
+function SortablePill({ id, text, solved, index }) {
   const {
     attributes,
     listeners,
@@ -54,13 +56,20 @@ function SortablePill({ id, text, solved }) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id });
+  } = useSortable({ id, disabled: solved });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    fontFamily: "Georgia, serif",
   };
+
+  const classes = [
+    "wog-pill font-deva",
+    solved ? "wog-pill--solved" : "wog-pill--rest",
+    isDragging ? "wog-pill--ghost" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <button
@@ -69,64 +78,54 @@ function SortablePill({ id, text, solved }) {
       {...attributes}
       {...listeners}
       type="button"
-      disabled={solved}
-      aria-label={`Word ${text}. Drag to reorder.`}
-      className={`select-none touch-none text-sm px-2.5 py-1 rounded-full border transition-colors duration-200 cursor-grab active:cursor-grabbing focus:outline-none focus-visible:ring-2 focus-visible:ring-brown/50 ${
-        solved
-          ? "bg-green-50 border-green-300 text-green-800 anim-pop"
-          : isDragging
-            ? "opacity-35 bg-white border-[#E5DDD0] text-black"
-            : "bg-white border-[#E5DDD0] text-black hover:border-brown hover:bg-accent-soft hover:shadow-sm"
-      }`}
+      aria-label={`Word ${text}. Position ${index + 1}. Drag to reorder.`}
+      className={classes}
     >
       {text}
+      {solved && <span aria-hidden className="wog-pill__index">{index + 1}</span>}
     </button>
   );
 }
 
 /**
- * Tall floating clone shown under the user's pointer while dragging.
- * Carries the same surface text but with a stronger shadow, slight scale,
- * and a tilt so the user can feel the pill is "picked up".
+ * The floating clone shown under the user's pointer during a drag.
+ * Identical surface text and metrics to the pill, plus depth shadow and a
+ * subtle tilt to communicate "lifted off the page". transform-origin is
+ * centred so the clone scales sharply without sub-pixel blur.
  */
 function DragPreviewPill({ text }) {
   return (
-    <button
-      type="button"
-      className="select-none text-sm px-2.5 py-1 rounded-full border border-brown bg-white text-black shadow-[0_10px_24px_rgba(124,95,60,0.30)] cursor-grabbing"
-      style={{
-        fontFamily: "Georgia, serif",
-        transform: "scale(1.12) rotate(-2deg)",
-      }}
-    >
+    <div className="wog-pill--overlay font-deva" aria-hidden>
       {text}
-    </button>
+    </div>
   );
 }
 
 /**
- * Draggable tap-to-swap word arranging game.
+ * Draggable word-arrangement game with a refined editorial aesthetic.
  *
- * Tokenises shloka.fullText by whitespace, scrambles the tokens into a
- * single flat pool of pills, and lets the student drag any pill onto
- * another pill's slot to reorder. Other pills animate out of the way as
- * the drag passes over them (dnd-kit sortable rect strategy). When the
- * surface order matches the original shloka, the card pulses green and a
- * celebration banner appears.
- *
- * Inputs are handled by three sensors: PointerSensor (mouse + pen),
- * TouchSensor (mobile), and KeyboardSensor (Space to grab, arrows to move
- * — keeps the puzzle usable without a pointer device).
- *
- * A short distance / delay activation constraint stops accidental drags
- * when the user is just tapping a pill to read it.
+ * - Pills sit inside a parchment-coloured "frame" with a hand-drawn dashed
+ *   border, soft inner shadow, paper grain texture, and corner-dot folio
+ *   marks — visually distinct from the surrounding cards so the puzzle
+ *   reads as a separate, intentional surface.
+ * - Each pill has a min-width and consistent padding so even short words
+ *   like "च" sit on the same visual baseline as long compounds.
+ * - Devanagari renders in Tiro Devanagari Sanskrit (loaded via next/font),
+ *   which preserves samyuktakshara ligatures and vedic marks; non-Devanagari
+ *   characters fall back gracefully to system serifs.
+ * - The DragOverlay clone is the only elevated copy of the pill at any
+ *   time; the source pill goes to opacity 0 the moment a drag starts, so
+ *   there is no faint duplicate behind the floating one.
+ * - Three sensors keep the game usable everywhere: pointer (mouse / pen,
+ *   6px activation distance), touch (120ms delay + 6px tolerance), and
+ *   keyboard (Space to pick up, arrows to move, Space to drop).
+ * - On solve, the card border greens, every pill gets a tiny ordinal
+ *   numeral chip, and a manuscript-tinted celebration banner appears with
+ *   the move count and a "Play again" CTA.
  */
 const WordOrderGame = ({ fullText }) => {
   const words = useMemo(() => tokenize(fullText), [fullText]);
 
-  // Each pill carries a stable id, its surface text, and the position it
-  // originally occupied in the shloka. The id is suffixed with the index so
-  // duplicate words remain distinct DnD entities.
   const initialItems = useMemo(
     () =>
       words.map((w, i) => ({
@@ -138,20 +137,17 @@ const WordOrderGame = ({ fullText }) => {
   );
 
   const [items, setItems] = useState(() => shuffleArray(initialItems));
+  const [activeId, setActiveId] = useState(null);
   const [solved, setSolved] = useState(false);
   const [moves, setMoves] = useState(0);
-  const [activeId, setActiveId] = useState(null);
 
-  // Reset when the shloka changes.
   useEffect(() => {
     setItems(shuffleArray(initialItems));
+    setActiveId(null);
     setSolved(false);
     setMoves(0);
-    setActiveId(null);
   }, [initialItems]);
 
-  // Detect solved state — compare surface text so duplicate words are
-  // interchangeable.
   useEffect(() => {
     if (items.length === 0) return;
     const correct = items.every((it, pos) => it.text === words[pos]);
@@ -159,21 +155,15 @@ const WordOrderGame = ({ fullText }) => {
     else if (!correct && solved) setSolved(false);
   }, [items, words, solved]);
 
-  // 8px drag activation distance so a quick tap doesn't initiate a drag
-  // and won't fight the user's intent. On touch we use a tiny delay
-  // instead — pointer activation distance doesn't fire on most touch
-  // browsers until a small grace period.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 120, tolerance: 6 },
-    }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   if (words.length === 0) {
     return (
-      <div className="bg-white border border-[#E5DDD0] rounded-xl p-3">
+      <div className="wog-card">
         <p className="text-xs text-gray-500 italic">No shloka text to arrange yet.</p>
       </div>
     );
@@ -204,91 +194,109 @@ const WordOrderGame = ({ fullText }) => {
 
   const activeItem = activeId ? items.find((i) => i.id === activeId) : null;
 
+  // Drop animation: spring-overshoot easing so the released pill settles
+  // with a small bounce, and the source pill stays invisible for the full
+  // duration of the drop so we never expose the half-faded ghost mid-flight.
+  const dropAnimation = {
+    duration: 320,
+    easing: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+    sideEffects: defaultDropAnimationSideEffects({
+      styles: { active: { opacity: "0" } },
+    }),
+  };
+
   return (
-    <div
-      className={`relative bg-white border rounded-xl p-3 space-y-2 transition-colors duration-300 overflow-hidden ${
-        solved
-          ? "border-green-400 shadow-[0_0_0_3px_rgba(74,222,128,0.18)]"
-          : "border-[#E5DDD0]"
-      }`}
-    >
+    <div className={`wog-card ${solved ? "is-solved" : ""}`}>
       {/* Header */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 mb-3">
         <div className="text-sm font-bold text-brown flex items-center gap-1.5">
-          <Sparkles size={14} /> Arrange the words
+          <Sparkles size={14} /> Arrange the verse
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-gray-500">
-            {solved ? "Solved" : `${moves} move${moves === 1 ? "" : "s"}`}
+          <span className={`wog-chip ${solved ? "wog-chip--solved" : ""}`}>
+            {solved
+              ? moves === 0
+                ? "Solved first try"
+                : `${moves} move${moves === 1 ? "" : "s"} · solved`
+              : `${moves} move${moves === 1 ? "" : "s"}`}
           </span>
           <button
             type="button"
             onClick={reshuffle}
-            className="text-[11px] text-brown px-2 py-1 rounded-full border border-[#E5DDD0] hover:bg-accent-soft transition flex items-center gap-1"
+            aria-label="Shuffle"
+            className="text-[11px] text-brown px-2 py-1 rounded-full border border-[#E5DDD0] bg-white hover:bg-accent-soft transition flex items-center gap-1"
           >
             <Shuffle size={11} /> Shuffle
           </button>
         </div>
       </div>
 
-      {/* Draggable pill pool */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragCancel={handleDragCancel}
-      >
-        <SortableContext items={items.map((i) => i.id)} strategy={rectSortingStrategy}>
-          <div className="flex flex-wrap gap-1.5 py-1">
-            {items.map((item) => (
-              <SortablePill
-                key={item.id}
-                id={item.id}
-                text={item.text}
-                solved={solved}
-              />
-            ))}
-          </div>
-        </SortableContext>
-        <DragOverlay dropAnimation={{ duration: 220, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
-          {activeItem ? <DragPreviewPill text={activeItem.text} /> : null}
-        </DragOverlay>
-      </DndContext>
+      {/* Manuscript-framed pill pool */}
+      <div className="wog-frame">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          <SortableContext
+            items={items.map((i) => i.id)}
+            strategy={rectSortingStrategy}
+          >
+            <div className="relative z-[1] flex flex-wrap gap-2">
+              {items.map((item, pos) => (
+                <SortablePill
+                  key={item.id}
+                  id={item.id}
+                  text={item.text}
+                  solved={solved}
+                  index={pos}
+                />
+              ))}
+            </div>
+          </SortableContext>
+          <DragOverlay dropAnimation={dropAnimation} zIndex={1000}>
+            {activeItem ? <DragPreviewPill text={activeItem.text} /> : null}
+          </DragOverlay>
+        </DndContext>
+      </div>
 
-      {/* Hint / celebration */}
+      {/* Hint or celebration */}
       {!solved ? (
-        <p className="text-[10px] text-gray-500 italic flex items-center gap-1">
-          <GripVertical size={10} className="text-gray-400" />
-          Drag any word to a new spot. Other words slide out of the way.
-        </p>
+        <div className="wog-hint mt-3">
+          <span className="wog-hint__ornament">⋅⋅⋅</span>
+          <span className="shrink-0">
+            Drag a word, drop it where it belongs. Others slide aside.
+          </span>
+          <span className="wog-hint__rule" />
+        </div>
       ) : (
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-green-50 via-amber-50 to-amber-100 border border-green-200 p-3 flex items-center gap-2 mt-1">
-          <span aria-hidden className="pointer-events-none absolute inset-0 anim-glow-sweep" />
-          <PartyPopper size={20} className="text-amber-600 shrink-0 anim-pop" />
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-bold text-green-800 flex items-center gap-1.5">
+        <div className="wog-celebrate mt-3 flex items-center gap-3">
+          <PartyPopper size={22} className="text-amber-700 shrink-0 anim-pop relative z-10" />
+          <div className="flex-1 min-w-0 relative z-10">
+            <div className="text-sm font-bold text-green-900 flex items-center gap-2">
               Shabaash!
-              <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
-                {moves === 0 ? "First try" : `${moves} move${moves === 1 ? "" : "s"}`}
+              <span className="text-[10px] bg-white/70 text-green-800 px-2 py-0.5 rounded-full border border-green-200/70">
+                {moves === 0 ? "Flawless" : `${moves} move${moves === 1 ? "" : "s"}`}
               </span>
             </div>
-            <div className="text-[11px] text-gray-600">
-              You arranged the shloka in the correct order.
+            <div className="text-[11px] text-[#3A2C16]/70">
+              The verse is in order. Each word found its place.
             </div>
           </div>
           <button
             type="button"
             onClick={reshuffle}
-            className="text-xs bg-accent text-white font-semibold rounded-full px-3 py-1.5 hover:opacity-90 transition flex items-center gap-1 shrink-0"
+            className="relative z-10 text-xs bg-brown text-white font-semibold rounded-full px-3 py-1.5 hover:opacity-90 transition flex items-center gap-1 shrink-0"
+            style={{ backgroundColor: "#A67C52" }}
           >
             Play again <RotateCcw size={12} />
           </button>
-          {/* Sparkle particles */}
-          <span aria-hidden className="confetti confetti-1">✨</span>
-          <span aria-hidden className="confetti confetti-2">⭐</span>
-          <span aria-hidden className="confetti confetti-3">🌸</span>
-          <span aria-hidden className="confetti confetti-4">🎉</span>
+          <span aria-hidden className="confetti confetti-1">✦</span>
+          <span aria-hidden className="confetti confetti-2">✧</span>
+          <span aria-hidden className="confetti confetti-3">❋</span>
+          <span aria-hidden className="confetti confetti-4">✺</span>
         </div>
       )}
     </div>

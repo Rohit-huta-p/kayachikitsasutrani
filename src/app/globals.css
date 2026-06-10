@@ -221,6 +221,229 @@ body {
 .confetti-3 { --cx: -170px; --cy: -8px;  animation-delay: 440ms; }
 .confetti-4 { --cx: -40px;  --cy: -48px; animation-delay: 660ms; }
 
+/* ──────────────────────────────────────────────────────────────────────
+ * Word-order puzzle — refined editorial / palm-leaf manuscript aesthetic
+ * ────────────────────────────────────────────────────────────────────── */
+
+.font-deva {
+  font-family: var(--font-deva), "Noto Serif Devanagari", "Sanskrit Text",
+    "Devanagari MT", Georgia, serif;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+}
+
+/* Outer card holding the puzzle */
+.wog-card {
+  position: relative;
+  background: #FFFFFF;
+  border: 1px solid #E5DDD0;
+  border-radius: 16px;
+  padding: 16px;
+  transition: border-color 320ms ease, box-shadow 320ms ease;
+}
+.wog-card.is-solved {
+  border-color: #86C9A4;
+  box-shadow: 0 0 0 3px rgba(120, 200, 150, 0.16),
+              0 8px 24px rgba(120, 200, 150, 0.10);
+}
+
+/* Manuscript pool frame */
+.wog-frame {
+  position: relative;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(166, 124, 82, 0.07) 0%, transparent 60%),
+    #FBF5E8;
+  border: 1.5px dashed rgba(166, 124, 82, 0.32);
+  border-radius: 14px;
+  box-shadow: inset 0 2px 8px rgba(124, 95, 60, 0.05);
+  padding: 14px;
+  overflow: hidden;
+}
+/* Soft paper grain texture */
+.wog-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+/* Corner ornaments — small dots in each corner like a folio mark */
+.wog-frame::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  pointer-events: none;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 0 0,  #A67C52 0 2px, transparent 2px) 0 0/12px 12px no-repeat,
+    radial-gradient(circle at 100% 0,  #A67C52 0 2px, transparent 2px) 100% 0/12px 12px no-repeat,
+    radial-gradient(circle at 0 100%,  #A67C52 0 2px, transparent 2px) 0 100%/12px 12px no-repeat,
+    radial-gradient(circle at 100% 100%,  #A67C52 0 2px, transparent 2px) 100% 100%/12px 12px no-repeat;
+  opacity: 0.5;
+}
+
+/* Pills — consistent rhythm, sharp text */
+.wog-pill {
+  position: relative;
+  min-width: 76px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1.5px solid;
+  font-size: 15px;
+  line-height: 1.35;
+  text-align: center;
+  white-space: nowrap;
+  user-select: none;
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+  /* Sharp text rendering, even under transform */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  backface-visibility: hidden;
+  transition: border-color 200ms ease, background-color 200ms ease,
+              box-shadow 220ms ease, color 200ms ease;
+}
+.wog-pill:active { cursor: grabbing; }
+.wog-pill:focus-visible {
+  outline: 2px solid rgba(166, 124, 82, 0.55);
+  outline-offset: 2px;
+}
+
+.wog-pill--rest {
+  background: #FFFFFF;
+  border-color: rgba(166, 124, 82, 0.25);
+  color: #1B1208;
+  box-shadow: 0 1px 0 rgba(124, 95, 60, 0.05);
+}
+.wog-pill--rest:hover {
+  border-color: rgba(166, 124, 82, 0.7);
+  background: #FDF7EC;
+  box-shadow: 0 4px 10px rgba(124, 95, 60, 0.12);
+}
+.wog-pill--solved {
+  background: linear-gradient(180deg, #F0FDF4 0%, #E7F8EE 100%);
+  border-color: rgba(34, 139, 78, 0.42);
+  color: #14532D;
+  box-shadow: 0 1px 0 rgba(34, 139, 78, 0.08);
+  cursor: default;
+}
+
+/* Drop overlay clone — single elevated copy, never duplicated */
+.wog-pill--overlay {
+  background: #FFFFFF;
+  border: 1.5px solid #A67C52;
+  color: #1B1208;
+  border-radius: 999px;
+  padding: 8px 14px;
+  min-width: 76px;
+  font-size: 15px;
+  line-height: 1.35;
+  text-align: center;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  backface-visibility: hidden;
+  transform: rotate(-1.5deg);
+  /* Layered shadow — close + distant for real-world depth */
+  box-shadow:
+    0 18px 36px rgba(124, 95, 60, 0.26),
+    0 4px 10px rgba(124, 95, 60, 0.18),
+    0 0 0 4px rgba(255, 255, 255, 0.9);
+  cursor: grabbing;
+}
+
+/* Source pill while overlay is up — fully invisible, layout space preserved */
+.wog-pill--ghost {
+  opacity: 0 !important;
+  transition: none;
+}
+
+/* Slot index — tiny serif numeral under each correct pill (solved state) */
+.wog-pill__index {
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  font-size: 9px;
+  font-weight: 700;
+  background: #14532D;
+  color: #F0FDF4;
+  border-radius: 999px;
+  padding: 1px 5px;
+  letter-spacing: 0.04em;
+  font-family: Georgia, serif;
+}
+
+/* Celebration banner */
+.wog-celebrate {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  padding: 14px;
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(255, 200, 120, 0.18) 0%, transparent 55%),
+    radial-gradient(100% 80% at 100% 100%, rgba(120, 200, 150, 0.18) 0%, transparent 55%),
+    linear-gradient(135deg, #F8FCEF 0%, #FFF8E1 100%);
+  border: 1.5px solid rgba(166, 124, 82, 0.35);
+  box-shadow: 0 4px 18px rgba(166, 124, 82, 0.12);
+}
+.wog-celebrate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 18% 30%, rgba(255, 200, 120, 0.35), transparent 1.5px),
+    radial-gradient(circle at 82% 70%, rgba(120, 200, 150, 0.30), transparent 1.5px),
+    radial-gradient(circle at 50% 12%, rgba(166, 124, 82, 0.18), transparent 1.5px);
+  background-size: 22px 22px, 28px 28px, 16px 16px;
+  opacity: 0.6;
+}
+
+/* Header chip */
+.wog-chip {
+  font-size: 11px;
+  color: #6B5436;
+  background: #FDF7EC;
+  border: 1px solid rgba(166, 124, 82, 0.25);
+  border-radius: 999px;
+  padding: 2px 9px;
+  letter-spacing: 0.02em;
+}
+.wog-chip--solved {
+  background: #ECFDF3;
+  border-color: rgba(34, 139, 78, 0.32);
+  color: #14532D;
+}
+
+/* Hint row */
+.wog-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6B5436;
+  font-size: 11.5px;
+  font-style: italic;
+  letter-spacing: 0.01em;
+}
+.wog-hint__rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(166, 124, 82, 0.30), transparent);
+}
+.wog-hint__ornament {
+  color: rgba(166, 124, 82, 0.6);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wog-pill,
+  .wog-card,
+  .wog-pill--overlay { transition-duration: 80ms !important; }
+}
+
 /* Card collapse / expand */
 .collapsible-body {
   overflow: hidden;
