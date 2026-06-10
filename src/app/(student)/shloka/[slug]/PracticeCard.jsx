@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Maximize2,
   Minimize2,
+  Trash2,
   X,
 } from "lucide-react";
 import InfiniteCanvas from "./InfiniteCanvas";
@@ -72,6 +73,9 @@ const PracticeCard = ({ targetText }) => {
 
   // ───────────────────────── Draw tab plumbing ─────────────────────────
   const drawWrapRef = useRef(null);
+  // Imperative handle into InfiniteCanvas — lets the top-bar Clear button
+  // wipe the board without lifting all of the stroke state up.
+  const canvasApiRef = useRef(null);
   const [tool, setTool] = useState("pen");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [overlayFs, setOverlayFs] = useState(false);
@@ -135,6 +139,14 @@ const PracticeCard = ({ targetText }) => {
             ? "Pan with two fingers / drag, pinch or ⌘+wheel to zoom · Esc to exit"
             : "Pan with two fingers / Hand tool, pinch or ⌘+wheel to zoom"}
         </span>
+        <button
+          type="button"
+          onClick={() => canvasApiRef.current?.clear()}
+          aria-label="Clear the board"
+          className="text-[11px] px-2 py-1 rounded-full border bg-white text-red-600 border-[#E5DDD0] flex items-center gap-1 hover:bg-red-50 transition shrink-0"
+        >
+          <Trash2 size={11} /> Clear
+        </button>
         {!inFullView ? (
           <button
             type="button"
@@ -173,7 +185,12 @@ const PracticeCard = ({ targetText }) => {
             : "rounded-lg border border-dashed border-[#E5DDD0] bg-white overflow-hidden h-[360px] sm:h-[420px]"
         }
       >
-        <InfiniteCanvas tool={tool} setTool={setTool} inFullView={inFullView} />
+        <InfiniteCanvas
+          ref={canvasApiRef}
+          tool={tool}
+          setTool={setTool}
+          inFullView={inFullView}
+        />
       </div>
     </div>
   );

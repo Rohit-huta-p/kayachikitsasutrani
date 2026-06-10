@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import {
   Pencil,
   Eraser,
@@ -125,7 +132,10 @@ function drawGrid(ctx, vp, cssW, cssH) {
  * at zoom 1× still has the right thickness when the user later zooms to
  * 2× — the ink scales with the page, exactly like Excalidraw.
  */
-const InfiniteCanvas = ({ tool, setTool, inFullView }) => {
+const InfiniteCanvas = forwardRef(function InfiniteCanvas(
+  { tool, setTool, inFullView },
+  ref,
+) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -453,6 +463,15 @@ const InfiniteCanvas = ({ tool, setTool, inFullView }) => {
     scheduleRender();
   };
 
+  // Expose imperative actions so the parent (PracticeCard) can wire its
+  // own toolbar buttons to clear / undo / reset without lifting all of the
+  // stroke state up.
+  useImperativeHandle(ref, () => ({
+    clear: clearAll,
+    undo,
+    resetView,
+  }), []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const zoomBy = (factor) => {
     const c = canvasRef.current;
     if (!c) return;
@@ -536,7 +555,7 @@ const InfiniteCanvas = ({ tool, setTool, inFullView }) => {
       </div>
     </div>
   );
-};
+});
 
 function ToolBtn({ active, disabled, onClick, title, children }) {
   return (
