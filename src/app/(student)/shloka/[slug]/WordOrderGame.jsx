@@ -1,67 +1,175 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Shuffle, PartyPopper, Sparkles, RotateCcw } from "lucide-react";
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Shuffle, PartyPopper, Sparkles, RotateCcw, GripVertical } from "lucide-react";
 
 function tokenize(s) {
   return (s || "").normalize("NFC").trim().split(/\s+/).filter(Boolean);
 }
 
-function shuffledIndices(n) {
-  const arr = Array.from({ length: n }, (_, i) => i);
-  // Fisher–Yates with a retry loop so single-word puzzles and small word
-  // lists don't open in already-solved order.
+function shuffleArray(arr) {
+  const a = [...arr];
   for (let attempt = 0; attempt < 5; attempt++) {
-    for (let i = arr.length - 1; i > 0; i--) {
+    for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+      [a[i], a[j]] = [a[j], a[i]];
     }
-    const isIdentity = arr.every((v, i) => v === i);
-    if (!isIdentity || arr.length <= 1) break;
+    const isIdentity = a.every((v, i) => v.originalPos === i);
+    if (!isIdentity || a.length <= 1) break;
   }
-  return arr;
+  return a;
 }
 
 /**
- * Flat tap-to-swap word arranging game.
+ * One draggable, sortable pill.
  *
- * Tokenises the full shloka by whitespace, scrambles the tokens into a
- * single pool of pills, and lets the student tap any pill then tap another
- * to swap their positions in place. When the surface order matches the
- * original shloka, the card pulses green and a celebration banner appears
- * with sparkle particles and a shimmer sweep.
+ * dnd-kit gives us a transform on every reorder so reflow is smooth, plus
+ * a transition for the items that get pushed out of the way. While a pill
+ * is being dragged we hide its placeholder (opacity 0.35) and render an
+ * elevated clone via <DragOverlay> at the parent level.
+ */
+function SortablePill({ id, text, solved }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    fontFamily: "Georgia, serif",
+  };
+
+  return (
+    <button
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      type="button"
+      disabled={solved}
+      aria-label={`Word ${text}. Drag to reorder.`}
+      className={`select-none touch-none text-sm px-2.5 py-1 rounded-full border transition-colors duration-200 cursor-grab active:cursor-grabbing focus:outline-none focus-visible:ring-2 focus-visible:ring-brown/50 ${
+        solved
+          ? "bg-green-50 border-green-300 text-green-800 anim-pop"
+          : isDragging
+            ? "opacity-35 bg-white border-[#E5DDD0] text-black"
+            : "bg-white border-[#E5DDD0] text-black hover:border-brown hover:bg-accent-soft hover:shadow-sm"
+      }`}
+    >
+      {text}
+    </button>
+  );
+}
+
+/**
+ * Tall floating clone shown under the user's pointer while dragging.
+ * Carries the same surface text but with a stronger shadow, slight scale,
+ * and a tilt so the user can feel the pill is "picked up".
+ */
+function DragPreviewPill({ text }) {
+  return (
+    <button
+      type="button"
+      className="select-none text-sm px-2.5 py-1 rounded-full border border-brown bg-white text-black shadow-[0_10px_24px_rgba(124,95,60,0.30)] cursor-grabbing"
+      style={{
+        fontFamily: "Georgia, serif",
+        transform: "scale(1.12) rotate(-2deg)",
+      }}
+    >
+      {text}
+    </button>
+  );
+}
+
+/**
+ * Draggable tap-to-swap word arranging game.
  *
- * Duplicate words are treated as equivalent — if the same Devanagari token
- * appears twice, swapping in either copy at either correct slot counts as
- * solved.
+ * Tokenises shloka.fullText by whitespace, scrambles the tokens into a
+ * single flat pool of pills, and lets the student drag any pill onto
+ * another pill's slot to reorder. Other pills animate out of the way as
+ * the drag passes over them (dnd-kit sortable rect strategy). When the
+ * surface order matches the original shloka, the card pulses green and a
+ * celebration banner appears.
+ *
+ * Inputs are handled by three sensors: PointerSensor (mouse + pen),
+ * TouchSensor (mobile), and KeyboardSensor (Space to grab, arrows to move
+ * — keeps the puzzle usable without a pointer device).
+ *
+ * A short distance / delay activation constraint stops accidental drags
+ * when the user is just tapping a pill to read it.
  */
 const WordOrderGame = ({ fullText }) => {
   const words = useMemo(() => tokenize(fullText), [fullText]);
-  const [order, setOrder] = useState(() => shuffledIndices(words.length));
-  const [selected, setSelected] = useState(null);
+
+  // Each pill carries a stable id, its surface text, and the position it
+  // originally occupied in the shloka. The id is suffixed with the index so
+  // duplicate words remain distinct DnD entities.
+  const initialItems = useMemo(
+    () =>
+      words.map((w, i) => ({
+        id: `pill-${i}-${w}`,
+        text: w,
+        originalPos: i,
+      })),
+    [words],
+  );
+
+  const [items, setItems] = useState(() => shuffleArray(initialItems));
   const [solved, setSolved] = useState(false);
   const [moves, setMoves] = useState(0);
+  const [activeId, setActiveId] = useState(null);
 
-  // Reset when the target shloka changes.
+  // Reset when the shloka changes.
   useEffect(() => {
-    setOrder(shuffledIndices(words.length));
-    setSelected(null);
+    setItems(shuffleArray(initialItems));
     setSolved(false);
     setMoves(0);
-  }, [fullText, words.length]);
+    setActiveId(null);
+  }, [initialItems]);
 
-  // Detect solved state. Compare surface text rather than original index so
-  // duplicate words are interchangeable.
+  // Detect solved state — compare surface text so duplicate words are
+  // interchangeable.
   useEffect(() => {
-    if (words.length === 0) return;
-    const correct = order.every((origIdx, pos) => words[origIdx] === words[pos]);
-    if (correct && !solved) {
-      setSolved(true);
-      setSelected(null);
-    } else if (!correct && solved) {
-      setSolved(false);
-    }
-  }, [order, words, solved]);
+    if (items.length === 0) return;
+    const correct = items.every((it, pos) => it.text === words[pos]);
+    if (correct && !solved) setSolved(true);
+    else if (!correct && solved) setSolved(false);
+  }, [items, words, solved]);
+
+  // 8px drag activation distance so a quick tap doesn't initiate a drag
+  // and won't fight the user's intent. On touch we use a tiny delay
+  // instead — pointer activation distance doesn't fire on most touch
+  // browsers until a small grace period.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 120, tolerance: 6 },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   if (words.length === 0) {
     return (
@@ -71,31 +179,30 @@ const WordOrderGame = ({ fullText }) => {
     );
   }
 
-  const handleTap = (pos) => {
-    if (solved) return;
-    if (selected === null) {
-      setSelected(pos);
-      return;
-    }
-    if (selected === pos) {
-      setSelected(null);
-      return;
-    }
-    setOrder((prev) => {
-      const next = [...prev];
-      [next[selected], next[pos]] = [next[pos], next[selected]];
-      return next;
+  const handleDragStart = (event) => setActiveId(event.active.id);
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    setActiveId(null);
+    if (!over || active.id === over.id) return;
+    setItems((prev) => {
+      const oldIdx = prev.findIndex((p) => p.id === active.id);
+      const newIdx = prev.findIndex((p) => p.id === over.id);
+      if (oldIdx < 0 || newIdx < 0) return prev;
+      return arrayMove(prev, oldIdx, newIdx);
     });
     setMoves((m) => m + 1);
-    setSelected(null);
   };
 
+  const handleDragCancel = () => setActiveId(null);
+
   const reshuffle = () => {
-    setOrder(shuffledIndices(words.length));
-    setSelected(null);
+    setItems(shuffleArray(initialItems));
     setSolved(false);
     setMoves(0);
   };
+
+  const activeItem = activeId ? items.find((i) => i.id === activeId) : null;
 
   return (
     <div
@@ -124,41 +231,36 @@ const WordOrderGame = ({ fullText }) => {
         </div>
       </div>
 
-      {/* Pills — flat list, all words, in current swap order */}
-      <div className="flex flex-wrap gap-1.5">
-        {order.map((origIdx, pos) => {
-          const isSelected = selected === pos;
-          const showCorrect = solved;
-          return (
-            <button
-              key={pos}
-              type="button"
-              onClick={() => handleTap(pos)}
-              disabled={solved}
-              className={`text-sm px-2.5 py-1 rounded-full border transition-all duration-200 ${
-                showCorrect
-                  ? "bg-green-50 border-green-300 text-green-800 anim-pop"
-                  : isSelected
-                    ? "bg-accent text-white border-accent scale-105 shadow-md"
-                    : "bg-white border-[#E5DDD0] text-black hover:border-brown hover:bg-accent-soft active:scale-95"
-              }`}
-              style={{
-                fontFamily: "Georgia, serif",
-                animationDelay: showCorrect ? `${pos * 40}ms` : undefined,
-              }}
-            >
-              {words[origIdx]}
-            </button>
-          );
-        })}
-      </div>
+      {/* Draggable pill pool */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <SortableContext items={items.map((i) => i.id)} strategy={rectSortingStrategy}>
+          <div className="flex flex-wrap gap-1.5 py-1">
+            {items.map((item) => (
+              <SortablePill
+                key={item.id}
+                id={item.id}
+                text={item.text}
+                solved={solved}
+              />
+            ))}
+          </div>
+        </SortableContext>
+        <DragOverlay dropAnimation={{ duration: 220, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
+          {activeItem ? <DragPreviewPill text={activeItem.text} /> : null}
+        </DragOverlay>
+      </DndContext>
 
       {/* Hint / celebration */}
       {!solved ? (
-        <p className="text-[10px] text-gray-500 italic">
-          {selected === null
-            ? "Tap a word, then tap another word to swap their positions."
-            : "Now tap the word it should swap with. Tap again to cancel."}
+        <p className="text-[10px] text-gray-500 italic flex items-center gap-1">
+          <GripVertical size={10} className="text-gray-400" />
+          Drag any word to a new spot. Other words slide out of the way.
         </p>
       ) : (
         <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-green-50 via-amber-50 to-amber-100 border border-green-200 p-3 flex items-center gap-2 mt-1">
