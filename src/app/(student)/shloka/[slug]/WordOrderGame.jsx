@@ -201,7 +201,7 @@ const WordOrderGame = ({ fullText }) => {
       {/* Header */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="text-sm font-bold text-brown flex items-center gap-1.5">
-          <Sparkles size={14} /> Arrange the verse
+          <Sparkles size={14} /> Arrange the Sutra
         </div>
         <div className="flex items-center gap-2">
           <span className={`wog-chip ${solved ? "wog-chip--solved" : ""}`}>
