@@ -216,24 +216,25 @@ const WordOrderGame = ({ fullText }) => {
 
   return (
     <div className={`wog-card ${solved ? "is-solved" : ""}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2 mb-3">
+      {/* Header — wraps to two rows on narrow phones so nothing overlaps */}
+      <div className="flex items-center justify-between flex-wrap gap-x-2 gap-y-1.5 mb-3">
         <div className="text-sm font-bold text-brown flex items-center gap-1.5">
-          <Sparkles size={14} /> Arrange the Sutra
+          <Sparkles size={14} className="shrink-0" />
+          <span>Arrange the Sutra</span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <span className={`wog-chip ${solved ? "wog-chip--solved" : ""}`}>
             {solved
               ? moves === 0
-                ? "Solved first try"
-                : `${moves} move${moves === 1 ? "" : "s"} · solved`
+                ? "First try"
+                : `${moves} · solved`
               : `${moves} move${moves === 1 ? "" : "s"}`}
           </span>
           <button
             type="button"
             onClick={reshuffle}
             aria-label="Shuffle"
-            className="text-[11px] text-brown px-2 py-1 rounded-full border border-[#E5DDD0] bg-white hover:bg-accent-soft transition flex items-center gap-1"
+            className="text-[11px] text-brown px-2 py-1 rounded-full border border-[#E5DDD0] bg-white hover:bg-accent-soft transition flex items-center gap-1 shrink-0"
           >
             <Shuffle size={11} /> Shuffle
           </button>
@@ -242,7 +243,7 @@ const WordOrderGame = ({ fullText }) => {
             onClick={handleCheck}
             disabled={solved}
             aria-label="Check arrangement"
-            className="text-[11px] font-semibold text-white bg-accent rounded-full px-2.5 py-1 hover:opacity-90 transition disabled:opacity-40 flex items-center gap-1"
+            className="text-[11px] font-semibold text-white bg-accent rounded-full px-2.5 py-1 hover:opacity-90 transition disabled:opacity-40 flex items-center gap-1 shrink-0"
           >
             <CheckCircle2 size={11} /> Check
           </button>
@@ -250,7 +251,7 @@ const WordOrderGame = ({ fullText }) => {
       </div>
 
       {/* Manuscript-framed pill pool */}
-      <div className="wog-frame">
+      <div className={`wog-frame ${solved ? "wog-frame--solved" : ""}`}>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}

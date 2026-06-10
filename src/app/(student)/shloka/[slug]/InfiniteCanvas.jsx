@@ -488,9 +488,34 @@ const InfiniteCanvas = ({ tool, setTool, inFullView }) => {
         className={`block w-full h-full touch-none select-none ${cursorClass}`}
       />
 
-      {/* Tool dock — floats over the canvas, bottom-centred */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center">
+      {/* Zoom dock — top-right. Lives at the opposite corner from the tool
+          dock so the two never collide at any viewport width. */}
+      <div className="pointer-events-none absolute right-2 top-2 flex justify-end">
         <div className="pointer-events-auto inline-flex items-center gap-1 bg-white/95 backdrop-blur border border-[#E5DDD0] rounded-full px-1.5 py-1 shadow-sm">
+          <ToolBtn onClick={() => zoomBy(1 / 1.2)} title="Zoom out">
+            <Minus size={13} />
+          </ToolBtn>
+          <button
+            type="button"
+            onClick={resetView}
+            className="text-[11px] text-brown font-semibold min-w-[40px] text-center px-1 py-1 hover:bg-accent-soft rounded-full transition"
+            title="Reset view"
+          >
+            {zoomPct}%
+          </button>
+          <ToolBtn onClick={() => zoomBy(1.2)} title="Zoom in">
+            <Plus size={13} />
+          </ToolBtn>
+          <span className="mx-1 h-4 w-px bg-[#E5DDD0]" />
+          <ToolBtn onClick={resetView} title="Reset view">
+            <Crosshair size={13} />
+          </ToolBtn>
+        </div>
+      </div>
+
+      {/* Tool dock — bottom-centred, wraps inside the canvas frame */}
+      <div className="pointer-events-none absolute inset-x-2 bottom-2 flex justify-center">
+        <div className="pointer-events-auto inline-flex items-center gap-1 bg-white/95 backdrop-blur border border-[#E5DDD0] rounded-full px-1.5 py-1 shadow-sm max-w-full">
           <ToolBtn active={tool === "pen"} onClick={() => setTool("pen")} title="Pen (P)">
             <Pencil size={13} />
           </ToolBtn>
@@ -506,30 +531,6 @@ const InfiniteCanvas = ({ tool, setTool, inFullView }) => {
           </ToolBtn>
           <ToolBtn onClick={clearAll} disabled={strokeCount === 0} title="Clear all">
             <Trash2 size={13} />
-          </ToolBtn>
-        </div>
-      </div>
-
-      {/* Zoom dock — floats over the canvas, bottom-right */}
-      <div className="pointer-events-none absolute right-2 bottom-2 flex justify-end">
-        <div className="pointer-events-auto inline-flex items-center gap-1 bg-white/95 backdrop-blur border border-[#E5DDD0] rounded-full px-1.5 py-1 shadow-sm">
-          <ToolBtn onClick={() => zoomBy(1 / 1.2)} title="Zoom out">
-            <Minus size={13} />
-          </ToolBtn>
-          <button
-            type="button"
-            onClick={resetView}
-            className="text-[11px] text-brown font-semibold min-w-[44px] text-center px-1 py-1 hover:bg-accent-soft rounded-full transition"
-            title="Reset view"
-          >
-            {zoomPct}%
-          </button>
-          <ToolBtn onClick={() => zoomBy(1.2)} title="Zoom in">
-            <Plus size={13} />
-          </ToolBtn>
-          <span className="mx-1 h-4 w-px bg-[#E5DDD0]" />
-          <ToolBtn onClick={resetView} title="Reset view">
-            <Crosshair size={13} />
           </ToolBtn>
         </div>
       </div>

@@ -286,14 +286,19 @@ body {
 /* Pills — consistent rhythm, sharp text */
 .wog-pill {
   position: relative;
-  min-width: 76px;
-  padding: 8px 14px;
+  min-width: 64px;
+  max-width: 100%;
+  padding: 7px 12px;
   border-radius: 999px;
   border: 1.5px solid;
   font-size: 15px;
   line-height: 1.35;
   text-align: center;
-  white-space: nowrap;
+  /* Allow very long Devanagari compounds to wrap inside the pill instead
+     of overflowing the viewport on narrow screens. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   user-select: none;
   touch-action: none;
   cursor: grab;
@@ -336,12 +341,15 @@ body {
   border: 1.5px solid #A67C52;
   color: #1B1208;
   border-radius: 999px;
-  padding: 8px 14px;
-  min-width: 76px;
+  padding: 7px 12px;
+  min-width: 64px;
+  max-width: calc(100vw - 56px);
   font-size: 15px;
   line-height: 1.35;
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   backface-visibility: hidden;
@@ -850,6 +858,10 @@ body {
 /* Ensure the frame is tall enough that the seal ceremony never feels
    cramped, even for very short verses. */
 .wog-frame { min-height: 140px; }
+.wog-frame--solved { min-height: 260px; }
+@media (min-width: 640px) {
+  .wog-frame--solved { min-height: 240px; }
+}
 /* Gold double-line frame */
 .wog-victory::before {
   content: "";
