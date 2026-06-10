@@ -16,10 +16,7 @@ import {
   PartyPopper,
 } from "lucide-react";
 import Leaderboard from "./Leaderboard";
-// Kept for quick switch-back: PracticeCard is the transliteration + canvas
-// version. Uncomment this import + the <PracticeCard /> usages below to
-// re-enable it instead of (or alongside) WordOrderGame.
-// import PracticeCard from "./PracticeCard";
+import PracticeCard from "./PracticeCard";
 import WordOrderGame from "./WordOrderGame";
 import { useShlokaPlayer } from "./hooks/useShlokaPlayer";
 import { useCompletionTracker } from "./hooks/useCompletionTracker";
@@ -426,12 +423,10 @@ const ShlokaDesc = ({ shloka }) => {
             </div>
           )}
 
-          {/* Practice card — type (transliteration) + draw.
-              Disabled in favour of the flat word-order game below;
-              uncomment this line (and comment WordOrderGame) to switch back. */}
-          {/* <PracticeCard targetText={shloka.fullText ?? ""} /> */}
+          {/* Practice card — type (transliteration) + draw */}
+          <PracticeCard targetText={shloka.fullText ?? ""} />
 
-          {/* Word-order arrangement game (flat tap-to-swap) */}
+          {/* Word-order arrangement game (drag-and-drop) */}
           <WordOrderGame fullText={shloka.fullText ?? ""} />
 
           {/* Completion banner */}
@@ -667,11 +662,9 @@ const ShlokaDesc = ({ shloka }) => {
                 <p className="text-sm mt-1 whitespace-pre-wrap text-black">{shloka.caseStudy}</p>
               </div>
             )}
-            {/* Practice card — type (transliteration) + draw.
-                Disabled in favour of the flat word-order game below;
-                uncomment this line (and comment WordOrderGame) to switch back. */}
-            {/* <PracticeCard targetText={shloka.fullText ?? ""} /> */}
-            {/* Word-order arrangement game (flat tap-to-swap) */}
+            {/* Practice card — type (transliteration) + draw */}
+            <PracticeCard targetText={shloka.fullText ?? ""} />
+            {/* Word-order arrangement game (drag-and-drop) */}
             <WordOrderGame fullText={shloka.fullText ?? ""} />
           </div>
         </div>
