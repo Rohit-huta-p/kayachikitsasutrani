@@ -199,8 +199,27 @@ body {
   animation: glow-sweep 1.4s ease-out 80ms both;
 }
 @media (prefers-reduced-motion: reduce) {
-  .anim-pop, .anim-glow-sweep { animation: none; }
+  .anim-pop, .anim-glow-sweep, .confetti { animation: none; }
 }
+
+/* Confetti particles for word-order celebration */
+@keyframes confetti-fly {
+  0%   { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.6); }
+  15%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--cx, -80px), var(--cy, -40px)) rotate(360deg) scale(1.2); }
+}
+.confetti {
+  position: absolute;
+  top: 50%;
+  right: 14%;
+  font-size: 14px;
+  pointer-events: none;
+  animation: confetti-fly 1.6s ease-out infinite;
+}
+.confetti-1 { --cx: -120px; --cy: -32px; animation-delay: 0ms; }
+.confetti-2 { --cx: -70px;  --cy: -64px; animation-delay: 220ms; }
+.confetti-3 { --cx: -170px; --cy: -8px;  animation-delay: 440ms; }
+.confetti-4 { --cx: -40px;  --cy: -48px; animation-delay: 660ms; }
 
 /* Card collapse / expand */
 .collapsible-body {
