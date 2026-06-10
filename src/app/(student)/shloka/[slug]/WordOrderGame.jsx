@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -20,7 +20,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Sparkles, Shuffle, RotateCcw } from "lucide-react";
+import { Sparkles, Shuffle, RotateCcw, Lock, Check } from "lucide-react";
 
 function tokenize(s) {
   return (s || "").normalize("NFC").trim().split(/\s+/).filter(Boolean);
@@ -28,8 +28,6 @@ function tokenize(s) {
 
 function shuffleArray(arr) {
   const a = [...arr];
-  // Fisher–Yates with a retry guard so we don't open the puzzle already
-  // solved on small word counts.
   for (let attempt = 0; attempt < 5; attempt++) {
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -42,13 +40,17 @@ function shuffleArray(arr) {
 }
 
 /**
- * One draggable pill.
+ * One pill. Three visual states (mutually exclusive):
+ *   solved  — entire verse complete; render in green gradient with ordinal.
+ *   locked  — pill is in its correct slot and pinned there; gold ring + lock badge.
+ *   rest    — neutral, draggable.
  *
- * While dragging, the source becomes wog-pill--ghost (opacity 0) so the
- * <DragOverlay> clone is the only visible representation of the pill —
- * no double-image, no blurred half-ghost.
+ * dnd-kit's `useSortable` is told to disable drags when the pill is solved
+ * or locked, so the pointer/touch/keyboard sensors all refuse to pick it
+ * up. The drag-end logic in the parent also rejects any move that would
+ * displace a locked pill from its slot.
  */
-function SortablePill({ id, text, solved, correct, index }) {
+function SortablePill({ id, text, solved, locked, index }) {
   const {
     attributes,
     listeners,
@@ -56,28 +58,25 @@ function SortablePill({ id, text, solved, correct, index }) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id, disabled: solved });
+  } = useSortable({ id, disabled: solved || locked });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const style = { transform: CSS.Transform.toString(transform), transition };
 
-  // State priority: solved (whole verse done) > correct (this slot matches
-  // its target word but the verse isn't fully assembled yet) > rest.
   const stateClass = solved
     ? "wog-pill--solved"
-    : correct
-      ? "wog-pill--correct"
+    : locked
+      ? "wog-pill--locked"
       : "wog-pill--rest";
 
   const classes = ["wog-pill font-deva", stateClass, isDragging ? "wog-pill--ghost" : ""]
     .filter(Boolean)
     .join(" ");
 
-  const label = correct
-    ? `${text}. Correct position ${index + 1}. Drag to move.`
-    : `Word ${text}. Position ${index + 1}. Drag to reorder.`;
+  const label = locked
+    ? `${text}. Locked in position ${index + 1}.`
+    : solved
+      ? `${text}. Position ${index + 1}, verse complete.`
+      : `Word ${text}. Position ${index + 1}. Drag to reorder.`;
 
   return (
     <button
@@ -87,21 +86,20 @@ function SortablePill({ id, text, solved, correct, index }) {
       {...listeners}
       type="button"
       aria-label={label}
-      aria-pressed={correct || solved || undefined}
+      aria-pressed={locked || solved || undefined}
       className={classes}
     >
       {text}
+      {locked && !solved && (
+        <span aria-hidden className="wog-pill__badge wog-pill__badge--lock">
+          <Lock size={9} strokeWidth={2.6} />
+        </span>
+      )}
       {solved && <span aria-hidden className="wog-pill__index">{index + 1}</span>}
     </button>
   );
 }
 
-/**
- * The floating clone shown under the user's pointer during a drag.
- * Identical surface text and metrics to the pill, plus depth shadow and a
- * subtle tilt to communicate "lifted off the page". transform-origin is
- * centred so the clone scales sharply without sub-pixel blur.
- */
 function DragPreviewPill({ text }) {
   return (
     <div className="wog-pill--overlay font-deva" aria-hidden>
@@ -111,26 +109,19 @@ function DragPreviewPill({ text }) {
 }
 
 /**
- * Draggable word-arrangement game with a refined editorial aesthetic.
+ * Word-order game with **slot-locking** semantics.
  *
- * - Pills sit inside a parchment-coloured "frame" with a hand-drawn dashed
- *   border, soft inner shadow, paper grain texture, and corner-dot folio
- *   marks — visually distinct from the surrounding cards so the puzzle
- *   reads as a separate, intentional surface.
- * - Each pill has a min-width and consistent padding so even short words
- *   like "च" sit on the same visual baseline as long compounds.
- * - Devanagari renders in Tiro Devanagari Sanskrit (loaded via next/font),
- *   which preserves samyuktakshara ligatures and vedic marks; non-Devanagari
- *   characters fall back gracefully to system serifs.
- * - The DragOverlay clone is the only elevated copy of the pill at any
- *   time; the source pill goes to opacity 0 the moment a drag starts, so
- *   there is no faint duplicate behind the floating one.
- * - Three sensors keep the game usable everywhere: pointer (mouse / pen,
- *   6px activation distance), touch (120ms delay + 6px tolerance), and
- *   keyboard (Space to pick up, arrows to move, Space to drop).
- * - On solve, the card border greens, every pill gets a tiny ordinal
- *   numeral chip, and a manuscript-tinted celebration banner appears with
- *   the move count and a "Play again" CTA.
+ * When a pill is dropped into its correct slot it immediately locks:
+ *   1. Its `id` is added to a `locked` Set so it can never be dragged again.
+ *   2. Its position becomes an immovable barrier — any subsequent drag
+ *      reorders only the *unlocked* pills around it; locked pills stay
+ *      pinned to their slot exactly where the user placed them.
+ *   3. A small confirmation toast slides in from the top of the card for
+ *      ~1.6s ("Placed correctly · locked").
+ *
+ * The shuffler can leave some pills already in their correct slot at game
+ * start — those auto-lock on mount so we never strand a "correct but not
+ * locked" pill that the user could accidentally move.
  */
 const WordOrderGame = ({ fullText }) => {
   const words = useMemo(() => tokenize(fullText), [fullText]);
@@ -145,24 +136,60 @@ const WordOrderGame = ({ fullText }) => {
     [words],
   );
 
+  // `items` is the current display order. `locked` is the Set of ids that
+  // are pinned to their current position because they match the target word
+  // at that position.
   const [items, setItems] = useState(() => shuffleArray(initialItems));
+  const [locked, setLocked] = useState(() => new Set());
   const [activeId, setActiveId] = useState(null);
   const [solved, setSolved] = useState(false);
   const [moves, setMoves] = useState(0);
 
+  // Toast state: a short transient message after a lock event. We key by an
+  // incrementing counter so the same message can re-trigger and we get a
+  // fresh animation each time.
+  const [toast, setToast] = useState(null); // { key, text }
+  const toastTimerRef = useRef(null);
+
+  // Reset on shloka change. Re-derive auto-locks from the freshly shuffled
+  // board so any pill that happens to land in its correct slot starts
+  // locked.
   useEffect(() => {
-    setItems(shuffleArray(initialItems));
+    const fresh = shuffleArray(initialItems);
+    const autoLocked = new Set();
+    fresh.forEach((it, pos) => {
+      if (it.text === words[pos]) autoLocked.add(it.id);
+    });
+    setItems(fresh);
+    setLocked(autoLocked);
     setActiveId(null);
     setSolved(false);
     setMoves(0);
-  }, [initialItems]);
+    setToast(null);
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+  }, [initialItems, words]);
 
+  // Whole-verse solved detection.
   useEffect(() => {
     if (items.length === 0) return;
     const correct = items.every((it, pos) => it.text === words[pos]);
     if (correct && !solved) setSolved(true);
     else if (!correct && solved) setSolved(false);
   }, [items, words, solved]);
+
+  // Clear toast timer on unmount.
+  useEffect(() => () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+  }, []);
+
+  const showToast = (text) => {
+    setToast({ key: Date.now(), text });
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToast(null), 1800);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -179,33 +206,99 @@ const WordOrderGame = ({ fullText }) => {
   }
 
   const handleDragStart = (event) => setActiveId(event.active.id);
+  const handleDragCancel = () => setActiveId(null);
 
+  // Custom move logic — reorder only the unlocked pills, keep locked ones
+  // pinned to their slots. Then check whether the move newly placed any
+  // pills into their correct positions and lock those too.
   const handleDragEnd = (event) => {
     const { active, over } = event;
     setActiveId(null);
     if (!over || active.id === over.id) return;
-    setItems((prev) => {
-      const oldIdx = prev.findIndex((p) => p.id === active.id);
-      const newIdx = prev.findIndex((p) => p.id === over.id);
-      if (oldIdx < 0 || newIdx < 0) return prev;
-      return arrayMove(prev, oldIdx, newIdx);
+
+    const srcIdx = items.findIndex((p) => p.id === active.id);
+    const dstIdx = items.findIndex((p) => p.id === over.id);
+    if (srcIdx < 0 || dstIdx < 0) return;
+    if (locked.has(active.id)) return; // shouldn't happen — sensor disabled — but defend anyway
+
+    // Build the unlocked-only sublist and project the source/target indices
+    // into it.
+    const unlocked = items.filter((p) => !locked.has(p.id));
+    const srcInUnlocked = unlocked.findIndex((p) => p.id === active.id);
+
+    // Count how many unlocked items sit before dstIdx in the full board.
+    let unlockedBeforeDst = 0;
+    for (let k = 0; k < dstIdx; k++) {
+      if (!locked.has(items[k].id)) unlockedBeforeDst++;
+    }
+    // If the drop target itself is unlocked, that slot is the dst index in
+    // the unlocked subarray. If the drop target is locked, the drag should
+    // resolve to the nearest *unlocked* slot in the drag direction; using
+    // unlockedBeforeDst gives the slot "just before" the locked pill, which
+    // is the natural place a forward drag would settle.
+    const dstInUnlocked = locked.has(over.id)
+      ? Math.max(0, unlockedBeforeDst - (srcInUnlocked < unlockedBeforeDst ? 0 : 1))
+      : unlockedBeforeDst;
+
+    if (srcInUnlocked === dstInUnlocked) return; // no-op
+
+    const newUnlocked = arrayMove(unlocked, srcInUnlocked, dstInUnlocked);
+
+    // Re-assemble: walk the original positions, leave locked pills exactly
+    // where they were, fill the gaps with newUnlocked in order.
+    const newOrder = [];
+    let cursor = 0;
+    for (let pos = 0; pos < items.length; pos++) {
+      if (locked.has(items[pos].id)) {
+        newOrder.push(items[pos]);
+      } else {
+        newOrder.push(newUnlocked[cursor++]);
+      }
+    }
+
+    // Detect newly-correct slots that should now lock.
+    const newlyLocked = [];
+    newOrder.forEach((it, pos) => {
+      if (!locked.has(it.id) && it.text === words[pos]) newlyLocked.push(it);
     });
+
+    setItems(newOrder);
     setMoves((m) => m + 1);
+
+    if (newlyLocked.length > 0) {
+      setLocked((prev) => {
+        const next = new Set(prev);
+        newlyLocked.forEach((it) => next.add(it.id));
+        return next;
+      });
+      // Only surface the toast if the verse isn't fully solved by this
+      // move — when it IS fully solved, the victory ceremony is the
+      // feedback and a toast would just compete with it.
+      const willBeSolved = newOrder.every((it, pos) => it.text === words[pos]);
+      if (!willBeSolved) {
+        const verb = newlyLocked.length > 1 ? "words" : "word";
+        const count = newlyLocked.length > 1 ? `${newlyLocked.length} ` : "";
+        showToast(`${count}${verb} placed correctly · locked`);
+      }
+    }
   };
 
-  const handleDragCancel = () => setActiveId(null);
-
   const reshuffle = () => {
-    setItems(shuffleArray(initialItems));
+    const fresh = shuffleArray(initialItems);
+    const autoLocked = new Set();
+    fresh.forEach((it, pos) => {
+      if (it.text === words[pos]) autoLocked.add(it.id);
+    });
+    setItems(fresh);
+    setLocked(autoLocked);
+    setActiveId(null);
     setSolved(false);
     setMoves(0);
+    setToast(null);
   };
 
   const activeItem = activeId ? items.find((i) => i.id === activeId) : null;
 
-  // Drop animation: spring-overshoot easing so the released pill settles
-  // with a small bounce, and the source pill stays invisible for the full
-  // duration of the drop so we never expose the half-faded ghost mid-flight.
   const dropAnimation = {
     duration: 320,
     easing: "cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -214,8 +307,21 @@ const WordOrderGame = ({ fullText }) => {
     }),
   };
 
+  const lockedCount = locked.size;
+  const totalCount = items.length;
+
   return (
     <div className={`wog-card ${solved ? "is-solved" : ""}`}>
+      {/* Floating toast — rendered above the card content */}
+      {toast && (
+        <div key={toast.key} className="wog-toast" role="status" aria-live="polite">
+          <span className="wog-toast__chip" aria-hidden>
+            <Check size={11} strokeWidth={3} />
+          </span>
+          {toast.text}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="text-sm font-bold text-brown flex items-center gap-1.5">
@@ -227,7 +333,7 @@ const WordOrderGame = ({ fullText }) => {
               ? moves === 0
                 ? "Solved first try"
                 : `${moves} move${moves === 1 ? "" : "s"} · solved`
-              : `${moves} move${moves === 1 ? "" : "s"}`}
+              : `${lockedCount} / ${totalCount} locked`}
           </span>
           <button
             type="button"
@@ -260,7 +366,7 @@ const WordOrderGame = ({ fullText }) => {
                   id={item.id}
                   text={item.text}
                   solved={solved}
-                  correct={item.text === words[pos]}
+                  locked={locked.has(item.id)}
                   index={pos}
                 />
               ))}
@@ -277,26 +383,23 @@ const WordOrderGame = ({ fullText }) => {
         <div className="wog-hint mt-3">
           <span className="wog-hint__ornament">⋅⋅⋅</span>
           <span className="shrink-0">
-            Drag a word, drop it where it belongs. A ✓ appears when it's home.
+            Drop a word in its slot — it locks with a 🔒 and stays put while others rearrange.
           </span>
           <span className="wog-hint__rule" />
         </div>
       ) : (
         <div className="wog-victory mt-3 text-center" role="status" aria-live="polite">
-          {/* Corner ornaments */}
           <span aria-hidden className="wog-orn wog-orn--tl">❦</span>
           <span aria-hidden className="wog-orn wog-orn--tr">❦</span>
           <span aria-hidden className="wog-orn wog-orn--bl">❦</span>
           <span aria-hidden className="wog-orn wog-orn--br">❦</span>
 
-          {/* Floating petals */}
           <span aria-hidden className="wog-petal wog-petal--1">✦</span>
           <span aria-hidden className="wog-petal wog-petal--2">✧</span>
           <span aria-hidden className="wog-petal wog-petal--3">❋</span>
           <span aria-hidden className="wog-petal wog-petal--4">✦</span>
           <span aria-hidden className="wog-petal wog-petal--5">✧</span>
 
-          {/* Sanskrit seal */}
           <div className="wog-seal">
             <span aria-hidden className="wog-seal__danda">॥</span>
             <span className="wog-seal__word">साधु</span>
@@ -310,11 +413,7 @@ const WordOrderGame = ({ fullText }) => {
               : `Assembled in ${moves} move${moves === 1 ? "" : "s"}`}
           </div>
 
-          <button
-            type="button"
-            onClick={reshuffle}
-            className="wog-victory__cta"
-          >
+          <button type="button" onClick={reshuffle} className="wog-victory__cta">
             <RotateCcw size={12} /> Recite again
           </button>
         </div>

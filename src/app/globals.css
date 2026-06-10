@@ -650,29 +650,120 @@ body {
     0 1px 0 rgba(34, 139, 78, 0.08);
   animation: wog-correct-pulse 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.wog-pill--correct::after {
-  content: "✓";
+
+/* Locked pill — same green tint, but with a gold outer ring to read as
+   "pinned/sealed", a lock badge in place of the check, and cursor:default
+   so the user knows it can't be moved. */
+.wog-pill--locked {
+  background: linear-gradient(180deg, #F8FCEF 0%, #ECF6DE 100%);
+  border-color: rgba(72, 144, 90, 0.55);
+  color: #1B1208;
+  cursor: default;
+  box-shadow:
+    0 0 0 2px rgba(166, 124, 82, 0.45),
+    0 0 0 5px rgba(120, 200, 150, 0.14),
+    0 1px 0 rgba(34, 139, 78, 0.08);
+  animation: wog-lock-snap 520ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.wog-pill--locked:hover { transform: none; }
+
+@keyframes wog-lock-snap {
+  0%   { transform: scale(1)    rotate(0); }
+  25%  { transform: scale(1.10) rotate(-1.5deg); }
+  55%  { transform: scale(0.97) rotate(0.8deg); }
+  100% { transform: scale(1)    rotate(0); }
+}
+
+/* The medallion badge in the top-right of a pill */
+.wog-pill__badge {
   position: absolute;
   top: -7px;
   right: -6px;
   width: 18px;
   height: 18px;
-  background: linear-gradient(180deg, #5DBE7B 0%, #2E8B57 100%);
-  color: #FFFFFF;
   border: 1.5px solid #FFFFFF;
   border-radius: 50%;
-  font-family: Georgia, serif;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow:
-    0 2px 6px rgba(34, 139, 78, 0.35),
-    0 0 0 0 rgba(120, 200, 150, 0.6);
-  animation: wog-tick-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards,
-             wog-tick-halo 1.6s ease-out 380ms;
+  pointer-events: none;
+  color: #FFFFFF;
+  animation: wog-tick-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+.wog-pill__badge--check {
+  background: linear-gradient(180deg, #5DBE7B 0%, #2E8B57 100%);
+  box-shadow: 0 2px 6px rgba(34, 139, 78, 0.35);
+}
+.wog-pill__badge--lock {
+  background: linear-gradient(180deg, #B8895D 0%, #8E6638 100%);
+  box-shadow: 0 2px 6px rgba(110, 75, 35, 0.40);
+}
+.wog-pill__badge--lock::after {
+  /* gold halo ring that fades out once on snap */
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(166, 124, 82, 0.55);
+  animation: wog-lock-halo 1.4s ease-out 200ms;
+}
+
+@keyframes wog-correct-pulse {
+  0%   { transform: scale(1); box-shadow: 0 0 0 3px rgba(120, 200, 150, 0); }
+  50%  { transform: scale(1.04); box-shadow: 0 0 0 6px rgba(120, 200, 150, 0.22); }
+  100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(120, 200, 150, 0.14); }
+}
+@keyframes wog-tick-pop {
+  0%   { transform: scale(0)   rotate(-30deg); opacity: 0; }
+  60%  { transform: scale(1.25) rotate(8deg);  opacity: 1; }
+  100% { transform: scale(1)    rotate(0deg);  opacity: 1; }
+}
+@keyframes wog-lock-halo {
+  0%   { box-shadow: 0 0 0 0   rgba(166, 124, 82, 0.55); }
+  100% { box-shadow: 0 0 0 12px rgba(166, 124, 82, 0); }
+}
+
+/* Floating toast — appears at the top of the card on each new lock */
+.wog-toast {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -120%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #14532D;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F4FBEA 100%);
+  border: 1.5px solid rgba(72, 144, 90, 0.6);
+  box-shadow: 0 10px 26px rgba(34, 139, 78, 0.18),
+              0 2px 6px rgba(34, 139, 78, 0.10);
+  pointer-events: none;
+  z-index: 50;
+  white-space: nowrap;
+  animation: wog-toast-in 1800ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.wog-toast__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #5DBE7B 0%, #2E8B57 100%);
+  color: #FFFFFF;
+  font-size: 10px;
+  box-shadow: 0 1px 3px rgba(34, 139, 78, 0.4);
+}
+@keyframes wog-toast-in {
+  0%   { transform: translate(-50%, -130%); opacity: 0; }
+  12%  { transform: translate(-50%, 8px);   opacity: 1; }
+  82%  { transform: translate(-50%, 8px);   opacity: 1; }
+  100% { transform: translate(-50%, -130%); opacity: 0; }
 }
 @keyframes wog-correct-pulse {
   0%   { transform: scale(1); box-shadow: 0 0 0 3px rgba(120, 200, 150, 0); }
@@ -871,6 +962,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .wog-pill--correct,
   .wog-pill--correct::after,
+  .wog-pill--locked,
+  .wog-pill__badge,
+  .wog-toast,
   .wog-victory::after,
   .wog-seal,
   .wog-orn,
