@@ -20,7 +20,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Sparkles, Shuffle, RotateCcw, Check } from "lucide-react";
+import { Sparkles, Shuffle, RotateCcw, Check, X, CheckCircle2 } from "lucide-react";
 
 function tokenize(s) {
   return (s || "").normalize("NFC").trim().split(/\s+/).filter(Boolean);
@@ -43,13 +43,14 @@ function shuffleArray(arr) {
  * One draggable pill.
  *
  * Visual states (mutually exclusive):
- *   solved  — the whole verse is in order; green gradient + ordinal numeral.
- *   correct — this pill is currently in its right slot (live hint) but the
- *             verse isn't complete yet. Soft green tint + check medallion.
- *             Stays fully draggable so the user can rearrange freely.
- *   rest    — neutral.
+ *   solved — the verse is fully assembled; render in green gradient with
+ *            an ordinal numeral chip.
+ *   wrong  — a Check has just been run and this pill is in the wrong slot;
+ *            render in red gradient with a ✗ medallion. Reverts to neutral
+ *            the moment the student drags any pill.
+ *   rest   — neutral, draggable.
  */
-function SortablePill({ id, text, solved, correct, index }) {
+function SortablePill({ id, text, solved, wrong, index }) {
   const {
     attributes,
     listeners,
@@ -63,19 +64,13 @@ function SortablePill({ id, text, solved, correct, index }) {
 
   const stateClass = solved
     ? "wog-pill--solved"
-    : correct
-      ? "wog-pill--correct"
+    : wrong
+      ? "wog-pill--wrong"
       : "wog-pill--rest";
 
   const classes = ["wog-pill font-deva", stateClass, isDragging ? "wog-pill--ghost" : ""]
     .filter(Boolean)
     .join(" ");
-
-  const label = correct
-    ? `${text}. Currently in correct position ${index + 1}. Drag to move.`
-    : solved
-      ? `${text}. Position ${index + 1}, verse complete.`
-      : `Word ${text}. Position ${index + 1}. Drag to reorder.`;
 
   return (
     <button
@@ -84,14 +79,13 @@ function SortablePill({ id, text, solved, correct, index }) {
       {...attributes}
       {...listeners}
       type="button"
-      aria-label={label}
-      aria-pressed={correct || solved || undefined}
+      aria-label={`Word ${text}. Position ${index + 1}. Drag to reorder.`}
       className={classes}
     >
       {text}
-      {correct && !solved && (
-        <span aria-hidden className="wog-pill__badge wog-pill__badge--check">
-          <Check size={10} strokeWidth={3} />
+      {wrong && !solved && (
+        <span aria-hidden className="wog-pill__badge wog-pill__badge--cross">
+          <X size={10} strokeWidth={3} />
         </span>
       )}
       {solved && <span aria-hidden className="wog-pill__index">{index + 1}</span>}
@@ -110,12 +104,14 @@ function DragPreviewPill({ text }) {
 /**
  * Drag-and-drop word arranging game.
  *
- * Tokenises shloka.fullText, scrambles into a pool of pills, lets the
- * student drag pills into the correct order. Pills that happen to sit in
- * their target slot get a live "✓" hint (green tint + check medallion) but
- * remain fully draggable — the student is free to keep rearranging without
- * any sticky/locked positions. When the entire pill order matches the
- * verse, a Sanskrit-manuscript "Well Done" seal ceremony plays.
+ * Pills shuffle on mount, the student rearranges them by drag, and there
+ * is NO live correctness feedback as they arrange. When the student is
+ * ready they tap "Check": the pills that are out of order glow red with
+ * a ✗ badge, and a banner reports the score. Any subsequent drag wipes
+ * the red highlights so the next Check starts fresh.
+ *
+ * If a Check finds every pill in its correct slot, the Sanskrit-
+ * manuscript "Well Done" ceremony fires.
  */
 const WordOrderGame = ({ fullText }) => {
   const words = useMemo(() => tokenize(fullText), [fullText]);
@@ -134,20 +130,19 @@ const WordOrderGame = ({ fullText }) => {
   const [activeId, setActiveId] = useState(null);
   const [solved, setSolved] = useState(false);
   const [moves, setMoves] = useState(0);
+  // checkResult is null until the student taps Check. After Check:
+  //   { wrongIds: Set<string>, correct: number, total: number }
+  // It is wiped on any drag so the highlighting only reflects the
+  // outcome of the most recent Check, not stale state.
+  const [checkResult, setCheckResult] = useState(null);
 
   useEffect(() => {
     setItems(shuffleArray(initialItems));
     setActiveId(null);
     setSolved(false);
     setMoves(0);
+    setCheckResult(null);
   }, [initialItems]);
-
-  useEffect(() => {
-    if (items.length === 0) return;
-    const correct = items.every((it, pos) => it.text === words[pos]);
-    if (correct && !solved) setSolved(true);
-    else if (!correct && solved) setSolved(false);
-  }, [items, words, solved]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -163,7 +158,12 @@ const WordOrderGame = ({ fullText }) => {
     );
   }
 
-  const handleDragStart = (event) => setActiveId(event.active.id);
+  const handleDragStart = (event) => {
+    setActiveId(event.active.id);
+    // First sign of motion wipes any previous Check highlight so the
+    // student sees a clean board on the next attempt.
+    if (checkResult) setCheckResult(null);
+  };
   const handleDragCancel = () => setActiveId(null);
 
   const handleDragEnd = (event) => {
@@ -179,11 +179,29 @@ const WordOrderGame = ({ fullText }) => {
     setMoves((m) => m + 1);
   };
 
+  const handleCheck = () => {
+    const wrongIds = new Set();
+    let correct = 0;
+    items.forEach((it, pos) => {
+      if (it.text === words[pos]) correct++;
+      else wrongIds.add(it.id);
+    });
+    if (correct === items.length) {
+      // All in place — go straight to the victory ceremony, no red
+      // highlights, no banner.
+      setCheckResult(null);
+      setSolved(true);
+    } else {
+      setCheckResult({ wrongIds, correct, total: items.length });
+    }
+  };
+
   const reshuffle = () => {
     setItems(shuffleArray(initialItems));
     setActiveId(null);
     setSolved(false);
     setMoves(0);
+    setCheckResult(null);
   };
 
   const activeItem = activeId ? items.find((i) => i.id === activeId) : null;
@@ -203,7 +221,7 @@ const WordOrderGame = ({ fullText }) => {
         <div className="text-sm font-bold text-brown flex items-center gap-1.5">
           <Sparkles size={14} /> Arrange the Sutra
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span className={`wog-chip ${solved ? "wog-chip--solved" : ""}`}>
             {solved
               ? moves === 0
@@ -218,6 +236,15 @@ const WordOrderGame = ({ fullText }) => {
             className="text-[11px] text-brown px-2 py-1 rounded-full border border-[#E5DDD0] bg-white hover:bg-accent-soft transition flex items-center gap-1"
           >
             <Shuffle size={11} /> Shuffle
+          </button>
+          <button
+            type="button"
+            onClick={handleCheck}
+            disabled={solved}
+            aria-label="Check arrangement"
+            className="text-[11px] font-semibold text-white bg-accent rounded-full px-2.5 py-1 hover:opacity-90 transition disabled:opacity-40 flex items-center gap-1"
+          >
+            <CheckCircle2 size={11} /> Check
           </button>
         </div>
       </div>
@@ -242,7 +269,7 @@ const WordOrderGame = ({ fullText }) => {
                   id={item.id}
                   text={item.text}
                   solved={solved}
-                  correct={item.text === words[pos]}
+                  wrong={!solved && !!checkResult?.wrongIds.has(item.id)}
                   index={pos}
                 />
               ))}
@@ -254,16 +281,8 @@ const WordOrderGame = ({ fullText }) => {
         </DndContext>
       </div>
 
-      {/* Hint or full-solve ceremony */}
-      {!solved ? (
-        <div className="wog-hint mt-3">
-          <span className="wog-hint__ornament">⋅⋅⋅</span>
-          <span className="shrink-0">
-            Drag a word, drop it where it belongs. A ✓ appears when it's home.
-          </span>
-          <span className="wog-hint__rule" />
-        </div>
-      ) : (
+      {/* Hint / check banner / ceremony */}
+      {solved ? (
         <div className="wog-victory mt-3 text-center" role="status" aria-live="polite">
           <span aria-hidden className="wog-orn wog-orn--tl">❦</span>
           <span aria-hidden className="wog-orn wog-orn--tr">❦</span>
@@ -292,6 +311,32 @@ const WordOrderGame = ({ fullText }) => {
           <button type="button" onClick={reshuffle} className="wog-victory__cta">
             <RotateCcw size={12} /> Recite again
           </button>
+        </div>
+      ) : checkResult ? (
+        <div
+          className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50/60 px-3 py-2"
+          role="status"
+          aria-live="polite"
+        >
+          <X size={14} className="text-red-700 shrink-0" />
+          <div className="flex-1 min-w-0 text-[12px] text-red-800">
+            <span className="font-semibold">{checkResult.correct} / {checkResult.total} correct</span>
+            <span className="text-red-700/80">
+              {" "}· {checkResult.total - checkResult.correct} word
+              {checkResult.total - checkResult.correct === 1 ? "" : "s"} out of order
+            </span>
+          </div>
+          <span className="text-[10px] text-red-700/70 italic shrink-0">
+            Drag to fix · Check again
+          </span>
+        </div>
+      ) : (
+        <div className="wog-hint mt-3">
+          <span className="wog-hint__ornament">⋅⋅⋅</span>
+          <span className="shrink-0">
+            Drag the words into the right order, then tap <span className="font-semibold">Check</span>.
+          </span>
+          <span className="wog-hint__rule" />
         </div>
       )}
     </div>

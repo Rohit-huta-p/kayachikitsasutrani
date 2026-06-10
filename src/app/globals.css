@@ -694,6 +694,28 @@ body {
   background: linear-gradient(180deg, #5DBE7B 0%, #2E8B57 100%);
   box-shadow: 0 2px 6px rgba(34, 139, 78, 0.35);
 }
+.wog-pill__badge--cross {
+  background: linear-gradient(180deg, #F07474 0%, #B91C1C 100%);
+  box-shadow: 0 2px 6px rgba(180, 28, 28, 0.40);
+}
+
+/* Wrong pill — revealed after the user clicks Check. Soft red tint, red
+   border, and a ✗ medallion so the student can spot the slots that need
+   to be re-arranged. Reverts to neutral the moment any pill is dragged. */
+.wog-pill--wrong {
+  background: linear-gradient(180deg, #FEF2F2 0%, #FCDCDC 100%);
+  border-color: rgba(185, 28, 28, 0.55);
+  color: #1B1208;
+  box-shadow:
+    0 0 0 3px rgba(220, 53, 53, 0.14),
+    0 1px 0 rgba(180, 28, 28, 0.08);
+  animation: wog-wrong-pulse 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes wog-wrong-pulse {
+  0%   { transform: scale(1); box-shadow: 0 0 0 3px rgba(220, 53, 53, 0); }
+  50%  { transform: scale(1.04); box-shadow: 0 0 0 6px rgba(220, 53, 53, 0.22); }
+  100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(220, 53, 53, 0.14); }
+}
 .wog-pill__badge--lock {
   background: linear-gradient(180deg, #B8895D 0%, #8E6638 100%);
   box-shadow: 0 2px 6px rgba(110, 75, 35, 0.40);
@@ -965,6 +987,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .wog-pill--correct,
   .wog-pill--correct::after,
+  .wog-pill--wrong,
   .wog-pill--locked,
   .wog-pill__badge,
   .wog-toast,
