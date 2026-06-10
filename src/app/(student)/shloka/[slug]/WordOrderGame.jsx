@@ -279,40 +279,48 @@ const WordOrderGame = ({ fullText }) => {
             {activeItem ? <DragPreviewPill text={activeItem.text} /> : null}
           </DragOverlay>
         </DndContext>
+
+        {/* Victory ceremony — overlays the pill frame so it is always
+            visible immediately after Check, even for long verses. */}
+        {solved && (
+          <div
+            className="wog-victory wog-victory--inset text-center"
+            role="status"
+            aria-live="polite"
+          >
+            <span aria-hidden className="wog-orn wog-orn--tl">❦</span>
+            <span aria-hidden className="wog-orn wog-orn--tr">❦</span>
+            <span aria-hidden className="wog-orn wog-orn--bl">❦</span>
+            <span aria-hidden className="wog-orn wog-orn--br">❦</span>
+
+            <span aria-hidden className="wog-petal wog-petal--1">✦</span>
+            <span aria-hidden className="wog-petal wog-petal--2">✧</span>
+            <span aria-hidden className="wog-petal wog-petal--3">❋</span>
+            <span aria-hidden className="wog-petal wog-petal--4">✦</span>
+            <span aria-hidden className="wog-petal wog-petal--5">✧</span>
+
+            <div className="wog-seal">
+              <span aria-hidden className="wog-seal__flank">❦</span>
+              <span className="wog-seal__word">Well Done</span>
+              <span aria-hidden className="wog-seal__flank">❦</span>
+            </div>
+
+            <div className="wog-victory__caption">— Verse Complete —</div>
+            <div className="wog-victory__meta">
+              {moves === 0
+                ? "Flawless · first try"
+                : `Assembled in ${moves} move${moves === 1 ? "" : "s"}`}
+            </div>
+
+            <button type="button" onClick={reshuffle} className="wog-victory__cta">
+              <RotateCcw size={12} /> Recite again
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Hint / check banner / ceremony */}
-      {solved ? (
-        <div className="wog-victory mt-3 text-center" role="status" aria-live="polite">
-          <span aria-hidden className="wog-orn wog-orn--tl">❦</span>
-          <span aria-hidden className="wog-orn wog-orn--tr">❦</span>
-          <span aria-hidden className="wog-orn wog-orn--bl">❦</span>
-          <span aria-hidden className="wog-orn wog-orn--br">❦</span>
-
-          <span aria-hidden className="wog-petal wog-petal--1">✦</span>
-          <span aria-hidden className="wog-petal wog-petal--2">✧</span>
-          <span aria-hidden className="wog-petal wog-petal--3">❋</span>
-          <span aria-hidden className="wog-petal wog-petal--4">✦</span>
-          <span aria-hidden className="wog-petal wog-petal--5">✧</span>
-
-          <div className="wog-seal">
-            <span aria-hidden className="wog-seal__flank">❦</span>
-            <span className="wog-seal__word">Well Done</span>
-            <span aria-hidden className="wog-seal__flank">❦</span>
-          </div>
-
-          <div className="wog-victory__caption">— Verse Complete —</div>
-          <div className="wog-victory__meta">
-            {moves === 0
-              ? "Flawless · first try"
-              : `Assembled in ${moves} move${moves === 1 ? "" : "s"}`}
-          </div>
-
-          <button type="button" onClick={reshuffle} className="wog-victory__cta">
-            <RotateCcw size={12} /> Recite again
-          </button>
-        </div>
-      ) : checkResult ? (
+      {/* Hint / check banner — celebration is now an overlay above */}
+      {!solved && checkResult ? (
         <div
           className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50/60 px-3 py-2"
           role="status"
@@ -330,7 +338,7 @@ const WordOrderGame = ({ fullText }) => {
             Drag to fix · Check again
           </span>
         </div>
-      ) : (
+      ) : !solved ? (
         <div className="wog-hint mt-3">
           <span className="wog-hint__ornament">⋅⋅⋅</span>
           <span className="shrink-0">
@@ -338,7 +346,7 @@ const WordOrderGame = ({ fullText }) => {
           </span>
           <span className="wog-hint__rule" />
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

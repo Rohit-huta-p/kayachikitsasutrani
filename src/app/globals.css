@@ -817,6 +817,39 @@ body {
     linear-gradient(180deg, #FFFDF4 0%, #FBF2DA 100%);
   isolation: isolate;
 }
+
+/* Inset variant: rendered ABSOLUTELY over the pill frame so the
+   celebration is always visible exactly where the student just clicked
+   Check, regardless of how long the verse is. The pills underneath stay
+   in the DOM (for screen-readers and to anchor the layout) but are veiled
+   behind a translucent + blurred background. */
+.wog-victory--inset {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 18px 20px;
+  border-radius: 14px;
+  background:
+    radial-gradient(80% 60% at 50% 0%, rgba(244, 201, 93, 0.26) 0%, transparent 65%),
+    radial-gradient(60% 80% at 50% 100%, rgba(166, 124, 82, 0.18) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(255, 253, 244, 0.94) 0%, rgba(251, 242, 218, 0.96) 100%);
+  backdrop-filter: blur(3px) saturate(1.05);
+  -webkit-backdrop-filter: blur(3px) saturate(1.05);
+  animation: wog-overlay-in 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes wog-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Ensure the frame is tall enough that the seal ceremony never feels
+   cramped, even for very short verses. */
+.wog-frame { min-height: 140px; }
 /* Gold double-line frame */
 .wog-victory::before {
   content: "";
