@@ -636,3 +636,246 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .lyric-idle, .lyric-brown, .lyric-active { transition: none; animation: none; }
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Word-order: per-pill "correct position" feedback (in-progress hint)
+ * ────────────────────────────────────────────────────────────────────── */
+
+.wog-pill--correct {
+  background: linear-gradient(180deg, #F8FCEF 0%, #ECF6DE 100%);
+  border-color: rgba(72, 144, 90, 0.55);
+  color: #1B1208;
+  box-shadow:
+    0 0 0 3px rgba(120, 200, 150, 0.14),
+    0 1px 0 rgba(34, 139, 78, 0.08);
+  animation: wog-correct-pulse 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.wog-pill--correct::after {
+  content: "✓";
+  position: absolute;
+  top: -7px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(180deg, #5DBE7B 0%, #2E8B57 100%);
+  color: #FFFFFF;
+  border: 1.5px solid #FFFFFF;
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 2px 6px rgba(34, 139, 78, 0.35),
+    0 0 0 0 rgba(120, 200, 150, 0.6);
+  animation: wog-tick-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards,
+             wog-tick-halo 1.6s ease-out 380ms;
+}
+@keyframes wog-correct-pulse {
+  0%   { transform: scale(1); box-shadow: 0 0 0 3px rgba(120, 200, 150, 0); }
+  50%  { transform: scale(1.04); box-shadow: 0 0 0 6px rgba(120, 200, 150, 0.22); }
+  100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(120, 200, 150, 0.14); }
+}
+@keyframes wog-tick-pop {
+  0%   { transform: scale(0)   rotate(-30deg); opacity: 0; }
+  60%  { transform: scale(1.25) rotate(8deg);  opacity: 1; }
+  100% { transform: scale(1)    rotate(0deg);  opacity: 1; }
+}
+@keyframes wog-tick-halo {
+  0%   { box-shadow: 0 2px 6px rgba(34, 139, 78, 0.35), 0 0 0 0   rgba(120, 200, 150, 0.6); }
+  100% { box-shadow: 0 2px 6px rgba(34, 139, 78, 0.35), 0 0 0 10px rgba(120, 200, 150, 0);   }
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Word-order: full-solve "ceremony" celebration
+ * ────────────────────────────────────────────────────────────────────── */
+
+.wog-victory {
+  position: relative;
+  overflow: hidden;
+  padding: 26px 18px 22px;
+  border-radius: 18px;
+  background:
+    radial-gradient(80% 60% at 50% 0%, rgba(244, 201, 93, 0.20) 0%, transparent 65%),
+    radial-gradient(60% 80% at 50% 100%, rgba(166, 124, 82, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, #FFFDF4 0%, #FBF2DA 100%);
+  isolation: isolate;
+}
+/* Gold double-line frame */
+.wog-victory::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  padding: 2px;
+  background: linear-gradient(135deg, #D4A574 0%, #F4D588 35%, #A67C52 65%, #D4A574 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
+}
+/* Light sweep — fires once on mount */
+.wog-victory::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg,
+    transparent 30%,
+    rgba(255, 235, 175, 0.55) 50%,
+    transparent 70%);
+  transform: translateX(-120%);
+  animation: wog-gold-sweep 1.8s ease-out 200ms 1 forwards;
+  z-index: 1;
+}
+@keyframes wog-gold-sweep {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* Central Sanskrit seal */
+.wog-seal {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px 10px;
+  border: 1.5px solid #A67C52;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #FFFBE8 0%, #FAEEC8 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 8px 22px rgba(166, 124, 82, 0.28);
+  transform: scale(0) rotate(-12deg);
+  opacity: 0;
+  animation: wog-seal-stamp 740ms cubic-bezier(0.34, 1.56, 0.64, 1) 320ms forwards;
+}
+@keyframes wog-seal-stamp {
+  0%   { transform: scale(3.4) rotate(-14deg); opacity: 0; }
+  55%  { transform: scale(0.9) rotate(-2deg);  opacity: 1; }
+  78%  { transform: scale(1.04) rotate(1deg); }
+  100% { transform: scale(1)   rotate(0deg);   opacity: 1; }
+}
+.wog-seal__danda {
+  color: #A67C52;
+  font-size: 26px;
+  font-family: var(--font-deva), serif;
+  line-height: 1;
+}
+.wog-seal__word {
+  font-family: var(--font-deva), serif;
+  font-size: 34px;
+  font-weight: 400;
+  color: #5C3D1A;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.wog-victory__caption {
+  position: relative;
+  z-index: 2;
+  margin-top: 12px;
+  font-family: Georgia, serif;
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #8B6B3F;
+  opacity: 0;
+  animation: wog-fade-rise 600ms ease-out 900ms forwards;
+}
+.wog-victory__meta {
+  position: relative;
+  z-index: 2;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #6B5436;
+  opacity: 0;
+  animation: wog-fade-rise 600ms ease-out 1080ms forwards;
+}
+.wog-victory__cta {
+  position: relative;
+  z-index: 2;
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: linear-gradient(180deg, #B8895D 0%, #8E6638 100%);
+  border: 1px solid #6B4C28;
+  border-radius: 999px;
+  padding: 7px 16px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(110, 75, 35, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  opacity: 0;
+  transform: translateY(4px);
+  animation: wog-fade-rise 600ms ease-out 1240ms forwards;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.wog-victory__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(110, 75, 35, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+@keyframes wog-fade-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Corner ornaments — drawn in after the seal lands */
+.wog-orn {
+  position: absolute;
+  z-index: 2;
+  font-family: serif;
+  font-size: 18px;
+  color: #C99966;
+  opacity: 0;
+  animation: wog-orn-in 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 760ms forwards;
+}
+.wog-orn--tl { top: 8px;    left: 12px;  }
+.wog-orn--tr { top: 8px;    right: 12px; }
+.wog-orn--bl { bottom: 8px; left: 12px;  }
+.wog-orn--br { bottom: 8px; right: 12px; }
+@keyframes wog-orn-in {
+  from { opacity: 0; transform: scale(0.3) rotate(-40deg); }
+  to   { opacity: 0.75; transform: scale(1) rotate(0); }
+}
+
+/* Floating petals — slow ambient drift after the ceremony lands */
+.wog-petal {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  font-size: 14px;
+  color: #D4A574;
+  opacity: 0;
+  animation: wog-petal-float 5s ease-in-out infinite;
+}
+@keyframes wog-petal-float {
+  0%   { transform: translate(0, 16px)  rotate(0deg);   opacity: 0; }
+  15%  { opacity: 0.75; }
+  85%  { opacity: 0.6;  }
+  100% { transform: translate(var(--px, 30px), -130px) rotate(var(--pr, 360deg)); opacity: 0; }
+}
+.wog-petal--1 { left: 8%;  bottom: 0;  --px: 20px;  --pr: 320deg; animation-delay: 1.2s; }
+.wog-petal--2 { left: 28%; bottom: 0;  --px: -16px; --pr: 260deg; animation-delay: 1.9s; }
+.wog-petal--3 { left: 52%; bottom: 0;  --px: 28px;  --pr: 380deg; animation-delay: 2.4s; }
+.wog-petal--4 { left: 72%; bottom: 0;  --px: -22px; --pr: 200deg; animation-delay: 1.6s; }
+.wog-petal--5 { left: 88%; bottom: 0;  --px: 12px;  --pr: 340deg; animation-delay: 2.7s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wog-pill--correct,
+  .wog-pill--correct::after,
+  .wog-victory::after,
+  .wog-seal,
+  .wog-orn,
+  .wog-petal,
+  .wog-victory__caption,
+  .wog-victory__meta,
+  .wog-victory__cta { animation: none; opacity: 1; transform: none; }
+}

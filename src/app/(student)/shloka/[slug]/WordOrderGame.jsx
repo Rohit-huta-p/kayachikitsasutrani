@@ -20,7 +20,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { PartyPopper, Sparkles, Shuffle, RotateCcw } from "lucide-react";
+import { Sparkles, Shuffle, RotateCcw } from "lucide-react";
 
 function tokenize(s) {
   return (s || "").normalize("NFC").trim().split(/\s+/).filter(Boolean);
@@ -48,7 +48,7 @@ function shuffleArray(arr) {
  * <DragOverlay> clone is the only visible representation of the pill —
  * no double-image, no blurred half-ghost.
  */
-function SortablePill({ id, text, solved, index }) {
+function SortablePill({ id, text, solved, correct, index }) {
   const {
     attributes,
     listeners,
@@ -63,13 +63,21 @@ function SortablePill({ id, text, solved, index }) {
     transition,
   };
 
-  const classes = [
-    "wog-pill font-deva",
-    solved ? "wog-pill--solved" : "wog-pill--rest",
-    isDragging ? "wog-pill--ghost" : "",
-  ]
+  // State priority: solved (whole verse done) > correct (this slot matches
+  // its target word but the verse isn't fully assembled yet) > rest.
+  const stateClass = solved
+    ? "wog-pill--solved"
+    : correct
+      ? "wog-pill--correct"
+      : "wog-pill--rest";
+
+  const classes = ["wog-pill font-deva", stateClass, isDragging ? "wog-pill--ghost" : ""]
     .filter(Boolean)
     .join(" ");
+
+  const label = correct
+    ? `${text}. Correct position ${index + 1}. Drag to move.`
+    : `Word ${text}. Position ${index + 1}. Drag to reorder.`;
 
   return (
     <button
@@ -78,7 +86,8 @@ function SortablePill({ id, text, solved, index }) {
       {...attributes}
       {...listeners}
       type="button"
-      aria-label={`Word ${text}. Position ${index + 1}. Drag to reorder.`}
+      aria-label={label}
+      aria-pressed={correct || solved || undefined}
       className={classes}
     >
       {text}
@@ -251,6 +260,7 @@ const WordOrderGame = ({ fullText }) => {
                   id={item.id}
                   text={item.text}
                   solved={solved}
+                  correct={item.text === words[pos]}
                   index={pos}
                 />
               ))}
@@ -262,41 +272,51 @@ const WordOrderGame = ({ fullText }) => {
         </DndContext>
       </div>
 
-      {/* Hint or celebration */}
+      {/* Hint or full-solve ceremony */}
       {!solved ? (
         <div className="wog-hint mt-3">
           <span className="wog-hint__ornament">⋅⋅⋅</span>
           <span className="shrink-0">
-            Drag a word, drop it where it belongs. Others slide aside.
+            Drag a word, drop it where it belongs. A ✓ appears when it's home.
           </span>
           <span className="wog-hint__rule" />
         </div>
       ) : (
-        <div className="wog-celebrate mt-3 flex items-center gap-3">
-          <PartyPopper size={22} className="text-amber-700 shrink-0 anim-pop relative z-10" />
-          <div className="flex-1 min-w-0 relative z-10">
-            <div className="text-sm font-bold text-green-900 flex items-center gap-2">
-              Shabaash!
-              <span className="text-[10px] bg-white/70 text-green-800 px-2 py-0.5 rounded-full border border-green-200/70">
-                {moves === 0 ? "Flawless" : `${moves} move${moves === 1 ? "" : "s"}`}
-              </span>
-            </div>
-            <div className="text-[11px] text-[#3A2C16]/70">
-              The verse is in order. Each word found its place.
-            </div>
+        <div className="wog-victory mt-3 text-center" role="status" aria-live="polite">
+          {/* Corner ornaments */}
+          <span aria-hidden className="wog-orn wog-orn--tl">❦</span>
+          <span aria-hidden className="wog-orn wog-orn--tr">❦</span>
+          <span aria-hidden className="wog-orn wog-orn--bl">❦</span>
+          <span aria-hidden className="wog-orn wog-orn--br">❦</span>
+
+          {/* Floating petals */}
+          <span aria-hidden className="wog-petal wog-petal--1">✦</span>
+          <span aria-hidden className="wog-petal wog-petal--2">✧</span>
+          <span aria-hidden className="wog-petal wog-petal--3">❋</span>
+          <span aria-hidden className="wog-petal wog-petal--4">✦</span>
+          <span aria-hidden className="wog-petal wog-petal--5">✧</span>
+
+          {/* Sanskrit seal */}
+          <div className="wog-seal">
+            <span aria-hidden className="wog-seal__danda">॥</span>
+            <span className="wog-seal__word">साधु</span>
+            <span aria-hidden className="wog-seal__danda">॥</span>
           </div>
+
+          <div className="wog-victory__caption">— Well Recited —</div>
+          <div className="wog-victory__meta">
+            {moves === 0
+              ? "Flawless · first try"
+              : `Assembled in ${moves} move${moves === 1 ? "" : "s"}`}
+          </div>
+
           <button
             type="button"
             onClick={reshuffle}
-            className="relative z-10 text-xs bg-brown text-white font-semibold rounded-full px-3 py-1.5 hover:opacity-90 transition flex items-center gap-1 shrink-0"
-            style={{ backgroundColor: "#A67C52" }}
+            className="wog-victory__cta"
           >
-            Play again <RotateCcw size={12} />
+            <RotateCcw size={12} /> Recite again
           </button>
-          <span aria-hidden className="confetti confetti-1">✦</span>
-          <span aria-hidden className="confetti confetti-2">✧</span>
-          <span aria-hidden className="confetti confetti-3">❋</span>
-          <span aria-hidden className="confetti confetti-4">✺</span>
         </div>
       )}
     </div>
