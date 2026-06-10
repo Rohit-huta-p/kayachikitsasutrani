@@ -852,17 +852,20 @@ body {
   78%  { transform: scale(1.04) rotate(1deg); }
   100% { transform: scale(1)   rotate(0deg);   opacity: 1; }
 }
-.wog-seal__danda {
+.wog-seal__flank {
   color: #A67C52;
-  font-size: 26px;
-  font-family: var(--font-deva), serif;
+  font-size: 22px;
+  font-family: Georgia, "Times New Roman", serif;
   line-height: 1;
+  opacity: 0.85;
 }
 .wog-seal__word {
-  font-family: var(--font-deva), serif;
-  font-size: 34px;
-  font-weight: 400;
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: 30px;
+  font-weight: 600;
   color: #5C3D1A;
+  letter-spacing: 0.01em;
   line-height: 1;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
 }

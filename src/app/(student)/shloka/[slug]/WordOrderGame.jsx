@@ -401,12 +401,12 @@ const WordOrderGame = ({ fullText }) => {
           <span aria-hidden className="wog-petal wog-petal--5">✧</span>
 
           <div className="wog-seal">
-            <span aria-hidden className="wog-seal__danda">॥</span>
-            <span className="wog-seal__word">साधु</span>
-            <span aria-hidden className="wog-seal__danda">॥</span>
+            <span aria-hidden className="wog-seal__flank">❦</span>
+            <span className="wog-seal__word">Well Done</span>
+            <span aria-hidden className="wog-seal__flank">❦</span>
           </div>
 
-          <div className="wog-victory__caption">— Well Recited —</div>
+          <div className="wog-victory__caption">— Verse Complete —</div>
           <div className="wog-victory__meta">
             {moves === 0
               ? "Flawless · first try"
