@@ -89,14 +89,8 @@ const AccessRequestsPage = () => {
     }
   };
 
-  const dismissAccepted = (id: string) => {
-    setAccepted((a) => {
-      const { [id]: _drop, ...rest } = a;
-      void _drop;
-      return rest;
-    });
-    setItems((prev) => (prev ?? []).filter((p) => p.id !== id));
-  };
+  // (Approved cards stay in the list; the credential panel remains
+  // visible until the page is refreshed. No client-side dismiss.)
 
   return (
     <div className="min-h-screen bg-cream">
@@ -206,10 +200,7 @@ const AccessRequestsPage = () => {
                     </button>
                   </div>
                 ) : (
-                  <ApprovedPanel
-                    ack={ack}
-                    onDismiss={() => dismissAccepted(req.id)}
-                  />
+                  <ApprovedPanel ack={ack} />
                 )}
               </article>
             );
@@ -242,13 +233,7 @@ function DetailRow({
   );
 }
 
-function ApprovedPanel({
-  ack,
-  onDismiss,
-}: {
-  ack: AcceptedAccessRequest;
-  onDismiss: () => void;
-}) {
+function ApprovedPanel({ ack }: { ack: AcceptedAccessRequest }) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -302,17 +287,10 @@ function ApprovedPanel({
 
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <p className="text-[10px] text-gray-500 italic">
-          This password is shown once. Copy it now or send the email below — you
-          won&apos;t be able to retrieve it again.
+          Copy the password or send the email now. The password is only visible
+          on this page until you refresh.
         </p>
         <div className="flex items-center gap-2 ml-auto">
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="text-[11px] text-brown bg-white border border-[#E5DDD0] rounded-full px-3 py-1.5 hover:bg-accent-soft transition"
-          >
-            Done
-          </button>
           <a
             href={ack.mailto}
             onClick={(e) => {
