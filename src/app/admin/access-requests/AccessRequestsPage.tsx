@@ -315,6 +315,17 @@ function ApprovedPanel({
           </button>
           <a
             href={ack.mailto}
+            onClick={(e) => {
+              // Belt-and-suspenders: some SPA + popup-blocker combos
+              // swallow the navigation when the user clicks a mailto:
+              // anchor inside a React event boundary. Force the handler
+              // via window.location so the default mail client always
+              // opens.
+              e.preventDefault();
+              window.location.href = ack.mailto;
+            }}
+            target="_self"
+            rel="noopener"
             className="text-[11px] font-semibold text-white bg-accent rounded-full px-3 py-1.5 hover:opacity-90 transition flex items-center gap-1.5"
           >
             <Mail size={12} /> Send email
