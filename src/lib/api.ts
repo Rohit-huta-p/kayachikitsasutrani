@@ -1,6 +1,7 @@
 import type {
   PublicUser,
   SignupBody,
+  RequestSignupBody,
   LoginBody,
   ApiError,
   PublicShloka,
@@ -81,6 +82,11 @@ async function uploadFile<T>(path: string, file: File): Promise<T> {
 export const api = {
   signup: (body: SignupBody) =>
     request<{ user: PublicUser }>('/api/auth/signup', { method: 'POST', body: JSON.stringify(body) }),
+  requestSignup: (body: RequestSignupBody) =>
+    request<{ ok: true; message: string }>('/api/auth/request-signup', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
   login: (body: LoginBody) =>
     request<{ user: PublicUser }>('/api/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   logout: () => request<{ ok: true }>('/api/auth/logout', { method: 'POST' }),

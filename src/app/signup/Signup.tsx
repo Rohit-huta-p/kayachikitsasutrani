@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { api } from "@/lib/api";
 
 const COURSE_OPTIONS = ["3rd Prof BAMS"] as const;
 
@@ -13,20 +14,20 @@ type FormData = {
   collegeName: string;
   course: string;
   email: string;
-  password: string;
-  confirmPassword: string;
 };
 
 const Signup = () => {
-  const { state, signup } = useAuth();
+  const { state } = useAuth();
   const router = useRouter();
   useEffect(() => {
     if (state.status === "authed") {
       router.replace(state.user.role === "admin" ? "/admin/shlokas" : "/dashboard");
     }
   }, [state, router]);
+
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
     age: "",
@@ -34,11 +35,11 @@ const Signup = () => {
     collegeName: "",
     course: COURSE_OPTIONS[0],
     email: "",
-    password: "",
-    confirmPassword: "",
   });
 
-  const update = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const update = (field: keyof FormData) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
@@ -47,8 +48,6 @@ const Signup = () => {
     setError(null);
     if (!formData.fullName.trim()) return setError("Please enter your name.");
     if (!formData.email.trim()) return setError("Please enter your email.");
-    if (formData.password.length < 8) return setError("Password must be at least 8 characters.");
-    if (formData.password !== formData.confirmPassword) return setError("Passwords don't match.");
 
     const genderMap: Record<string, "male" | "female" | "other" | undefined> = {
       male: "male",
@@ -58,34 +57,89 @@ const Signup = () => {
 
     setSubmitting(true);
     try {
-      await signup({
+      await api.requestSignup({
         email: formData.email.trim(),
-        password: formData.password,
         name: formData.fullName.trim(),
         age: formData.age ? Number(formData.age) : undefined,
         gender: genderMap[formData.gender],
         collegeName: formData.collegeName.trim() || undefined,
         course: formData.course.trim() || undefined,
       });
-      router.push("/dashboard");
+      setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign up failed");
+      setError(err instanceof Error ? err.message : "Request failed");
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-cream flex flex-col">
+        <header className="bg-brown text-white px-4 py-3 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.replace("/login")}
+            className="touch-target -ml-2"
+            aria-label="Back to login"
+          >
+            <span className="text-xl" aria-hidden="true">←</span>
+          </button>
+          <div className="flex-1 text-center font-bold text-base">Request received</div>
+          <div className="w-6" />
+        </header>
+
+        <main className="flex-1 px-6 py-10 flex flex-col items-center text-center max-w-md mx-auto w-full">
+          <div
+            aria-hidden
+            className="w-16 h-16 rounded-full bg-accent-soft border border-[#E5DDD0] flex items-center justify-center mb-4"
+          >
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A67C52" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 6 12 13 2 6" />
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-bold text-brown">Request submitted</h2>
+          <p className="text-sm text-brown/80 mt-2 leading-relaxed">
+            Your request to join <span className="font-semibold">Chikitsa Sutra</span> has
+            been sent to the administrator. Once it&apos;s reviewed, you&apos;ll receive your login
+            credentials by email at <span className="font-semibold">{formData.email}</span>.
+          </p>
+          <p className="text-xs text-gray-500 mt-4">
+            Please allow a day or two for the administrator to respond.
+          </p>
+          <Link
+            href="/login"
+            className="mt-6 bg-accent text-white rounded-full py-3 px-6 font-bold text-sm shadow-sm hover:opacity-90 transition"
+          >
+            Back to sign in
+          </Link>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-cream flex flex-col">
       <header className="bg-brown text-white px-4 py-3 flex items-center gap-3">
-        <button type="button" onClick={() => router.back()} className="touch-target -ml-2" aria-label="Go back">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="touch-target -ml-2"
+          aria-label="Go back"
+        >
           <span className="text-xl" aria-hidden="true">←</span>
         </button>
-        <div className="flex-1 text-center font-bold text-base">Create account</div>
+        <div className="flex-1 text-center font-bold text-base">Request access</div>
         <div className="w-6" />
       </header>
 
       <form onSubmit={handleSubmit} className="flex-1 px-6 py-6 flex flex-col gap-3 max-w-md mx-auto w-full">
+        <p className="text-xs text-brown/80 -mt-2 mb-1 leading-relaxed">
+          Submit your details below. The administrator will review your request and email
+          you a login password.
+        </p>
+
         <Field id="fullName" label="Full Name" type="text" placeholder="Your name" value={formData.fullName} onChange={update("fullName")} required autoComplete="name" />
         <Field id="age" label="Age" type="number" placeholder="Your age" value={formData.age} onChange={update("age")} />
 
@@ -123,8 +177,6 @@ const Signup = () => {
         </div>
 
         <Field id="email" label="Email" type="email" placeholder="your@email.com" value={formData.email} onChange={update("email")} required autoComplete="email" />
-        <Field id="password" label="Password" type="password" placeholder="At least 8 characters" value={formData.password} onChange={update("password")} required autoComplete="new-password" />
-        <Field id="confirmPassword" label="Confirm Password" type="password" placeholder="Repeat your password" value={formData.confirmPassword} onChange={update("confirmPassword")} required autoComplete="new-password" />
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -133,7 +185,7 @@ const Signup = () => {
           disabled={submitting}
           className="bg-accent text-white rounded-full py-3 px-6 font-bold text-sm mt-2 shadow-sm hover:opacity-90 transition disabled:opacity-50"
         >
-          {submitting ? "Creating account…" : "Create account"}
+          {submitting ? "Sending request…" : "Request"}
         </button>
 
         <div className="text-center text-xs text-gray-500 mt-2">

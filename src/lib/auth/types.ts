@@ -20,6 +20,16 @@ export interface SignupBody {
   course?: string;
 }
 
+/** Access-request body — like SignupBody but with no password field. */
+export interface RequestSignupBody {
+  email: string;
+  name: string;
+  age?: number;
+  gender?: 'male' | 'female' | 'other';
+  collegeName?: string;
+  course?: string;
+}
+
 export interface LoginBody {
   email: string;
   password: string;
