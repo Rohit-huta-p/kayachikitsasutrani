@@ -16,6 +16,7 @@ export interface ShlokaInfoValues {
   reference: string;
   images: ShlokaAssetInput[];
   audioFull?: ShlokaAssetInput;
+  meaningAudio?: ShlokaAssetInput;
 }
 
 interface Props extends ShlokaInfoValues {
@@ -30,6 +31,7 @@ interface Props extends ShlokaInfoValues {
   onReference: (v: string) => void;
   onImages: (next: ShlokaAssetInput[]) => void;
   onAudioFull: (a: ShlokaAssetInput | undefined) => void;
+  onMeaningAudio: (a: ShlokaAssetInput | undefined) => void;
 }
 
 function isComplete(v: ShlokaInfoValues): boolean {
@@ -120,6 +122,10 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
           <div className="text-gray-500">Full audio</div>
           <div className="col-span-2 text-xs">
             {props.audioFull ? "uploaded" : <span className="text-amber-700">not uploaded yet</span>}
+          </div>
+          <div className="text-gray-500">Meaning audio</div>
+          <div className="col-span-2 text-xs">
+            {props.meaningAudio ? "uploaded" : <span className="text-gray-400">none (optional)</span>}
           </div>
         </div>
       ) : (
@@ -228,6 +234,11 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
           </div>
           <ImagesGalleryField values={props.images} onChange={props.onImages} />
           <AudioUploadField label="Full audio" value={props.audioFull} onChange={props.onAudioFull} />
+          <AudioUploadField
+            label="Meaning audio (optional — plain play/pause on the student page)"
+            value={props.meaningAudio}
+            onChange={props.onMeaningAudio}
+          />
         </div>
       )}
     </div>

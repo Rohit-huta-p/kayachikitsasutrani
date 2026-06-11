@@ -97,6 +97,7 @@ export interface PublicShloka {
     full: ShlokaAsset;
     lines: ShlokaAsset[];
   };
+  meaningAudio?: ShlokaAsset;
   image?: ShlokaAsset;
   images: ShlokaAsset[];
   lines: ShlokaLine[];
@@ -123,6 +124,8 @@ export interface ShlokaInput {
     full: ShlokaAssetInput;
     lines: ShlokaAssetInput[];
   };
+  /** null clears the meaning audio on PATCH; omit to leave unchanged. */
+  meaningAudio?: ShlokaAssetInput | null;
   image?: ShlokaAssetInput;
   images?: ShlokaAssetInput[];
   lines: ShlokaLine[];

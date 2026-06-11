@@ -45,6 +45,11 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       ? { url: initial.audio.full.url, publicId: initial.audio.full.publicId ?? "" }
       : undefined,
   );
+  const [meaningAudio, setMeaningAudio] = useState<ShlokaAssetInput | undefined>(
+    initial?.meaningAudio
+      ? { url: initial.meaningAudio.url, publicId: initial.meaningAudio.publicId ?? "" }
+      : undefined,
+  );
 
   const [modelLines, setModelLines] = useState<ModelLine[]>(
     initial
@@ -74,6 +79,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       reference: initial?.reference ?? "",
       images: initial?.images ?? [],
       audioFull: initial?.audio.full,
+      meaningAudio: initial?.meaningAudio,
       lines: initial?.lines,
     }),
   );
@@ -87,6 +93,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     reference,
     images,
     audioFull,
+    meaningAudio,
     modelLines,
   });
   const dirty = currentSnapshot !== initialSnapshot.current;
@@ -101,6 +108,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       caseStudy,
       images,
       audioFull,
+      meaningAudio,
       modelLines,
     });
   };
@@ -160,6 +168,8 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
         full: audioFull ?? { url: "", publicId: "" },
         lines: [],
       },
+      // null explicitly clears a previously-uploaded meaning audio on PATCH.
+      meaningAudio: meaningAudio ?? null,
       images,
       lines: modelLines,
     };
@@ -219,6 +229,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
             reference={reference}
             images={images}
             audioFull={audioFull}
+            meaningAudio={meaningAudio}
             slugDisabled={isEdit}
             onSlug={setSlug}
             onTitle={setTitle}
@@ -229,6 +240,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
             onReference={setReference}
             onImages={setImages}
             onAudioFull={setAudioFull}
+            onMeaningAudio={setMeaningAudio}
           />
           <div className="soft-card p-5 space-y-3">
             <div className="text-sm font-semibold text-brown">Audio + line buckets</div>

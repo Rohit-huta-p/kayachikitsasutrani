@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   Heart,
@@ -408,6 +408,7 @@ const ShlokaDesc = ({ shloka }) => {
             <div className="text-sm font-bold text-brown mb-1.5 flex items-center gap-1.5">
               <BookOpen size={14} />
               Meaning
+              <MeaningAudioButton src={shloka.meaningAudio?.url} />
             </div>
             <p className="text-xs text-black leading-relaxed whitespace-pre-wrap">{shloka.meaning}</p>
           </div>
@@ -653,7 +654,10 @@ const ShlokaDesc = ({ shloka }) => {
           {/* Left Side */}
           <div className="col-span-2 space-y-5">
             <div className="bg-indigo-50 p-4 rounded-lg">
-              <h2 className="text-xl text-brown mb-2">Meaning</h2>
+              <h2 className="text-xl text-brown mb-2 flex items-center gap-2">
+                Meaning
+                <MeaningAudioButton src={shloka.meaningAudio?.url} />
+              </h2>
               <p className="text-sm whitespace-pre-wrap text-black">{shloka.meaning}</p>
             </div>
             {shloka.caseStudy && (
@@ -721,6 +725,55 @@ const ShlokaDesc = ({ shloka }) => {
         />
       </div>
     </>
+  );
+};
+
+/**
+ * Minimal play/pause button for the admin-uploaded "meaning" narration.
+ * No word highlighting, no seek, no speed — one toggle. Renders nothing
+ * when the shloka has no meaning audio.
+ */
+const MeaningAudioButton = ({ src }) => {
+  const audioRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+
+  // Stop and release the element when the source changes or on unmount.
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [src]);
+
+  if (!src) return null;
+
+  const toggle = () => {
+    if (!audioRef.current) {
+      const a = new Audio(src);
+      a.addEventListener("ended", () => setPlaying(false));
+      audioRef.current = a;
+    }
+    const a = audioRef.current;
+    if (a.paused) {
+      a.play();
+      setPlaying(true);
+    } else {
+      a.pause();
+      setPlaying(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={playing ? "Pause meaning audio" : "Play meaning audio"}
+      className="ml-auto inline-flex items-center justify-center w-7 h-7 rounded-full bg-accent text-white hover:opacity-90 transition shrink-0"
+    >
+      {playing ? <Pause size={13} /> : <Play size={13} className="ml-0.5" />}
+    </button>
   );
 };
 
