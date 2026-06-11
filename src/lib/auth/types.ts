@@ -7,7 +7,30 @@ export interface PublicUser {
   gender?: 'male' | 'female' | 'other';
   collegeName?: string;
   course?: string;
+  status?: 'pending' | 'active';
   createdAt: string;
+}
+
+export interface AccessRequest {
+  id: string;
+  name: string;
+  email: string;
+  age?: number;
+  gender?: 'male' | 'female' | 'other';
+  collegeName?: string;
+  course?: string;
+  createdAt: string;
+}
+
+export interface AcceptedAccessRequest {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  mailtoSubject: string;
+  mailtoBody: string;
+  mailto: string;
+  loginUrl: string;
 }
 
 export interface SignupBody {

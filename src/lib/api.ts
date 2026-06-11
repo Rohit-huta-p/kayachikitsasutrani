@@ -9,6 +9,8 @@ import type {
   CompleteResponse,
   LeaderboardResponse,
   MyCompletionsResponse,
+  AccessRequest,
+  AcceptedAccessRequest,
 } from './auth/types';
 
 // Empty base — relative `/api/*` paths are proxied to the backend by
@@ -135,6 +137,18 @@ export const api = {
         request<{ items: PublicUser[]; nextCursor?: string }>(`/api/admin/students${qs(params)}`),
       get: (id: string) =>
         request<{ user: PublicUser }>(`/api/admin/students/${id}`),
+    },
+    accessRequests: {
+      list: () =>
+        request<{ items: AccessRequest[] }>(`/api/admin/access-requests`),
+      accept: (id: string) =>
+        request<AcceptedAccessRequest>(`/api/admin/access-requests/${id}/accept`, {
+          method: 'POST',
+        }),
+      reject: (id: string) =>
+        request<{ ok: true }>(`/api/admin/access-requests/${id}/reject`, {
+          method: 'POST',
+        }),
     },
   },
 };

@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Shield, ChevronDown, LogIn, User } from "lucide-react";
+import { LogOut, Shield, ChevronDown, LogIn, User, UserPlus } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import AvatarCircle from "@/components/student/AvatarCircle";
 
@@ -89,14 +89,24 @@ const Navbar: React.FC = () => {
                   </Link>
 
                   {state.user.role === "admin" && (
-                    <Link
-                      href="/admin/shlokas"
-                      role="menuitem"
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-brown hover:bg-accent-soft transition"
-                    >
-                      <Shield size={14} className="shrink-0" />
-                      Admin
-                    </Link>
+                    <>
+                      <Link
+                        href="/admin/shlokas"
+                        role="menuitem"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-brown hover:bg-accent-soft transition"
+                      >
+                        <Shield size={14} className="shrink-0" />
+                        Admin
+                      </Link>
+                      <Link
+                        href="/admin/access-requests"
+                        role="menuitem"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-brown hover:bg-accent-soft transition"
+                      >
+                        <UserPlus size={14} className="shrink-0" />
+                        Access requests
+                      </Link>
+                    </>
                   )}
 
                   <button
