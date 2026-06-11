@@ -293,9 +293,19 @@ function ApprovedPanel({ ack }: { ack: AcceptedAccessRequest }) {
         <div className="flex items-center gap-2 ml-auto">
           <a
             href={ack.mailto}
-            className="text-[11px] font-semibold text-white bg-accent rounded-full px-3 py-1.5 hover:opacity-90 transition flex items-center gap-1.5"
+            className="text-[11px] font-semibold text-brown bg-white border border-[#E5DDD0] rounded-full px-3 py-1.5 hover:bg-accent-soft transition flex items-center gap-1.5"
+            title="Open in your default mail app"
           >
-            <Mail size={12} /> Send email
+            <Mail size={12} /> Mail app
+          </a>
+          <a
+            href={ack.gmailUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-semibold text-white bg-accent rounded-full px-3 py-1.5 hover:opacity-90 transition flex items-center gap-1.5"
+            title="Open Gmail compose in a new tab"
+          >
+            <Mail size={12} /> Open in Gmail
           </a>
         </div>
       </div>

@@ -30,6 +30,7 @@ export interface AcceptedAccessRequest {
   mailtoSubject: string;
   mailtoBody: string;
   mailto: string;
+  gmailUrl: string;
   loginUrl: string;
 }
 
