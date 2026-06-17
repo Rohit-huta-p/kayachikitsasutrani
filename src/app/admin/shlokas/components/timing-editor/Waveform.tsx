@@ -137,19 +137,16 @@ const Waveform: React.FC<Props> = ({
       if (ourId) onRegionUpdateRef.current(ourId, region.start, region.end);
     });
     rp.on("region-clicked", (region: WsRegion, e: MouseEvent) => {
-      // Allow click-to-seek even when clicking inside a region. Compute the
-      // seek time from the click position relative to the waveform container.
-      // Note: don't stopPropagation — let parent state handle selection too.
-      const wrapper = containerRef.current;
-      if (wrapper) {
-        const rect = wrapper.getBoundingClientRect();
-        const scrollLeft = wrapper.scrollLeft;
-        const x = e.clientX - rect.left + scrollLeft;
+      // Seek to the click position using WaveSurfer's own wrapper element
+      // (not our container div which has padding that skews the ratio).
+      const wsWrapper = ws.getWrapper();
+      if (wsWrapper) {
+        const rect = wsWrapper.getBoundingClientRect();
+        const x = e.clientX - rect.left;
         const dur = ws.getDuration?.() || 0;
         if (dur > 0) {
-          const totalWidth = wrapper.scrollWidth || rect.width;
-          const ratio = Math.max(0, Math.min(1, x / totalWidth));
-          ws.setTime(ratio * dur);
+          const ratio = Math.max(0, Math.min(1, x / rect.width));
+          ws.seekTo(ratio);
         }
       }
       const ourId = wsIdToOurId.current.get(region.id);

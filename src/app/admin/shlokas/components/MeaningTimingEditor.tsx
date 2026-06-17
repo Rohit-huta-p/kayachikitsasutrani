@@ -27,7 +27,7 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
   const markRef = useRef<(() => void) | undefined>(undefined);
   const [selectedIdx, setSelectedIdx] = useState(-1);
 
-  const words = useMemo(() => meaningText.split(/\s+/).filter(Boolean), [meaningText]);
+  const lines = useMemo(() => meaningText.split(/\n/).filter(s => s.trim()), [meaningText]);
 
   // ── Audio element for tap-to-mark mode ─────────────────────────────
   useEffect(() => {
@@ -41,17 +41,17 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
   }, [audioUrl, mode]);
 
   // ── Tap-to-mark ────────────────────────────────────────────────────
-  const markWord = useCallback(() => {
+  const markLine = useCallback(() => {
     if (mode !== "timing" || !audioRef.current) return;
     const t = audioRef.current.currentTime;
     setMarks((prev) => {
       const next = [...prev, t];
       const nextIdx = wordIdx + 1;
-      if (nextIdx >= words.length) {
-        const result = words.map((w, i) => ({
-          text: w,
+      if (nextIdx >= lines.length) {
+        const result = lines.map((l, i) => ({
+          text: l.trim(),
           start: next[i],
-          end: i < words.length - 1 ? next[i + 1] : audioRef.current!.duration || t + 0.5,
+          end: i < lines.length - 1 ? next[i + 1] : audioRef.current!.duration || t + 0.5,
         }));
         onChange(result);
         setMode("done");
@@ -60,9 +60,9 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
       setWordIdx(nextIdx);
       return next;
     });
-  }, [mode, wordIdx, words, onChange]);
+  }, [mode, wordIdx, lines, onChange]);
 
-  markRef.current = markWord;
+  markRef.current = markLine;
 
   useEffect(() => {
     if (mode !== "timing") return;
@@ -77,6 +77,8 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [mode]);
+
+  const lineIdx = wordIdx;
 
   const startTiming = () => {
     const a = audioRef.current;
@@ -140,7 +142,7 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
 
   // ── Render ─────────────────────────────────────────────────────────
   if (!audioUrl) {
-    return <div className="text-xs text-gray-400 italic">Upload meaning audio to enable word timing.</div>;
+    return <div className="text-xs text-gray-400 italic">Upload meaning audio to enable line timing.</div>;
   }
 
   const fmt = (s: number) => {
@@ -153,9 +155,9 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="text-xs font-semibold text-gray-600">
-          Meaning word timing
+          Meaning line timing
           {mode === "done" && (
-            <span className="ml-1.5 text-green-700 font-normal">({timings.length} words timed)</span>
+            <span className="ml-1.5 text-green-700 font-normal">({timings.length} lines timed)</span>
           )}
         </div>
         {mode === "timing" && (
@@ -176,13 +178,13 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
         />
       )}
 
-      {/* ── Word pills ────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-1 p-2 bg-gray-50 rounded border border-gray-200 max-h-48 overflow-y-auto">
-        {words.map((w, i) => {
-          let cls = "px-1.5 py-0.5 rounded text-xs transition-colors cursor-default ";
+      {/* ── Line pills ────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-1 p-2 bg-gray-50 rounded border border-gray-200 max-h-48 overflow-y-auto">
+        {lines.map((l, i) => {
+          let cls = "px-2 py-1 rounded text-xs transition-colors cursor-default truncate ";
           if (mode === "timing") {
-            if (i < wordIdx) cls += "bg-green-100 text-green-800";
-            else if (i === wordIdx) cls += "bg-amber-200 text-amber-900 font-semibold ring-1 ring-amber-400";
+            if (i < lineIdx) cls += "bg-green-100 text-green-800";
+            else if (i === lineIdx) cls += "bg-amber-200 text-amber-900 font-semibold ring-1 ring-amber-400";
             else cls += "bg-white text-gray-400 border border-gray-200";
           } else if (mode === "done") {
             cls += i === selectedIdx
@@ -193,7 +195,7 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
           }
           return (
             <span key={i} className={cls} onClick={() => mode === "done" && setSelectedIdx(i === selectedIdx ? -1 : i)}>
-              {w}
+              <span className="text-gray-400 mr-1.5">{i + 1}.</span>{l.trim()}
             </span>
           );
         })}
@@ -208,10 +210,10 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
         )}
         {mode === "timing" && (
           <>
-            <button type="button" onClick={markWord} className="text-xs px-3 py-1.5 rounded bg-amber-500 text-white hover:opacity-90">
+            <button type="button" onClick={markLine} className="text-xs px-3 py-1.5 rounded bg-amber-500 text-white hover:opacity-90">
               Tap / Space
             </button>
-            <span className="text-[10px] text-gray-500">{wordIdx}/{words.length}</span>
+            <span className="text-[10px] text-gray-500">{lineIdx}/{lines.length}</span>
             <button type="button" onClick={undoLast} disabled={marks.length === 0} className="text-xs px-2 py-1 rounded border text-gray-600 hover:bg-gray-100 disabled:opacity-30">
               Undo
             </button>
@@ -234,12 +236,12 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
 
       {mode === "timing" && (
         <div className="text-[10px] text-gray-400">
-          Audio is playing. Tap the button or press Space each time the next word is spoken.
+          Audio is playing. Tap the button or press Space each time the next line starts being spoken.
         </div>
       )}
       {mode === "done" && (
         <div className="text-[10px] text-gray-400">
-          Drag region edges on the waveform to adjust word boundaries. Click a word or region to highlight it.
+          Drag region edges on the waveform to adjust line boundaries. Click a line or region to highlight it.
         </div>
       )}
     </div>

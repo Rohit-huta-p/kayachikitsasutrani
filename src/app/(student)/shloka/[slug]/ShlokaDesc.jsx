@@ -791,19 +791,24 @@ const MeaningSection = ({ src, timings, meaningText, mobile }) => {
     else { a.pause(); setPlaying(false); }
   };
 
-  // Split meaning text into word positions for index-based highlighting
-  const wordPositions = React.useMemo(() => {
+  // Split meaning text into lines for index-based highlighting
+  const meaningLines = React.useMemo(() => {
     if (!timings?.length) return null;
-    const positions = [];
-    const regex = /\S+/g;
-    let m;
-    while ((m = regex.exec(meaningText)) !== null) {
-      positions.push({ word: m[0], start: m.index, end: m.index + m[0].length });
+    const result = [];
+    let idx = 0;
+    const rawLines = meaningText.split("\n");
+    for (let i = 0; i < rawLines.length; i++) {
+      if (rawLines[i].trim()) {
+        result.push({ text: rawLines[i], lineIdx: idx, rawIdx: i });
+        idx++;
+      } else {
+        result.push({ text: rawLines[i], lineIdx: -1, rawIdx: i });
+      }
     }
-    return positions;
+    return result;
   }, [meaningText, timings]);
 
-  const hasTimings = timings?.length > 0 && wordPositions?.length > 0;
+  const hasTimings = timings?.length > 0 && meaningLines?.length > 0;
 
   const renderText = () => {
     if (!hasTimings) {
@@ -813,36 +818,25 @@ const MeaningSection = ({ src, timings, meaningText, mobile }) => {
         </p>
       );
     }
-    // Render word-by-word, preserving original whitespace
-    const parts = [];
-    let lastEnd = 0;
-    wordPositions.forEach((wp, i) => {
-      if (wp.start > lastEnd) {
-        parts.push(
-          <span key={`ws-${i}`}>{meaningText.slice(lastEnd, wp.start)}</span>
-        );
-      }
-      const isActive = i === activeIdx;
-      parts.push(
-        <span
-          key={`w-${i}`}
-          className={isActive
-            ? "bg-[#F5E6D0] text-[#6B4226] font-semibold rounded-sm px-0.5 transition-colors duration-150"
-            : "transition-colors duration-150"
-          }
-        >
-          {wp.word}
-        </span>
-      );
-      lastEnd = wp.end;
-    });
-    if (lastEnd < meaningText.length) {
-      parts.push(<span key="ws-tail">{meaningText.slice(lastEnd)}</span>);
-    }
     return (
-      <p className={`${mobile ? "text-xs text-black leading-relaxed" : "text-sm text-black"} whitespace-pre-wrap`}>
-        {parts}
-      </p>
+      <div className={`${mobile ? "text-xs text-black leading-relaxed" : "text-sm text-black"} whitespace-pre-wrap`}>
+        {meaningLines.map((line, i) => {
+          const isActive = line.lineIdx >= 0 && line.lineIdx === activeIdx;
+          return (
+            <React.Fragment key={i}>
+              {i > 0 && "\n"}
+              <span
+                className={isActive
+                  ? "bg-[#F5E6D0] text-[#6B4226] font-semibold rounded-sm transition-colors duration-150"
+                  : "transition-colors duration-150"
+                }
+              >
+                {line.text}
+              </span>
+            </React.Fragment>
+          );
+        })}
+      </div>
     );
   };
 

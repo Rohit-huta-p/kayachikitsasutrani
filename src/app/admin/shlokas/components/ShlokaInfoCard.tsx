@@ -130,10 +130,10 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
           <div className="col-span-2 text-xs">
             {props.meaningAudio ? "uploaded" : <span className="text-gray-400">none (optional)</span>}
           </div>
-          <div className="text-gray-500">Word timing</div>
+          <div className="text-gray-500">Line timing</div>
           <div className="col-span-2 text-xs">
             {props.meaningTimings.length > 0
-              ? <span className="text-green-700">{props.meaningTimings.length} words timed</span>
+              ? <span className="text-green-700">{props.meaningTimings.length} lines timed</span>
               : <span className="text-gray-400">not set</span>}
           </div>
         </div>
