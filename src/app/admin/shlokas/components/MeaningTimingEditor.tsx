@@ -130,7 +130,7 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
   // ── Adjust helpers ─────────────────────────────────────────────────
   const nudge = (field: "start" | "end", delta: number) => {
     if (selectedIdx < 0 || selectedIdx >= timings.length) return;
-    const updated = timings.map((t, i) => ({ ...t }));
+    const updated = timings.map((t) => ({ ...t }));
     const w = updated[selectedIdx];
 
     if (field === "start") {
