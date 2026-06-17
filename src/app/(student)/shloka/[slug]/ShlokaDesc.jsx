@@ -795,15 +795,14 @@ const MeaningSection = ({ src, timings, meaningText, mobile }) => {
   const segmentPositions = React.useMemo(() => {
     if (!timings?.length) return null;
     const positions = [];
-    let searchFrom = 0;
     for (let i = 0; i < timings.length; i++) {
-      const pos = meaningText.indexOf(timings[i].text, searchFrom);
+      const pos = meaningText.indexOf(timings[i].text);
       if (pos >= 0) {
         positions.push({ start: pos, end: pos + timings[i].text.length, idx: i });
-        searchFrom = pos + timings[i].text.length;
       }
     }
-    return positions.length === timings.length ? positions : null;
+    positions.sort((a, b) => a.start - b.start);
+    return positions.length > 0 ? positions : null;
   }, [meaningText, timings]);
 
   const hasTimings = timings?.length > 0 && segmentPositions?.length > 0;

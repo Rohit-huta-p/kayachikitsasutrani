@@ -135,15 +135,12 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
   const renderedMeaning = useMemo(() => {
     if (segments.length === 0) return null;
     const parts: { text: string; segIdx: number }[] = [];
-    let searchFrom = 0;
 
-    // Find positions of all segments in order
     const positions: { start: number; end: number; idx: number }[] = [];
     for (let i = 0; i < segments.length; i++) {
-      const pos = meaningText.indexOf(segments[i], searchFrom);
+      const pos = meaningText.indexOf(segments[i]);
       if (pos >= 0) {
         positions.push({ start: pos, end: pos + segments[i].length, idx: i });
-        searchFrom = pos + segments[i].length;
       }
     }
     positions.sort((a, b) => a.start - b.start);
