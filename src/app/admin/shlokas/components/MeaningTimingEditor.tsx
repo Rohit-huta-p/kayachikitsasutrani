@@ -15,11 +15,13 @@ interface Props {
   onChange: (timings: WordTiming[]) => void;
 }
 
+const STEP = 0.05;
+
 const fmt = (s: number) => {
   const m = Math.floor(s / 60);
   const sec = Math.floor(s % 60);
-  const ms = Math.floor((s % 1) * 10);
-  return `${m}:${sec.toString().padStart(2, "0")}.${ms}`;
+  const ms = Math.round((s % 1) * 100);
+  return `${m}:${sec.toString().padStart(2, "0")}.${ms.toString().padStart(2, "0")}`;
 };
 
 const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, onChange }) => {
@@ -30,6 +32,9 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const markRef = useRef<(() => void) | undefined>(undefined);
+
+  // ── Adjust mode state ──────────────────────────────────────────────
+  const [selectedIdx, setSelectedIdx] = useState(-1);
 
   const words = useMemo(() => meaningText.split(/\s+/).filter(Boolean), [meaningText]);
 
@@ -49,6 +54,7 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
     };
   }, [audioUrl]);
 
+  // ── Tap-to-mark logic ──────────────────────────────────────────────
   const markWord = useCallback(() => {
     if (mode !== "timing" || !audioRef.current) return;
     const t = audioRef.current.currentTime;
@@ -72,10 +78,9 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
     });
   }, [mode, wordIdx, words, onChange]);
 
-  // Keep markRef in sync for keyboard handler
   markRef.current = markWord;
 
-  // Spacebar / Enter to mark
+  // Spacebar / Enter to mark during timing mode
   useEffect(() => {
     if (mode !== "timing") return;
     const handler = (e: KeyboardEvent) => {
@@ -98,6 +103,7 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
     setMode("timing");
     setWordIdx(0);
     setMarks([]);
+    setSelectedIdx(-1);
   };
 
   const undoLast = () => {
@@ -113,6 +119,7 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
     setWordIdx(0);
     setMarks([]);
     setCurrentTime(0);
+    setSelectedIdx(-1);
   };
 
   const clearTimings = () => {
@@ -120,11 +127,82 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
     resetAll();
   };
 
+  // ── Adjust helpers ─────────────────────────────────────────────────
+  const nudge = (field: "start" | "end", delta: number) => {
+    if (selectedIdx < 0 || selectedIdx >= timings.length) return;
+    const updated = timings.map((t, i) => ({ ...t }));
+    const w = updated[selectedIdx];
+
+    if (field === "start") {
+      const lower = selectedIdx > 0 ? updated[selectedIdx - 1].start + STEP : 0;
+      w.start = Math.max(lower, +(w.start + delta).toFixed(3));
+      if (w.start >= w.end) w.start = w.end - STEP;
+      // Adjust previous word's end to match
+      if (selectedIdx > 0) updated[selectedIdx - 1].end = w.start;
+    } else {
+      const upper = selectedIdx < updated.length - 1 ? updated[selectedIdx + 1].end - STEP : duration || w.end + 10;
+      w.end = Math.min(upper, +(w.end + delta).toFixed(3));
+      if (w.end <= w.start) w.end = w.start + STEP;
+      // Adjust next word's start to match
+      if (selectedIdx < updated.length - 1) updated[selectedIdx + 1].start = w.end;
+    }
+
+    onChange(updated);
+  };
+
+  const playWord = (idx: number) => {
+    const a = audioRef.current;
+    if (!a || idx < 0 || idx >= timings.length) return;
+    a.currentTime = timings[idx].start;
+    a.play();
+    // Stop at end of this word
+    const stopAt = timings[idx].end;
+    const check = () => {
+      if (a.currentTime >= stopAt) {
+        a.pause();
+        return;
+      }
+      requestAnimationFrame(check);
+    };
+    requestAnimationFrame(check);
+  };
+
+  const selectWord = (i: number) => {
+    if (mode !== "done") return;
+    setSelectedIdx(i === selectedIdx ? -1 : i);
+    if (i !== selectedIdx) playWord(i);
+  };
+
+  // Arrow keys to nudge selected word in done mode
+  useEffect(() => {
+    if (mode !== "done" || selectedIdx < 0) return;
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.code === "ArrowLeft") { e.preventDefault(); nudge(e.shiftKey ? "end" : "start", -STEP); }
+      else if (e.code === "ArrowRight") { e.preventDefault(); nudge(e.shiftKey ? "end" : "start", STEP); }
+      else if (e.code === "Space") { e.preventDefault(); playWord(selectedIdx); }
+      else if (e.code === "Tab") {
+        e.preventDefault();
+        const next = e.shiftKey
+          ? (selectedIdx - 1 + timings.length) % timings.length
+          : (selectedIdx + 1) % timings.length;
+        setSelectedIdx(next);
+        playWord(next);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, selectedIdx, timings, duration]);
+
   if (!audioUrl) {
     return (
       <div className="text-xs text-gray-400 italic">Upload meaning audio to enable word timing.</div>
     );
   }
+
+  const sel = selectedIdx >= 0 && selectedIdx < timings.length ? timings[selectedIdx] : null;
 
   return (
     <div className="space-y-2">
@@ -141,23 +219,57 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
       {/* Word pills */}
       <div className="flex flex-wrap gap-1 p-2 bg-gray-50 rounded border border-gray-200 max-h-48 overflow-y-auto">
         {words.map((w, i) => {
-          let cls = "px-1.5 py-0.5 rounded text-xs transition-colors ";
+          let cls = "px-1.5 py-0.5 rounded text-xs transition-colors cursor-default ";
           if (mode === "timing") {
             if (i < wordIdx) cls += "bg-green-100 text-green-800";
             else if (i === wordIdx) cls += "bg-amber-200 text-amber-900 font-semibold ring-1 ring-amber-400";
             else cls += "bg-white text-gray-400 border border-gray-200";
           } else if (mode === "done") {
-            cls += "bg-green-50 text-green-800";
+            cls += i === selectedIdx
+              ? "bg-amber-200 text-amber-900 font-semibold ring-1 ring-amber-400 cursor-pointer"
+              : "bg-green-50 text-green-800 hover:bg-green-100 cursor-pointer";
           } else {
             cls += "bg-white text-gray-500 border border-gray-200";
           }
           return (
-            <span key={i} className={cls}>
+            <span
+              key={i}
+              className={cls}
+              onClick={() => selectWord(i)}
+            >
               {w}
             </span>
           );
         })}
       </div>
+
+      {/* Adjust panel — visible when a word is selected in done mode */}
+      {mode === "done" && sel && (
+        <div className="flex items-center gap-3 p-2 bg-amber-50 rounded border border-amber-200 flex-wrap">
+          <span className="text-xs font-semibold text-amber-900 min-w-0 truncate max-w-24">
+            {sel.text}
+          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-gray-500 w-7">Start</span>
+            <button type="button" onClick={() => nudge("start", -STEP)} className="w-6 h-6 rounded border text-xs hover:bg-white">-</button>
+            <span className="text-[11px] font-mono w-14 text-center">{fmt(sel.start)}</span>
+            <button type="button" onClick={() => nudge("start", STEP)} className="w-6 h-6 rounded border text-xs hover:bg-white">+</button>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-gray-500 w-7">End</span>
+            <button type="button" onClick={() => nudge("end", -STEP)} className="w-6 h-6 rounded border text-xs hover:bg-white">-</button>
+            <span className="text-[11px] font-mono w-14 text-center">{fmt(sel.end)}</span>
+            <button type="button" onClick={() => nudge("end", STEP)} className="w-6 h-6 rounded border text-xs hover:bg-white">+</button>
+          </div>
+          <button
+            type="button"
+            onClick={() => playWord(selectedIdx)}
+            className="text-xs px-2 py-1 rounded bg-amber-500 text-white hover:opacity-90"
+          >
+            Play
+          </button>
+        </div>
+      )}
 
       {/* Controls */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -222,6 +334,11 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
       {mode === "timing" && (
         <div className="text-[10px] text-gray-400">
           Audio is playing. Tap the button or press Space each time the next word is spoken.
+        </div>
+      )}
+      {mode === "done" && selectedIdx < 0 && (
+        <div className="text-[10px] text-gray-400">
+          Click any word to adjust its timing. Arrow keys nudge start (Shift+Arrow for end). Tab moves to next word.
         </div>
       )}
     </div>
