@@ -70,8 +70,8 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
       if (nextIdx >= segments.length) {
         const result = segments.map((s, i) => ({
           text: s,
-          start: next[i],
-          end: i < segments.length - 1 ? next[i + 1] : audioRef.current!.duration || t + 0.5,
+          start: i === 0 ? 0 : next[i - 1],
+          end: next[i],
         }));
         onChange(result);
         setMode("done");
@@ -329,7 +329,7 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
 
       {mode === "timing" && (
         <div className="text-[10px] text-gray-400">
-          Audio is playing. Tap the button or press Space each time the next segment starts.
+          Audio is playing. Tap the button or press Space when each segment finishes being spoken.
         </div>
       )}
       {mode === "done" && (
