@@ -4,7 +4,8 @@ import React, { useRef, useState } from "react";
 import Image from "next/image";
 import AudioUploadField from "./AudioUploadField";
 import ImagesGalleryField from "./ImagesGalleryField";
-import type { ShlokaAssetInput } from "@/lib/auth/types";
+import MeaningTimingEditor from "./MeaningTimingEditor";
+import type { ShlokaAssetInput, WordTiming } from "@/lib/auth/types";
 
 export interface ShlokaInfoValues {
   slug: string;
@@ -17,6 +18,7 @@ export interface ShlokaInfoValues {
   images: ShlokaAssetInput[];
   audioFull?: ShlokaAssetInput;
   meaningAudio?: ShlokaAssetInput;
+  meaningTimings: WordTiming[];
 }
 
 interface Props extends ShlokaInfoValues {
@@ -32,6 +34,7 @@ interface Props extends ShlokaInfoValues {
   onImages: (next: ShlokaAssetInput[]) => void;
   onAudioFull: (a: ShlokaAssetInput | undefined) => void;
   onMeaningAudio: (a: ShlokaAssetInput | undefined) => void;
+  onMeaningTimings: (t: WordTiming[]) => void;
 }
 
 function isComplete(v: ShlokaInfoValues): boolean {
@@ -126,6 +129,12 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
           <div className="text-gray-500">Meaning audio</div>
           <div className="col-span-2 text-xs">
             {props.meaningAudio ? "uploaded" : <span className="text-gray-400">none (optional)</span>}
+          </div>
+          <div className="text-gray-500">Word timing</div>
+          <div className="col-span-2 text-xs">
+            {props.meaningTimings.length > 0
+              ? <span className="text-green-700">{props.meaningTimings.length} words timed</span>
+              : <span className="text-gray-400">not set</span>}
           </div>
         </div>
       ) : (
@@ -239,6 +248,14 @@ const ShlokaInfoCard: React.FC<Props> = (props) => {
             value={props.meaningAudio}
             onChange={props.onMeaningAudio}
           />
+          {props.meaningAudio && props.meaning && (
+            <MeaningTimingEditor
+              audioUrl={props.meaningAudio.url}
+              meaningText={props.meaning}
+              timings={props.meaningTimings}
+              onChange={props.onMeaningTimings}
+            />
+          )}
         </div>
       )}
     </div>

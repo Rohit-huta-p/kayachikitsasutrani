@@ -127,6 +127,7 @@ export interface ShlokaInput {
   };
   /** null clears the meaning audio on PATCH; omit to leave unchanged. */
   meaningAudio?: ShlokaAssetInput | null;
+  meaningTimings?: WordTiming[];
   image?: ShlokaAssetInput;
   images?: ShlokaAssetInput[];
   lines: ShlokaLine[];

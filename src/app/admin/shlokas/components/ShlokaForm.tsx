@@ -6,7 +6,7 @@ import EditPageShell from "./EditPageShell";
 import { useKeyboardShortcuts } from "./useHistory";
 import RegionBucketEditor from "./timing-editor/RegionBucketEditor";
 import { api } from "@/lib/api";
-import type { PublicShloka, ShlokaInput, ShlokaAssetInput } from "@/lib/auth/types";
+import type { PublicShloka, ShlokaInput, ShlokaAssetInput, WordTiming } from "@/lib/auth/types";
 
 interface Props {
   initial?: PublicShloka;
@@ -50,6 +50,9 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       ? { url: initial.meaningAudio.url, publicId: initial.meaningAudio.publicId ?? "" }
       : undefined,
   );
+  const [meaningTimings, setMeaningTimings] = useState<WordTiming[]>(
+    initial?.meaningTimings ?? [],
+  );
 
   const [modelLines, setModelLines] = useState<ModelLine[]>(
     initial
@@ -80,6 +83,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       images: initial?.images ?? [],
       audioFull: initial?.audio.full,
       meaningAudio: initial?.meaningAudio,
+      meaningTimings: initial?.meaningTimings ?? [],
       lines: initial?.lines,
     }),
   );
@@ -94,6 +98,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
     images,
     audioFull,
     meaningAudio,
+    meaningTimings,
     modelLines,
   });
   const dirty = currentSnapshot !== initialSnapshot.current;
@@ -109,6 +114,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
       images,
       audioFull,
       meaningAudio,
+      meaningTimings,
       modelLines,
     });
   };
@@ -168,8 +174,8 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
         full: audioFull ?? { url: "", publicId: "" },
         lines: [],
       },
-      // null explicitly clears a previously-uploaded meaning audio on PATCH.
       meaningAudio: meaningAudio ?? null,
+      meaningTimings,
       images,
       lines: modelLines,
     };
@@ -230,6 +236,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
             images={images}
             audioFull={audioFull}
             meaningAudio={meaningAudio}
+            meaningTimings={meaningTimings}
             slugDisabled={isEdit}
             onSlug={setSlug}
             onTitle={setTitle}
@@ -241,6 +248,7 @@ const ShlokaForm: React.FC<Props> = ({ initial, onSaved }) => {
             onImages={setImages}
             onAudioFull={setAudioFull}
             onMeaningAudio={setMeaningAudio}
+            onMeaningTimings={setMeaningTimings}
           />
           <div className="soft-card p-5 space-y-3">
             <div className="text-sm font-semibold text-brown">Audio + line buckets</div>
