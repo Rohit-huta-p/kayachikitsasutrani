@@ -49,16 +49,16 @@ const MeaningTimingEditor: React.FC<Props> = ({ audioUrl, meaningText, timings, 
     setSegments((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // ── Audio element for tap-to-mark mode ─────────────────────────────
+  // ── Audio element (persists across mode changes) ────────────────────
   useEffect(() => {
-    if (!audioUrl || mode === "done") return;
+    if (!audioUrl) return;
     const a = new Audio(audioUrl);
     a.addEventListener("loadedmetadata", () => setDuration(a.duration));
     a.addEventListener("timeupdate", () => setCurrentTime(a.currentTime));
     a.addEventListener("ended", () => { if (audioRef.current) setCurrentTime(a.duration); });
     audioRef.current = a;
     return () => { a.pause(); a.removeAttribute("src"); a.load(); };
-  }, [audioUrl, mode]);
+  }, [audioUrl]);
 
   // ── Tap-to-mark ────────────────────────────────────────────────────
   const markSegment = useCallback(() => {
