@@ -98,6 +98,7 @@ export interface PublicShloka {
     lines: ShlokaAsset[];
   };
   meaningAudio?: ShlokaAsset;
+  meaningTimings?: WordTiming[];
   image?: ShlokaAsset;
   images: ShlokaAsset[];
   lines: ShlokaLine[];

@@ -405,12 +405,12 @@ const ShlokaDesc = ({ shloka }) => {
 
           {/* Meaning card */}
           <div className="bg-white border border-[#E5DDD0] rounded-xl p-3">
-            <div className="text-sm font-bold text-brown mb-1.5 flex items-center gap-1.5">
-              <BookOpen size={14} />
-              Meaning
-              <MeaningAudioButton src={shloka.meaningAudio?.url} />
-            </div>
-            <p className="text-xs text-black leading-relaxed whitespace-pre-wrap">{shloka.meaning}</p>
+            <MeaningSection
+              src={shloka.meaningAudio?.url}
+              timings={shloka.meaningTimings}
+              meaningText={shloka.meaning}
+              mobile
+            />
           </div>
 
           {/* Case Scenario (always visible, hidden if empty) */}
@@ -654,11 +654,11 @@ const ShlokaDesc = ({ shloka }) => {
           {/* Left Side */}
           <div className="col-span-2 space-y-5">
             <div className="bg-indigo-50 p-4 rounded-lg">
-              <h2 className="text-xl text-brown mb-2 flex items-center gap-2">
-                Meaning
-                <MeaningAudioButton src={shloka.meaningAudio?.url} />
-              </h2>
-              <p className="text-sm whitespace-pre-wrap text-black">{shloka.meaning}</p>
+              <MeaningSection
+                src={shloka.meaningAudio?.url}
+                timings={shloka.meaningTimings}
+                meaningText={shloka.meaning}
+              />
             </div>
             {shloka.caseStudy && (
               <div className="bg-white p-4 rounded-lg">
@@ -729,15 +729,18 @@ const ShlokaDesc = ({ shloka }) => {
 };
 
 /**
- * Minimal play/pause button for the admin-uploaded "meaning" narration.
- * No word highlighting, no seek, no speed — one toggle. Renders nothing
- * when the shloka has no meaning audio.
+ * Meaning section with play/pause + word-level highlight synced to audio.
+ * Whisper-generated timings drive highlighting; falls back to plain text
+ * when no timings exist.
  */
-const MeaningAudioButton = ({ src }) => {
+const MeaningSection = ({ src, timings, meaningText, mobile }) => {
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(-1);
+  const lastIdxRef = useRef(-1);
+  const timingsRef = useRef(timings);
+  timingsRef.current = timings;
 
-  // Stop and release the element when the source changes or on unmount.
   useEffect(() => {
     return () => {
       if (audioRef.current) {
@@ -747,33 +750,123 @@ const MeaningAudioButton = ({ src }) => {
     };
   }, [src]);
 
-  if (!src) return null;
+  // RAF loop for smooth word tracking
+  useEffect(() => {
+    if (!playing || !audioRef.current || !timingsRef.current?.length) return;
+    let rafId;
+    const tick = () => {
+      const a = audioRef.current;
+      if (!a) return;
+      const t = a.currentTime;
+      const ts = timingsRef.current;
+      let idx = -1;
+      if (ts) {
+        for (let i = 0; i < ts.length; i++) {
+          if (t >= ts[i].start && t < ts[i].end) { idx = i; break; }
+        }
+      }
+      if (idx !== lastIdxRef.current) {
+        lastIdxRef.current = idx;
+        setActiveIdx(idx);
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [playing]);
 
   const toggle = () => {
-    if (!audioRef.current) {
+    if (!audioRef.current && src) {
       const a = new Audio(src);
-      a.addEventListener("ended", () => setPlaying(false));
+      a.addEventListener("ended", () => {
+        setPlaying(false);
+        setActiveIdx(-1);
+        lastIdxRef.current = -1;
+      });
       audioRef.current = a;
     }
     const a = audioRef.current;
-    if (a.paused) {
-      a.play();
-      setPlaying(true);
-    } else {
-      a.pause();
-      setPlaying(false);
+    if (!a) return;
+    if (a.paused) { a.play(); setPlaying(true); }
+    else { a.pause(); setPlaying(false); }
+  };
+
+  // Split meaning text into word positions for index-based highlighting
+  const wordPositions = React.useMemo(() => {
+    if (!timings?.length) return null;
+    const positions = [];
+    const regex = /\S+/g;
+    let m;
+    while ((m = regex.exec(meaningText)) !== null) {
+      positions.push({ word: m[0], start: m.index, end: m.index + m[0].length });
     }
+    return positions;
+  }, [meaningText, timings]);
+
+  const hasTimings = timings?.length > 0 && wordPositions?.length > 0;
+
+  const renderText = () => {
+    if (!hasTimings) {
+      return (
+        <p className={`${mobile ? "text-xs text-black leading-relaxed" : "text-sm text-black"} whitespace-pre-wrap`}>
+          {meaningText}
+        </p>
+      );
+    }
+    // Render word-by-word, preserving original whitespace
+    const parts = [];
+    let lastEnd = 0;
+    wordPositions.forEach((wp, i) => {
+      if (wp.start > lastEnd) {
+        parts.push(
+          <span key={`ws-${i}`}>{meaningText.slice(lastEnd, wp.start)}</span>
+        );
+      }
+      const isActive = i === activeIdx;
+      parts.push(
+        <span
+          key={`w-${i}`}
+          className={isActive
+            ? "bg-[#F5E6D0] text-[#6B4226] font-semibold rounded-sm px-0.5 transition-colors duration-150"
+            : "transition-colors duration-150"
+          }
+        >
+          {wp.word}
+        </span>
+      );
+      lastEnd = wp.end;
+    });
+    if (lastEnd < meaningText.length) {
+      parts.push(<span key="ws-tail">{meaningText.slice(lastEnd)}</span>);
+    }
+    return (
+      <p className={`${mobile ? "text-xs text-black leading-relaxed" : "text-sm text-black"} whitespace-pre-wrap`}>
+        {parts}
+      </p>
+    );
   };
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-label={playing ? "Pause meaning audio" : "Play meaning audio"}
-      className="ml-auto inline-flex items-center justify-center w-7 h-7 rounded-full bg-accent text-white hover:opacity-90 transition shrink-0"
-    >
-      {playing ? <Pause size={13} /> : <Play size={13} className="ml-0.5" />}
-    </button>
+    <>
+      <div className={mobile
+        ? "text-sm font-bold text-brown mb-1.5 flex items-center gap-1.5"
+        : "text-xl text-brown mb-2 flex items-center gap-2"
+      }>
+        {mobile && <BookOpen size={14} />}
+        Meaning
+        {src && (
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={playing ? "Pause meaning audio" : "Play meaning audio"}
+            className="ml-auto inline-flex items-center justify-center w-7 h-7 rounded-full bg-accent text-white hover:opacity-90 transition shrink-0"
+          >
+            {playing ? <Pause size={13} /> : <Play size={13} className="ml-0.5" />}
+          </button>
+        )}
+      </div>
+      {renderText()}
+    </>
   );
 };
 
