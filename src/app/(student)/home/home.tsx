@@ -6,7 +6,6 @@ import Image from "next/image";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useCompletions } from "@/lib/completions/CompletionsContext";
-import ShlokaList from "./components/ShlokaList";
 import LottieLoader from "@/components/LottieLoader";
 import type { PublicShloka, ApiError, MyCompletionRow } from "@/lib/auth/types";
 import { COLORS, SANSKRIT_FONT_FAMILY } from "@/constants";
