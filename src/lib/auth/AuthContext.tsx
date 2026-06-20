@@ -14,6 +14,7 @@ interface AuthApi {
   login: (body: LoginBody) => Promise<void>;
   signup: (body: SignupBody) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const Ctx = createContext<AuthApi | null>(null);
@@ -60,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  return <Ctx.Provider value={{ state, login, signup, logout }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ state, login, signup, logout, refreshUser: refresh }}>{children}</Ctx.Provider>;
 }
 
 export function useAuth(): AuthApi {

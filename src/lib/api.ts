@@ -96,6 +96,10 @@ export const api = {
     () => request<{ user: PublicUser }>('/api/auth/me'),
     {
       completions: () => request<MyCompletionsResponse>(`/api/me/completions`),
+      updateProfile: (body: { name?: string; age?: number; gender?: string; collegeName?: string; course?: string }) =>
+        request<{ user: PublicUser }>('/api/me/profile', { method: 'PATCH', body: JSON.stringify(body) }),
+      changePassword: (body: { currentPassword: string; newPassword: string }) =>
+        request<{ ok: true }>('/api/me/change-password', { method: 'POST', body: JSON.stringify(body) }),
     },
   ),
 
