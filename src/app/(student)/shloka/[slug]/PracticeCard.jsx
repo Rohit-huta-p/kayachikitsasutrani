@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import InfiniteCanvas from "./InfiniteCanvas";
+import { SANSKRIT_FONT_FAMILY } from "@/constants";
 
 const SCHEMES = [
   { id: "iast", label: "IAST", hint: "ā ī ū ṛ ṣ ṅ ñ" },
@@ -281,7 +282,7 @@ const PracticeCard = ({ targetText }) => {
             <div className="text-[10px] text-gray-500 mb-0.5">Preview</div>
             <p
               className="text-base text-black leading-snug whitespace-pre-wrap"
-              style={{ fontFamily: "Georgia, serif" }}
+              style={{ fontFamily: SANSKRIT_FONT_FAMILY }}
             >
               {devanagari || (
                 <span className="text-gray-400 italic text-xs">
@@ -321,7 +322,7 @@ const PracticeCard = ({ targetText }) => {
               </div>
               <div
                 className="text-sm leading-relaxed flex flex-wrap gap-1"
-                style={{ fontFamily: "Georgia, serif" }}
+                style={{ fontFamily: SANSKRIT_FONT_FAMILY }}
               >
                 {result.words.map((w, i) => (
                   <span

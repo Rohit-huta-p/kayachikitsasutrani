@@ -23,6 +23,12 @@ import { useCompletionTracker } from "./hooks/useCompletionTracker";
 import { useAuth } from "@/lib/auth/AuthContext";
 import TopBar from "@/components/student/TopBar";
 import MiniPlayer from "@/components/student/MiniPlayer";
+import {
+  SPEED_OPTIONS,
+  SWIPE_THRESHOLD_PX,
+  COLORS,
+  SANSKRIT_FONT_FAMILY,
+} from "@/constants";
 
 const ShlokaDesc = ({ shloka }) => {
   const player = useShlokaPlayer(shloka);
@@ -43,7 +49,6 @@ const ShlokaDesc = ({ shloka }) => {
   })();
 
   // Playback speed (cycles through SPEED_OPTIONS on tap).
-  const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5];
   const [playbackRate, setPlaybackRate] = useState(1);
   const cycleSpeed = () => {
     const i = SPEED_OPTIONS.indexOf(playbackRate);
@@ -330,7 +335,7 @@ const ShlokaDesc = ({ shloka }) => {
                 const startX = parseFloat(e.currentTarget.dataset.touchX || "0");
                 const endX = e.changedTouches[0].clientX;
                 const dx = endX - startX;
-                if (Math.abs(dx) < 30) return;
+                if (Math.abs(dx) < SWIPE_THRESHOLD_PX) return;
                 if (dx < 0 && carouselIdx < gallery.length - 1) setCarouselIdx(carouselIdx + 1);
                 if (dx > 0 && carouselIdx > 0) setCarouselIdx(carouselIdx - 1);
               }}
@@ -362,7 +367,7 @@ const ShlokaDesc = ({ shloka }) => {
               {fullTextStr ? (
                 <p
                   className="text-base leading-relaxed text-black whitespace-pre-wrap"
-                  style={{ fontFamily: "Georgia, serif" }}
+                  style={{ fontFamily: SANSKRIT_FONT_FAMILY }}
                 >
                   {renderFullText()}
                 </p>
@@ -494,7 +499,7 @@ const ShlokaDesc = ({ shloka }) => {
                   const startX = parseFloat(e.currentTarget.dataset.touchX || "0");
                   const endX = e.changedTouches[0].clientX;
                   const dx = endX - startX;
-                  if (Math.abs(dx) < 30) return;
+                  if (Math.abs(dx) < SWIPE_THRESHOLD_PX) return;
                   if (dx < 0 && carouselIdx < gallery.length - 1) setCarouselIdx(carouselIdx + 1);
                   if (dx > 0 && carouselIdx > 0) setCarouselIdx(carouselIdx - 1);
                 }}
@@ -545,7 +550,7 @@ const ShlokaDesc = ({ shloka }) => {
               {fullTextStr ? (
                 <p
                   className="text-2xl leading-relaxed text-black whitespace-pre-wrap"
-                  style={{ fontFamily: "Georgia, serif" }}
+                  style={{ fontFamily: SANSKRIT_FONT_FAMILY }}
                 >
                   {renderFullText()}
                 </p>
