@@ -12,7 +12,7 @@ import type {
   AccessRequest,
   AcceptedAccessRequest,
   AnalyticsRangeDays,
-  StudentActivitySummary,
+  StudentRosterResponse,
   StudentAnalytics,
 } from './auth/types';
 
@@ -146,8 +146,9 @@ export const api = {
         request<{ user: PublicUser }>(`/api/admin/students/${id}`),
     },
     analytics: {
+      /** Every student with headline numbers (the admin students page). */
       students: (params?: { tz?: string }) =>
-        request<{ items: StudentActivitySummary[] }>(`/api/admin/analytics/students${qs(params)}`),
+        request<StudentRosterResponse>(`/api/admin/analytics/students${qs(params)}`),
       student: (id: string, params: { days: AnalyticsRangeDays; tz?: string }) =>
         request<StudentAnalytics>(`/api/admin/analytics/students/${id}${qs(params)}`),
     },

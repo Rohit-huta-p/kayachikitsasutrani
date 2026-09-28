@@ -47,7 +47,7 @@ const StudentDetailPage: React.FC = () => {
   return (
     <>
       {/* ── Desktop ─────────────────────────────────────────────────── */}
-      <div className="hidden md:block px-10 pt-10 pb-4 max-w-6xl">
+      <div className="hidden md:block px-10 pt-10 pb-4 max-w-6xl mx-auto">
         <div className="mb-4">
           <Link href="/admin/students" className="text-sm text-green underline">← Back to students</Link>
         </div>
@@ -98,7 +98,7 @@ const StudentDetailPage: React.FC = () => {
       </div>
 
       {/* ── Analytics (responsive, shared) ──────────────────────────── */}
-      <div className="px-4 pb-8 max-w-md mx-auto md:px-10 md:pb-10 md:max-w-6xl md:mx-0">
+      <div className="px-4 pb-8 max-w-md mx-auto md:px-10 md:pb-10 md:max-w-6xl">
         <StudentAnalyticsPanel studentId={user.id} />
       </div>
     </>

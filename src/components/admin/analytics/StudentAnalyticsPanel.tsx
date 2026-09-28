@@ -61,8 +61,8 @@ function RangeSelector({ value, onChange }: { value: AnalyticsRangeDays; onChang
           type="button"
           onClick={() => onChange(d)}
           aria-pressed={value === d}
-          className={`rounded-full px-3 py-1 transition ${
-            value === d ? "bg-accent text-white font-semibold" : "text-brown hover:bg-accent-soft"
+          className={`rounded-full px-3 py-1 transition outline-none focus-visible:ring-2 focus-visible:ring-[#D4A574] ${
+            value === d ? "bg-[#8A5A2B] text-white font-semibold" : "text-brown hover:bg-[#FDF5E6]"
           }`}
         >
           Last {d} days

@@ -109,7 +109,7 @@ export function ColumnChart({ data, ariaLabel, plotHeight = 140, labelAnchor = "
   return (
     <div
       ref={wrapRef}
-      className="relative outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+      className="relative outline-none focus-visible:ring-2 focus-visible:ring-[#D4A574] rounded"
       role="group"
       aria-label={`${ariaLabel}. Use the left and right arrow keys to read each value.`}
       tabIndex={0}

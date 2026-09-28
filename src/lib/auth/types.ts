@@ -199,12 +199,29 @@ export type ActivityCounter =
   | 'arrangeSolves';
 export type AnalyticsRangeDays = 7 | 30 | 90;
 
-export interface StudentActivitySummary {
-  userId: string;
+export interface StudentRosterRow {
+  id: string;
+  name: string;
+  email: string;
+  collegeName?: string;
+  course?: string;
+  status: 'pending' | 'active';
+  createdAt: string;
   totalSeconds: number;
   last7Seconds: number;
+  /** Engaged seconds for each of the response's `days`, oldest first. */
+  last14Days: number[];
   lastActiveAt: string | null;
+  /** Completed shlokas that are still in the student's catalog. */
   completed: number;
+  available: number;
+}
+
+export interface StudentRosterResponse {
+  today: string;
+  /** The 14 calendar days `last14Days` covers, oldest first. */
+  days: string[];
+  items: StudentRosterRow[];
 }
 
 export interface ShlokaAnalyticsRow {
