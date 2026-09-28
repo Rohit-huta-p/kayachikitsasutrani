@@ -4,9 +4,10 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Search, ChevronRight } from "lucide-react";
 import { api } from "@/lib/api";
-import type { PublicUser, ApiError } from "@/lib/auth/types";
+import type { PublicUser, ApiError, StudentActivitySummary } from "@/lib/auth/types";
 import AvatarCircle from "@/components/student/AvatarCircle";
 import LottieLoader from "@/components/LottieLoader";
+import { formatDuration, formatRelative } from "@/components/admin/analytics/format";
 
 const StudentListPage: React.FC = () => {
   const [items, setItems] = useState<PublicUser[]>([]);
@@ -14,6 +15,7 @@ const StudentListPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<Map<string, StudentActivitySummary>>(new Map());
 
   const fetchPage = async (cursor?: string, replace = true) => {
     setLoading(true);
@@ -33,6 +35,22 @@ const StudentListPage: React.FC = () => {
   useEffect(() => {
     void fetchPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    api.admin.analytics
+      .students({ tz })
+      .then(({ items: rows }) => {
+        if (!cancelled) setStats(new Map(rows.map((r) => [r.userId, r])));
+      })
+      .catch(() => {
+        // The list is still useful without activity numbers.
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filtered = items.filter((u) => {
@@ -62,21 +80,32 @@ const StudentListPage: React.FC = () => {
               <th className="p-2">Email</th>
               <th className="p-2">Role</th>
               <th className="p-2">Joined</th>
+              <th className="p-2 text-right">This week</th>
+              <th className="p-2 text-right">Total time</th>
+              <th className="p-2 text-right">Completed</th>
+              <th className="p-2">Last active</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((u) => (
-              <tr key={u.id} className="border-b last:border-b-0">
-                <td className="p-2">
-                  <Link href={`/admin/students/${u.id}`} className="text-green underline">
-                    {u.name}
-                  </Link>
-                </td>
-                <td className="p-2">{u.email}</td>
-                <td className="p-2">{u.role}</td>
-                <td className="p-2">{new Date(u.createdAt).toLocaleDateString()}</td>
-              </tr>
-            ))}
+            {filtered.map((u) => {
+              const st = stats.get(u.id);
+              return (
+                <tr key={u.id} className="border-b last:border-b-0">
+                  <td className="p-2">
+                    <Link href={`/admin/students/${u.id}`} className="text-green underline">
+                      {u.name}
+                    </Link>
+                  </td>
+                  <td className="p-2">{u.email}</td>
+                  <td className="p-2">{u.role}</td>
+                  <td className="p-2">{new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td className="p-2 text-right tabular-nums">{formatDuration(st?.last7Seconds ?? 0)}</td>
+                  <td className="p-2 text-right tabular-nums">{formatDuration(st?.totalSeconds ?? 0)}</td>
+                  <td className="p-2 text-right tabular-nums">{st?.completed ?? 0}</td>
+                  <td className="p-2 whitespace-nowrap">{st?.lastActiveAt ? formatRelative(st.lastActiveAt) : "—"}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
@@ -119,20 +148,28 @@ const StudentListPage: React.FC = () => {
           <p className="text-sm text-gray-500 italic">No students match.</p>
         )}
 
-        {filtered.map((u) => (
-          <Link
-            key={u.id}
-            href={`/admin/students/${u.id}`}
-            className="bg-white border border-[#E5DDD0] rounded-xl p-3 flex gap-3 items-center hover:bg-white/80 transition"
-          >
-            <AvatarCircle name={u.name} email={u.email} size={40} />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-brown truncate">{u.name}</div>
-              <div className="text-xs text-gray-500 truncate">{u.email}</div>
-            </div>
-            <ChevronRight size={16} className="text-gray-400" aria-hidden="true" />
-          </Link>
-        ))}
+        {filtered.map((u) => {
+          const st = stats.get(u.id);
+          return (
+            <Link
+              key={u.id}
+              href={`/admin/students/${u.id}`}
+              className="bg-white border border-[#E5DDD0] rounded-xl p-3 flex gap-3 items-center hover:bg-white/80 transition"
+            >
+              <AvatarCircle name={u.name} email={u.email} size={40} />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-brown truncate">{u.name}</div>
+                <div className="text-xs text-gray-500 truncate">{u.email}</div>
+                {st?.lastActiveAt && (
+                  <div className="text-[11px] text-gray-500 truncate">
+                    {formatDuration(st.last7Seconds)} this week · active {formatRelative(st.lastActiveAt)}
+                  </div>
+                )}
+              </div>
+              <ChevronRight size={16} className="text-gray-400" aria-hidden="true" />
+            </Link>
+          );
+        })}
 
         {nextCursor && (
           <button

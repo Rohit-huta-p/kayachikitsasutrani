@@ -186,3 +186,89 @@ export interface MyCompletionsResponse {
   total: number;
   items: MyCompletionRow[];
 }
+
+// ── Admin analytics (mirror backend studentAnalytics) ─────────────────────
+
+export type ActivityKind = 'listening' | 'reading' | 'typing' | 'drawing' | 'arranging' | 'browsing';
+export type ActivityCounter =
+  | 'audioPlays'
+  | 'audioCompletes'
+  | 'meaningPlays'
+  | 'typeChecks'
+  | 'arrangeChecks'
+  | 'arrangeSolves';
+export type AnalyticsRangeDays = 7 | 30 | 90;
+
+export interface StudentActivitySummary {
+  userId: string;
+  totalSeconds: number;
+  last7Seconds: number;
+  lastActiveAt: string | null;
+  completed: number;
+}
+
+export interface ShlokaAnalyticsRow {
+  shlokaId: string;
+  slug: string;
+  title: string;
+  status: 'completed' | 'in-progress' | 'not-started';
+  /** False once the shloka left the student's catalog (unpublished or access restricted). */
+  available: boolean;
+  totalSeconds: number;
+  listeningSeconds: number;
+  readingSeconds: number;
+  practiceSeconds: number;
+  audioPlays: number;
+  audioCompletes: number;
+  meaningPlays: number;
+  typeChecks: number;
+  typeBestPct: number;
+  arrangeChecks: number;
+  arrangeSolves: number;
+  firstActiveDay: string | null;
+  lastActiveAt: string | null;
+  completion: {
+    completedAt: string;
+    attempts: number;
+    elapsedSeconds: number;
+    rank: number;
+    totalCompletions: number;
+  } | null;
+}
+
+export interface StudentAnalytics {
+  generatedAt: string;
+  tz: string;
+  today: string;
+  /** First day any student activity was recorded — earlier time was never measured. */
+  trackingSince: string | null;
+  /** `prevFrom` starts the equally long period before `from`, used for comparisons. */
+  range: { days: AnalyticsRangeDays; from: string; to: string; prevFrom: string };
+  user: PublicUser & { lastLoginAt: string | null };
+  summary: {
+    totalSeconds: number;
+    rangeSeconds: number;
+    prevRangeSeconds: number;
+    activeDays: number;
+    currentStreak: number;
+    longestStreak: number;
+    sessions: number;
+    rangeSessions: number;
+    avgSessionSeconds: number;
+    firstActiveAt: string | null;
+    lastActiveAt: string | null;
+    completed: number;
+    inProgress: number;
+    available: number;
+    /** Engaged seconds in range per device type. */
+    devices: Record<'mobile' | 'tablet' | 'desktop', number>;
+  };
+  daily: { day: string; seconds: number }[];
+  /** Engaged seconds in range by the student's local hour, 0–23. */
+  hourly: number[];
+  /** Engaged seconds in range by weekday, Monday first. */
+  weekday: number[];
+  activity: Record<ActivityKind, number>;
+  actions: Record<ActivityCounter, number>;
+  shlokas: ShlokaAnalyticsRow[];
+}

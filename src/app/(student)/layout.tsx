@@ -3,10 +3,12 @@
 import React from "react";
 import TabBar from "@/components/student/TabBar";
 import { CompletionsProvider } from "@/lib/completions/CompletionsContext";
+import StudentActivityTracker from "@/lib/analytics/StudentActivityTracker";
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   return (
     <CompletionsProvider>
+      <StudentActivityTracker />
       <div className="min-h-screen bg-cream flex flex-col">
         <div className="flex-1 pb-safe-tab md:pb-0">
           {children}

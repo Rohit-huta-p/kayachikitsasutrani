@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import InfiniteCanvas from "./InfiniteCanvas";
 import { SANSKRIT_FONT_FAMILY } from "@/constants";
+import { trackActivity } from "@/lib/analytics/activityTracker";
 
 const SCHEMES = [
   { id: "iast", label: "IAST", hint: "ā ī ū ṛ ṣ ṅ ñ" },
@@ -65,6 +66,9 @@ const PracticeCard = ({ targetText }) => {
       words.push({ user: u, target: t, ok });
     }
     setResult({ score, total: targetWords.length, words });
+    trackActivity("typeChecks", {
+      typePct: targetWords.length > 0 ? (score / targetWords.length) * 100 : 0,
+    });
   };
 
   const handleClear = () => {
@@ -197,7 +201,10 @@ const PracticeCard = ({ targetText }) => {
   );
 
   return (
-    <div className="bg-white border border-[#E5DDD0] rounded-xl p-3 space-y-2">
+    <div
+      className="bg-white border border-[#E5DDD0] rounded-xl p-3 space-y-2"
+      data-activity={tab === "type" ? "typing" : "drawing"}
+    >
       {/* Header + tabs */}
       <div className="flex items-center justify-between gap-2">
         <div className="text-sm font-bold text-brown flex items-center gap-1.5">
