@@ -11,6 +11,9 @@ import type {
   MyCompletionsResponse,
   AccessRequest,
   AcceptedAccessRequest,
+  AnalyticsRangeDays,
+  StudentRosterResponse,
+  StudentAnalytics,
 } from './auth/types';
 
 // Empty base — relative `/api/*` paths are proxied to the backend by
@@ -141,6 +144,13 @@ export const api = {
         request<{ items: PublicUser[]; nextCursor?: string }>(`/api/admin/students${qs(params)}`),
       get: (id: string) =>
         request<{ user: PublicUser }>(`/api/admin/students/${id}`),
+    },
+    analytics: {
+      /** Every student with headline numbers (the admin students page). */
+      students: (params?: { tz?: string }) =>
+        request<StudentRosterResponse>(`/api/admin/analytics/students${qs(params)}`),
+      student: (id: string, params: { days: AnalyticsRangeDays; tz?: string }) =>
+        request<StudentAnalytics>(`/api/admin/analytics/students/${id}${qs(params)}`),
     },
     accessRequests: {
       list: () =>

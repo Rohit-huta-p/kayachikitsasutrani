@@ -8,11 +8,12 @@ import { api } from "@/lib/api";
 import type { PublicUser, ApiError } from "@/lib/auth/types";
 import AvatarCircle from "@/components/student/AvatarCircle";
 import LottieLoader from "@/components/LottieLoader";
+import StudentAnalyticsPanel from "@/components/admin/analytics/StudentAnalyticsPanel";
 
 const Row: React.FC<{ k: string; v?: string | number }> = ({ k, v }) => (
-  <div className="flex border-b py-2 text-sm">
-    <div className="w-40 text-gray-600">{k}</div>
-    <div>{v ?? "—"}</div>
+  <div className="text-sm min-w-0">
+    <div className="text-xs text-gray-500">{k}</div>
+    <div className="truncate">{v ?? "—"}</div>
   </div>
 );
 
@@ -46,19 +47,24 @@ const StudentDetailPage: React.FC = () => {
   return (
     <>
       {/* ── Desktop ─────────────────────────────────────────────────── */}
-      <div className="hidden md:block p-10 max-w-2xl">
+      <div className="hidden md:block px-10 pt-10 pb-4 max-w-6xl mx-auto">
         <div className="mb-4">
           <Link href="/admin/students" className="text-sm text-green underline">← Back to students</Link>
         </div>
-        <h1 className="text-2xl text-brown mb-4">{user.name}</h1>
-        <div className="bg-white/40 rounded p-4">
-          <Row k="Email" v={user.email} />
+        <div className="flex items-center gap-4 mb-4">
+          <AvatarCircle name={user.name} email={user.email} size={56} />
+          <div className="min-w-0">
+            <h1 className="text-2xl text-brown">{user.name}</h1>
+            <div className="text-sm text-gray-500">{user.email}</div>
+          </div>
+        </div>
+        <div className="bg-white/40 rounded p-4 grid grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-3">
           <Row k="Role" v={user.role} />
           <Row k="Age" v={user.age} />
           <Row k="Gender" v={user.gender} />
           <Row k="College Name" v={user.collegeName} />
           <Row k="Course" v={user.course} />
-          <Row k="Joined" v={new Date(user.createdAt).toLocaleString()} />
+          <Row k="Joined" v={new Date(user.createdAt).toLocaleDateString()} />
         </div>
       </div>
 
@@ -89,6 +95,11 @@ const StudentDetailPage: React.FC = () => {
           <MobileRow label="Course" value={user.course} />
           <MobileRow label="Joined" value={new Date(user.createdAt).toLocaleDateString()} last />
         </div>
+      </div>
+
+      {/* ── Analytics (responsive, shared) ──────────────────────────── */}
+      <div className="px-4 pb-8 max-w-md mx-auto md:px-10 md:pb-10 md:max-w-6xl">
+        <StudentAnalyticsPanel studentId={user.id} />
       </div>
     </>
   );

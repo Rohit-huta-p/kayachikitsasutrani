@@ -21,6 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Sparkles, Shuffle, RotateCcw, Check, X, CheckCircle2 } from "lucide-react";
+import { trackActivity } from "@/lib/analytics/activityTracker";
 
 function tokenize(s) {
   return (s || "").normalize("NFC").trim().split(/\s+/).filter(Boolean);
@@ -186,7 +187,9 @@ const WordOrderGame = ({ fullText }) => {
       if (it.text === words[pos]) correct++;
       else wrongIds.add(it.id);
     });
+    trackActivity("arrangeChecks");
     if (correct === items.length) {
+      trackActivity("arrangeSolves");
       // All in place — go straight to the victory ceremony, no red
       // highlights, no banner.
       setCheckResult(null);
@@ -215,7 +218,7 @@ const WordOrderGame = ({ fullText }) => {
   };
 
   return (
-    <div className={`wog-card ${solved ? "is-solved" : ""}`}>
+    <div className={`wog-card ${solved ? "is-solved" : ""}`} data-activity="arranging">
       {/* Header — wraps to two rows on narrow phones so nothing overlaps */}
       <div className="flex items-center justify-between flex-wrap gap-x-2 gap-y-1.5 mb-3">
         <div className="text-sm font-bold text-brown flex items-center gap-1.5">

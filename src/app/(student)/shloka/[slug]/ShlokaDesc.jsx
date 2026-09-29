@@ -20,7 +20,9 @@ import PracticeCard from "./PracticeCard";
 import WordOrderGame from "./WordOrderGame";
 import { useShlokaPlayer } from "./hooks/useShlokaPlayer";
 import { useCompletionTracker } from "./hooks/useCompletionTracker";
+import { usePlaybackAnalytics } from "./hooks/usePlaybackAnalytics";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { trackActivity, watchMedia } from "@/lib/analytics/activityTracker";
 import TopBar from "@/components/student/TopBar";
 import MiniPlayer from "@/components/student/MiniPlayer";
 import {
@@ -35,6 +37,7 @@ const ShlokaDesc = ({ shloka }) => {
   const { state: authState } = useAuth();
   const currentUserId = authState.status === "authed" ? authState.user.id : undefined;
   const tracker = useCompletionTracker(shloka.slug, player.state);
+  usePlaybackAnalytics(player.state.status);
 
   const [hideSanskrit, setHideSanskrit] = useState(false);
   const [carouselIdx, setCarouselIdx] = useState(0);
@@ -788,11 +791,12 @@ const MeaningSection = ({ src, timings, meaningText, mobile }) => {
         setActiveIdx(-1);
         lastIdxRef.current = -1;
       });
+      watchMedia(a);
       audioRef.current = a;
     }
     const a = audioRef.current;
     if (!a) return;
-    if (a.paused) { a.play(); setPlaying(true); }
+    if (a.paused) { a.play(); setPlaying(true); trackActivity("meaningPlays"); }
     else { a.pause(); setPlaying(false); }
   };
 
