@@ -264,10 +264,10 @@ const AccessRequestsPage = () => {
     }
   };
 
-  const removeApproved = async (rec: ApprovedAccount) => {
+  const forgetPassword = async (rec: ApprovedAccount) => {
     if (
       !confirm(
-        `Remove ${rec.name} from this list?\n\nThis deletes the stored password; it can't be recovered. You can issue a new one later with Regenerate.`,
+        `Forget the stored password for ${rec.name}?\n\nIt can't be recovered afterwards — use Regenerate to issue a new one. ${rec.name} stays an approved student.`,
       )
     )
       return;
@@ -275,14 +275,16 @@ const AccessRequestsPage = () => {
     try {
       await api.admin.accessRequests.forget(rec.id);
     } catch {
-      // Backend may not have the endpoint yet — still drop the local copy.
+      // Backend may not have the endpoint yet — still drop the local bridge copy.
     }
-    setServerApproved((cur) => cur.filter((r) => r.id !== rec.id));
+    // Drop any bridge copy, then refetch so the card updates in place
+    // (becomes "password not stored") rather than vanishing.
     setLocalApproved((cur) => {
       const next = cur.filter((r) => r.id !== rec.id);
       writeApproved(next);
       return next;
     });
+    await load();
   };
 
   const regenerate = async (rec: ApprovedAccount) => {
@@ -430,7 +432,7 @@ const AccessRequestsPage = () => {
                       key={e.id}
                       rec={e.rec}
                       regenerating={regenId === e.id}
-                      onRemove={() => void removeApproved(e.rec)}
+                      onForget={() => void forgetPassword(e.rec)}
                       onRegenerate={() => void regenerate(e.rec)}
                     />
                   ),
@@ -617,12 +619,12 @@ function PendingCard({
 function ApprovedCard({
   rec,
   regenerating,
-  onRemove,
+  onForget,
   onRegenerate,
 }: {
   rec: ApprovedAccount;
   regenerating: boolean;
-  onRemove: () => void;
+  onForget: () => void;
   onRegenerate: () => void;
 }) {
   return (
@@ -653,7 +655,7 @@ function ApprovedCard({
         />
       </div>
 
-      <CredentialPanel rec={rec} regenerating={regenerating} onRemove={onRemove} onRegenerate={onRegenerate} />
+      <CredentialPanel rec={rec} regenerating={regenerating} onForget={onForget} onRegenerate={onRegenerate} />
     </article>
   );
 }
@@ -661,12 +663,12 @@ function ApprovedCard({
 function CredentialPanel({
   rec,
   regenerating,
-  onRemove,
+  onForget,
   onRegenerate,
 }: {
   rec: ApprovedAccount;
   regenerating: boolean;
-  onRemove: () => void;
+  onForget: () => void;
   onRegenerate: () => void;
 }) {
   const [copied, setCopied] = useState<"email" | "password" | null>(null);
@@ -691,25 +693,17 @@ function CredentialPanel({
 
       {rec.password === null ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-gray-500">Password isn&apos;t stored for this account. Issue a new one to share.</p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onRegenerate}
-              disabled={regenerating}
-              className={`inline-flex items-center gap-1.5 rounded-full bg-[#8A5A2B] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#754B22] disabled:opacity-50 ${FOCUS_RING}`}
-            >
-              <KeyRound size={13} aria-hidden="true" /> {regenerating ? "Issuing…" : "Regenerate"}
-            </button>
-            <button
-              type="button"
-              onClick={onRemove}
-              className={`inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 ${FOCUS_RING}`}
-              title="Remove this card"
-            >
-              <Trash2 size={13} aria-hidden="true" /> Remove
-            </button>
-          </div>
+          <p className="text-xs text-gray-500">
+            Password isn&apos;t stored for this account (approved earlier, or cleared). Issue a new one to share.
+          </p>
+          <button
+            type="button"
+            onClick={onRegenerate}
+            disabled={regenerating}
+            className={`inline-flex items-center gap-1.5 rounded-full bg-[#8A5A2B] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#754B22] disabled:opacity-50 ${FOCUS_RING}`}
+          >
+            <KeyRound size={13} aria-hidden="true" /> {regenerating ? "Issuing…" : "Regenerate"}
+          </button>
         </div>
       ) : (
         <>
@@ -761,11 +755,11 @@ function CredentialPanel({
               </button>
               <button
                 type="button"
-                onClick={onRemove}
+                onClick={onForget}
                 className={`inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 ${FOCUS_RING}`}
-                title="Remove this card (the password can't be recovered afterwards)"
+                title="Forget the stored password (the account stays approved; can't be recovered afterwards)"
               >
-                <Trash2 size={13} aria-hidden="true" /> Remove
+                <Trash2 size={13} aria-hidden="true" /> Forget
               </button>
             </div>
           </div>
