@@ -13,6 +13,7 @@ import {
   RotateCcw,
   School,
   Search,
+  Send,
   Trash2,
   User,
   X,
@@ -157,6 +158,7 @@ const AccessRequestsPage = () => {
   // Per-row in-flight flags.
   const [busy, setBusy] = useState<Record<string, "accept" | "reject" | null>>({});
   const [regenId, setRegenId] = useState<string | null>(null);
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const { tab, search } = view;
 
   const load = useCallback(async () => {
@@ -301,6 +303,20 @@ const AccessRequestsPage = () => {
     }
   };
 
+  // One-click server send (SMTP). The manual Mail app / Gmail buttons remain.
+  const sendEmail = async (rec: ApprovedAccount) => {
+    setSendingId(rec.id);
+    setError(null);
+    try {
+      const res = await api.admin.accessRequests.sendEmail(rec.id);
+      setServerApproved((cur) => cur.map((r) => (r.id === rec.id ? { ...r, deliveredAt: res.deliveredAt } : r)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send email");
+    } finally {
+      setSendingId(null);
+    }
+  };
+
   const entries: Entry[] = useMemo(
     () => [
       ...(items ?? []).map(
@@ -432,8 +448,10 @@ const AccessRequestsPage = () => {
                       key={e.id}
                       rec={e.rec}
                       regenerating={regenId === e.id}
+                      sending={sendingId === e.id}
                       onForget={() => void forgetPassword(e.rec)}
                       onRegenerate={() => void regenerate(e.rec)}
+                      onSendEmail={() => void sendEmail(e.rec)}
                     />
                   ),
                 )}
@@ -619,13 +637,17 @@ function PendingCard({
 function ApprovedCard({
   rec,
   regenerating,
+  sending,
   onForget,
   onRegenerate,
+  onSendEmail,
 }: {
   rec: ApprovedAccount;
   regenerating: boolean;
+  sending: boolean;
   onForget: () => void;
   onRegenerate: () => void;
+  onSendEmail: () => void;
 }) {
   return (
     <article className="overflow-hidden rounded-xl border border-[#E5DDD0] bg-white shadow-sm">
@@ -655,7 +677,14 @@ function ApprovedCard({
         />
       </div>
 
-      <CredentialPanel rec={rec} regenerating={regenerating} onForget={onForget} onRegenerate={onRegenerate} />
+      <CredentialPanel
+        rec={rec}
+        regenerating={regenerating}
+        sending={sending}
+        onForget={onForget}
+        onRegenerate={onRegenerate}
+        onSendEmail={onSendEmail}
+      />
     </article>
   );
 }
@@ -663,13 +692,17 @@ function ApprovedCard({
 function CredentialPanel({
   rec,
   regenerating,
+  sending,
   onForget,
   onRegenerate,
+  onSendEmail,
 }: {
   rec: ApprovedAccount;
   regenerating: boolean;
+  sending: boolean;
   onForget: () => void;
   onRegenerate: () => void;
+  onSendEmail: () => void;
 }) {
   const [copied, setCopied] = useState<"email" | "password" | null>(null);
 
@@ -686,9 +719,17 @@ function CredentialPanel({
 
   return (
     <div className="space-y-3 border-t border-[#E5DDD0] bg-[#FBF8F2] px-4 py-3">
-      <div className="flex items-center gap-2 text-xs font-semibold text-[#1B1208]">
+      <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#1B1208]">
         <KeyRound size={13} className="text-[#A67C52]" aria-hidden="true" />
         Login credentials
+        {rec.deliveredAt && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-green-700"
+            title={formatAbsolute(rec.deliveredAt)}
+          >
+            <Check size={10} aria-hidden="true" /> Emailed {formatRelative(rec.deliveredAt)}
+          </span>
+        )}
       </div>
 
       {rec.password === null ? (
@@ -725,7 +766,16 @@ function CredentialPanel({
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={onSendEmail}
+                disabled={sending}
+                className={`inline-flex items-center gap-1.5 rounded-full bg-[#8A5A2B] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#754B22] disabled:opacity-50 ${FOCUS_RING}`}
+                title="Email these credentials to the student from the server (SMTP)"
+              >
+                <Send size={13} aria-hidden="true" /> {sending ? "Sending…" : rec.deliveredAt ? "Resend email" : "Send email"}
+              </button>
               {rec.mailto && (
                 <a href={rec.mailto} className={GHOST_BUTTON} title="Open in your default mail app">
                   <Mail size={13} aria-hidden="true" /> Mail app
@@ -736,7 +786,7 @@ function CredentialPanel({
                   href={rec.gmailUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-1.5 rounded-full bg-[#8A5A2B] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#754B22] ${FOCUS_RING}`}
+                  className={GHOST_BUTTON}
                   title="Open Gmail compose in a new tab"
                 >
                   <Mail size={13} aria-hidden="true" /> Open in Gmail
