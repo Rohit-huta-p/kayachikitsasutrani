@@ -34,6 +34,30 @@ export interface AcceptedAccessRequest {
   loginUrl: string;
 }
 
+/**
+ * An approved account with its (recoverable) credential, from
+ * `GET /api/admin/access-requests/approved`. `password` is null when the
+ * stored copy has been purged/removed, is undecryptable, or the server has
+ * no encryption key configured — the UI offers "Regenerate" in that case.
+ */
+export interface ApprovedAccount {
+  id: string;
+  name: string;
+  email: string;
+  age?: number;
+  gender?: 'male' | 'female' | 'other';
+  collegeName?: string;
+  course?: string;
+  approvedAt: string;
+  deliveredAt: string | null;
+  password: string | null;
+  loginUrl: string;
+  mailtoSubject?: string;
+  mailtoBody?: string;
+  mailto?: string;
+  gmailUrl?: string;
+}
+
 export interface SignupBody {
   email: string;
   password: string;
