@@ -11,6 +11,7 @@ import type {
   MyCompletionsResponse,
   AccessRequest,
   AcceptedAccessRequest,
+  ApprovedAccount,
   AnalyticsRangeDays,
   StudentRosterResponse,
   StudentAnalytics,
@@ -163,6 +164,22 @@ export const api = {
         request<{ ok: true }>(`/api/admin/access-requests/${id}/reject`, {
           method: 'POST',
         }),
+      // Server-persisted approved credentials (see spec/plan 2026-10-05).
+      approved: () =>
+        request<{ items: ApprovedAccount[] }>(`/api/admin/access-requests/approved`),
+      regenerate: (id: string) =>
+        request<AcceptedAccessRequest>(`/api/admin/access-requests/${id}/regenerate`, {
+          method: 'POST',
+        }),
+      forget: (id: string) =>
+        request<{ ok: true }>(`/api/admin/access-requests/approved/${id}`, {
+          method: 'DELETE',
+        }),
+      sendEmail: (id: string) =>
+        request<{ ok: true; deliveredAt: string }>(
+          `/api/admin/access-requests/approved/${id}/send-email`,
+          { method: 'POST' },
+        ),
     },
   },
 };
