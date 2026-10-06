@@ -32,6 +32,10 @@ export interface AcceptedAccessRequest {
   mailto: string;
   gmailUrl: string;
   loginUrl: string;
+  /** Whether the server auto-sent the credential email on approval. */
+  emailSent?: boolean;
+  /** Human-readable reason the auto-send failed, when emailSent is false. */
+  emailError?: string;
 }
 
 /**
