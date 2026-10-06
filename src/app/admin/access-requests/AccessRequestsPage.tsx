@@ -59,8 +59,8 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "pending", label: "Pending" },
   { key: "approved", label: "Approved" },
 ];
-/** Sort weight so pending (actionable) cards come before approved ones in "All". */
-const KIND_ORDER = { pending: 0, approved: 1 } as const;
+/** Sort weight so pending cards come before approved ones in "All". */
+const BUCKET_ORDER = { pending: 0, approved: 1 } as const;
 
 /**
  * BRIDGE type — the one-time accept response plus a profile snapshot, cached
@@ -69,6 +69,7 @@ const KIND_ORDER = { pending: 0, approved: 1 } as const;
  */
 interface StoredApproval extends AcceptedAccessRequest {
   approvedAt: string;
+  deliveredAt?: string | null;
   age?: number;
   gender?: "male" | "female" | "other";
   collegeName?: string;
@@ -76,9 +77,22 @@ interface StoredApproval extends AcceptedAccessRequest {
   submittedAt?: string;
 }
 
-type Entry =
-  | { kind: "pending"; id: string; name: string; email: string; ts: number; req: AccessRequest }
-  | { kind: "approved"; id: string; name: string; email: string; ts: number; rec: ApprovedAccount };
+/**
+ * A row in the list. `bucket` decides which tab it shows under (from the
+ * server's pending list), while `pending`/`approved` decide how it renders.
+ * A just-approved request stays in the "pending" bucket — so it keeps its spot
+ * in Pending until a refresh — but renders as an approved card once it has a
+ * credential record.
+ */
+interface Entry {
+  id: string;
+  name: string;
+  email: string;
+  ts: number;
+  bucket: "pending" | "approved";
+  pending?: AccessRequest;
+  approved?: ApprovedAccount;
+}
 
 interface View {
   tab: Tab;
@@ -118,7 +132,7 @@ function storedToApproved(s: StoredApproval): ApprovedAccount {
     collegeName: s.collegeName,
     course: s.course,
     approvedAt: s.approvedAt,
-    deliveredAt: null,
+    deliveredAt: s.deliveredAt ?? null,
     password: s.password,
     loginUrl: s.loginUrl,
     mailtoSubject: s.mailtoSubject,
@@ -227,11 +241,14 @@ const AccessRequestsPage = () => {
     setError(null);
     try {
       const res = await api.admin.accessRequests.accept(req.id);
-      // Bridge write so the password survives even if the server can't persist
-      // it yet. load() prunes this once the server reports the same account.
+      // Turn the card into an approved card *in place*: keep it in the pending
+      // list so it holds its spot until a refresh, and attach the credential.
+      // The server already auto-sent the email on approval; the record's
+      // deliveredAt reflects that, and any failure is shown inline below.
       const record: StoredApproval = {
         ...res,
         approvedAt: new Date().toISOString(),
+        deliveredAt: res.emailSent ? new Date().toISOString() : null,
         age: req.age,
         gender: req.gender,
         collegeName: req.collegeName,
@@ -243,10 +260,14 @@ const AccessRequestsPage = () => {
         writeApproved(next);
         return next;
       });
-      setItems((prev) => (prev ?? []).filter((p) => p.id !== req.id));
-      // Keep the just-approved card (and its password) in view.
-      updateView((cur) => (cur.tab === "pending" ? { tab: "all" } : {}));
-      await load();
+      if (res.emailSent === false) {
+        setSendError((s) => ({
+          ...s,
+          [req.id]: res.emailError || "Couldn't auto-send the email — use the buttons below.",
+        }));
+      }
+      // Intentionally no setItems/tab-switch/reload: the card stays put and a
+      // refresh is what moves it out of Pending and into Approved.
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not accept request");
     } finally {
@@ -323,44 +344,49 @@ const AccessRequestsPage = () => {
     }
   };
 
-  const entries: Entry[] = useMemo(
-    () => [
-      ...(items ?? []).map(
-        (req): Entry => ({
-          kind: "pending",
-          id: req.id,
-          name: req.name,
-          email: req.email,
-          ts: Date.parse(req.createdAt) || 0,
-          req,
-        }),
-      ),
-      ...approved.map(
-        (rec): Entry => ({
-          kind: "approved",
-          id: rec.id,
-          name: rec.name,
-          email: rec.email,
-          ts: Date.parse(rec.approvedAt) || 0,
-          rec,
-        }),
-      ),
-    ],
-    [items, approved],
-  );
+  const entries: Entry[] = useMemo(() => {
+    const pendingList = items ?? [];
+    const pendingIds = new Set(pendingList.map((p) => p.id));
+    const approvedById = new Map(approved.map((a) => [a.id, a]));
+    // Pending-list rows keep their place; a just-approved one renders as approved.
+    const inPending = pendingList.map((req): Entry => {
+      const rec = approvedById.get(req.id);
+      return {
+        id: req.id,
+        name: req.name,
+        email: req.email,
+        ts: rec ? Date.parse(rec.approvedAt) || 0 : Date.parse(req.createdAt) || 0,
+        bucket: "pending",
+        pending: rec ? undefined : req,
+        approved: rec,
+      };
+    });
+    // Approved accounts the server no longer lists as pending (moved on refresh).
+    const moved = approved
+      .filter((a) => !pendingIds.has(a.id))
+      .map((a): Entry => ({
+        id: a.id,
+        name: a.name,
+        email: a.email,
+        ts: Date.parse(a.approvedAt) || 0,
+        bucket: "approved",
+        approved: a,
+      }));
+    return [...inPending, ...moved];
+  }, [items, approved]);
 
   const counts: Record<Tab, number> = {
     all: entries.length,
-    pending: items?.length ?? 0,
-    approved: approved.length,
+    pending: entries.filter((e) => e.bucket === "pending").length,
+    approved: entries.filter((e) => e.bucket === "approved").length,
   };
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     return entries
-      .filter((e) => tab === "all" || e.kind === tab)
+      .filter((e) => tab === "all" || e.bucket === tab)
       .filter((e) => !q || e.name.toLowerCase().includes(q) || e.email.toLowerCase().includes(q))
-      .sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || b.ts - a.ts);
+      .sort((a, b) => BUCKET_ORDER[a.bucket] - BUCKET_ORDER[b.bucket] || b.ts - a.ts);
   }, [entries, tab, search]);
 
   const loadingPending = items === null && !error;
@@ -440,28 +466,33 @@ const AccessRequestsPage = () => {
           ) : (
             <>
               <div className="flex flex-col gap-3">
-                {visible.map((e) =>
-                  e.kind === "pending" ? (
+                {visible.map((e) => {
+                  if (e.approved) {
+                    const rec = e.approved;
+                    return (
+                      <ApprovedCard
+                        key={e.id}
+                        rec={rec}
+                        regenerating={regenId === e.id}
+                        sending={sendingId === e.id}
+                        sendError={sendError[e.id]}
+                        onForget={() => void forgetPassword(rec)}
+                        onRegenerate={() => void regenerate(rec)}
+                        onSendEmail={() => void sendEmail(rec)}
+                      />
+                    );
+                  }
+                  const req = e.pending!;
+                  return (
                     <PendingCard
                       key={e.id}
-                      req={e.req}
+                      req={req}
                       busy={busy[e.id] ?? null}
-                      onAccept={() => void handleAccept(e.req)}
-                      onReject={() => void handleReject(e.req)}
+                      onAccept={() => void handleAccept(req)}
+                      onReject={() => void handleReject(req)}
                     />
-                  ) : (
-                    <ApprovedCard
-                      key={e.id}
-                      rec={e.rec}
-                      regenerating={regenId === e.id}
-                      sending={sendingId === e.id}
-                      sendError={sendError[e.id]}
-                      onForget={() => void forgetPassword(e.rec)}
-                      onRegenerate={() => void regenerate(e.rec)}
-                      onSendEmail={() => void sendEmail(e.rec)}
-                    />
-                  ),
-                )}
+                  );
+                })}
               </div>
               <p className="text-xs text-gray-500">
                 Showing {visible.length} of {counts.all}
