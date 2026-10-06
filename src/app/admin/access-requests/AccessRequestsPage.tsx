@@ -159,6 +159,8 @@ const AccessRequestsPage = () => {
   const [busy, setBusy] = useState<Record<string, "accept" | "reject" | null>>({});
   const [regenId, setRegenId] = useState<string | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
+  // Per-card "Send email" error, shown inline on that card.
+  const [sendError, setSendError] = useState<Record<string, string>>({});
   const { tab, search } = view;
 
   const load = useCallback(async () => {
@@ -306,12 +308,16 @@ const AccessRequestsPage = () => {
   // One-click server send (SMTP). The manual Mail app / Gmail buttons remain.
   const sendEmail = async (rec: ApprovedAccount) => {
     setSendingId(rec.id);
-    setError(null);
+    setSendError((s) => {
+      const next = { ...s };
+      delete next[rec.id];
+      return next;
+    });
     try {
       const res = await api.admin.accessRequests.sendEmail(rec.id);
       setServerApproved((cur) => cur.map((r) => (r.id === rec.id ? { ...r, deliveredAt: res.deliveredAt } : r)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not send email");
+      setSendError((s) => ({ ...s, [rec.id]: err instanceof Error ? err.message : "Could not send the email." }));
     } finally {
       setSendingId(null);
     }
@@ -449,6 +455,7 @@ const AccessRequestsPage = () => {
                       rec={e.rec}
                       regenerating={regenId === e.id}
                       sending={sendingId === e.id}
+                      sendError={sendError[e.id]}
                       onForget={() => void forgetPassword(e.rec)}
                       onRegenerate={() => void regenerate(e.rec)}
                       onSendEmail={() => void sendEmail(e.rec)}
@@ -638,6 +645,7 @@ function ApprovedCard({
   rec,
   regenerating,
   sending,
+  sendError,
   onForget,
   onRegenerate,
   onSendEmail,
@@ -645,6 +653,7 @@ function ApprovedCard({
   rec: ApprovedAccount;
   regenerating: boolean;
   sending: boolean;
+  sendError?: string;
   onForget: () => void;
   onRegenerate: () => void;
   onSendEmail: () => void;
@@ -681,6 +690,7 @@ function ApprovedCard({
         rec={rec}
         regenerating={regenerating}
         sending={sending}
+        sendError={sendError}
         onForget={onForget}
         onRegenerate={onRegenerate}
         onSendEmail={onSendEmail}
@@ -693,6 +703,7 @@ function CredentialPanel({
   rec,
   regenerating,
   sending,
+  sendError,
   onForget,
   onRegenerate,
   onSendEmail,
@@ -700,6 +711,7 @@ function CredentialPanel({
   rec: ApprovedAccount;
   regenerating: boolean;
   sending: boolean;
+  sendError?: string;
   onForget: () => void;
   onRegenerate: () => void;
   onSendEmail: () => void;
@@ -813,6 +825,9 @@ function CredentialPanel({
               </button>
             </div>
           </div>
+          {sendError && (
+            <p className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs text-red-700">{sendError}</p>
+          )}
         </>
       )}
     </div>
